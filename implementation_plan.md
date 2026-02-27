@@ -23,6 +23,7 @@ Bu belge, FinCast uygulamasının adım adım geliştirilmesi için bir rehber v
 ### 2. Gelir / Gider Ekleme Sayfası (Transaction Entry)
 *   **Zengin Hazır Modeller (Kategoriler):** Eğlence, Market, Abonelik (Netflix/Spotify), Kira, Ekstra Harcama gibi çok çeşitli, ikonografileri ve renkleri özel olarak tasarlanmış yuvarlak/kare Neumorphic kutulardan oluşan "Kategori Grid"i. 
 *   **Periyot Seçimi (Slider/Dropdown):** Seçilen giderin (veya gelirin) tekrarlama periyodunu belirleme. (Örn: Sadece 1 Kez, 1 Haftalık, 1 Aylık, Yıllık).
+*   **Taksit ve Borç Yönetimi (Sınırlı Süreli Kilit):** Ekrandaki "Bu bir Taksit mi?" anahtarına (switch) basıldığında, kullanıcıdan "Kaç ay kaldı?" bilgisi istenir. Bu sistem, uygulamanın asıl gücü olan Zaman Makinesine entegredir; örneğin 6 ay sonrasına simülasyon yapıldığında kredi kartı taksiti otomatik olarak bitmiş sayılır ve bakiye zıplar.
 *   **Min - Max Aralık (Esnek Bütçeleme):** İki adet kaydırıcı (Range Slider) veya Numpad ile "Minimum 200 TL - Maksimum 600 TL" gibi bir aralık (Range) seçtiren ekran bölümü.
 *   **UI/UX Vurgusu:** Alt kısımda yer alan Neumorphic fiziksel Numpad (tuş takımı) ile aralık limitleri hızlıca girilir ve devasa siyah-neon mor bir "Kaydet" butonu ile işlem sonlandırılır.
 
@@ -34,7 +35,11 @@ Bu belge, FinCast uygulamasının adım adım geliştirilmesi için bir rehber v
     *   Siz hedefi girdiğinizde, AI geçmiş verilerinize, enflasyona ve kilitli borçlarınıza bakarak "Cam Tüplerin" ne kadar azalması gerektiğini matematiksel olarak hesaplayan ve arayüzü doğrudan (sıvı animasyonlarıyla) besleyen asıl güçtür.
     *   Bu AI, hedefinizin gerçekçiliğini milisaniyeler içinde yüzdesel olarak hesaplar (Örn: *Bu hedefe ulaşma ihtimalin %88*). Hedef çok ulaşılmazsa, arayüzdeki renkler/uyarılar değişerek sizi yormadan yönlendirir.
 
-### 4. Profil ve Ayarlar (Oyunlaştırma & Ayar Merkezi)
+### 4. Hızlı Ekleme ve Widget'lar (Faz 2 / Gelecekteki İleri Eklenti)
+*   **Ana Ekran Araçları (Home Screen Widgets):** Flutter doğrudan UI üzerinden ana ekran (Home Screen) widget'ı üretemese de, araya giren köprü paketleri (Örn: `home_widget` paketi) ve Native kodlar (iOS için Swift/WidgetKit, Android için Kotlin/Glance) yardımıyla bu çok şık bir eklenti olarak yapılabilir.
+*   **Pratiklik Hedefi:** Temel uygulama kusursuz oturduktan sonra, iOS/Android ana ekranından direkt uygulamaya veri yollayan bağlantılar entegre edilebilir.
+
+### 5. Profil ve Ayarlar (Oyunlaştırma & Ayar Merkezi)
 *   **Seviye (Gamification/Oyunlaştırma) ve Rozetler:** Sıkıcı bir ayarlar sayfası yerine, kullanıcının "Tasarruf/Optimizasyon Puanı" ve seviyesini gösteren bir profil alanı. Hedefi tutturanlara verilen neon rozetler (Örn: "Master of Budgeting", "Zinciri Kırma" vb.).
 *   **AI Kişiselleştirme Sınırları:** AI asistanının ses tonunu ayarlama (Örn: Motive Edici, Disiplinli/Sert, Sadece Sayısal Analiz gibi).
 *   **Uygulama Temelleri:** Koyu/Açık Tema seçimleri (Gerçi Obsidian Black asıldır ama seçenek konabilir), Veri yedekleme (Google Drive Sync), Bildirim tercihleri, Döviz kurları için baz birim seçimi.
