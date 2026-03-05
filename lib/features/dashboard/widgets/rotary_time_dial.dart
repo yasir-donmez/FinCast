@@ -67,13 +67,11 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> {
         _lastHapticLevel = currentTick;
         HapticFeedback.selectionClick();
 
-        // MOCK SİMÜLASYON Olarak Bakiyeyi artır: Her tikte belirli bir ivme ile para kazanılmış gibi
-        // Zaman ivmeli aktığı için servet de parabolik şekilde katlanarak artacak
-        final baseBalance = 125000.50;
-        final extraMultiplier =
-            pow(_currentAngle, 1.5) * 800; // Geleceğe gittikçe ivme artar
-        ref.read(totalBalanceProvider.notifier).state =
-            baseBalance + extraMultiplier;
+        // SİMÜLASYON Olarak Bakiyeyi artır: Her tikte belirli bir ivme ile para kazanılmış gibi
+        // Gerçek bakiyeyi bozmadan, üzerine eklenecek "Sanal Gelecek Bakiyesi" güncelleniyor.
+        final extraMultiplier = (pow(_currentAngle, 1.5) * 800)
+            .toDouble(); // Geleceğe gittikçe ivme artar
+        ref.read(simulationBonusProvider.notifier).state = extraMultiplier;
       }
     });
   }
@@ -203,7 +201,7 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> {
                 setState(() {
                   _currentAngle = 0.0;
                   _lastAngle = 0.0;
-                  ref.read(totalBalanceProvider.notifier).state = 125000.50;
+                  ref.read(simulationBonusProvider.notifier).state = 0.0;
                 });
               },
               child: SizedBox(

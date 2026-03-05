@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_constants.dart';
+import '../../core/providers/db_providers.dart';
 import 'dashboard_providers.dart';
 import 'widgets/rotary_time_dial.dart';
 import 'widgets/expandable_vault_grid.dart';
@@ -13,9 +14,9 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Riverpod'dan verileri çekiyoruz
-    final vaults = ref.watch(mockVaultsProvider);
-    final totalBalance = ref.watch(totalBalanceProvider);
+    // Riverpod'dan verileri çekiyoruz (Artık DB'den geliyor + Simülasyon Ekli)
+    final vaults = ref.watch(allVaultsProvider);
+    final totalBalance = ref.watch(displayBalanceProvider);
 
     return SafeArea(
       child: Column(

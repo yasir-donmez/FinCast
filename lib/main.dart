@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'features/dashboard/main_scaffold.dart';
-
+import 'core/database/database_service.dart';
 import 'core/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Isar veritabanı ileride burada başlatılacak (Aşama 5)
-  // await DatabaseService.init();
+  // Isar veritabanını başlat
+  await DatabaseService.init();
 
   runApp(
     // Riverpod State Management için En Üst Kapsayıcı

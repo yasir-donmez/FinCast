@@ -41,6 +41,11 @@ const VaultSchema = CollectionSchema(
       id: 4,
       name: r'name',
       type: IsarType.string,
+    ),
+    r'showOnDashboard': PropertySchema(
+      id: 5,
+      name: r'showOnDashboard',
+      type: IsarType.bool,
     )
   },
   estimateSize: _vaultEstimateSize,
@@ -85,6 +90,7 @@ void _vaultSerialize(
   writer.writeString(offsets[2], object.iconCode);
   writer.writeBool(offsets[3], object.isIncludedInTotal);
   writer.writeString(offsets[4], object.name);
+  writer.writeBool(offsets[5], object.showOnDashboard);
 }
 
 Vault _vaultDeserialize(
@@ -100,6 +106,7 @@ Vault _vaultDeserialize(
   object.id = id;
   object.isIncludedInTotal = reader.readBool(offsets[3]);
   object.name = reader.readString(offsets[4]);
+  object.showOnDashboard = reader.readBool(offsets[5]);
   return object;
 }
 
@@ -120,6 +127,8 @@ P _vaultDeserializeProp<P>(
       return (reader.readBool(offset)) as P;
     case 4:
       return (reader.readString(offset)) as P;
+    case 5:
+      return (reader.readBool(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -740,6 +749,16 @@ extension VaultQueryFilter on QueryBuilder<Vault, Vault, QFilterCondition> {
       ));
     });
   }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> showOnDashboardEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'showOnDashboard',
+        value: value,
+      ));
+    });
+  }
 }
 
 extension VaultQueryObject on QueryBuilder<Vault, Vault, QFilterCondition> {}
@@ -804,6 +823,18 @@ extension VaultQuerySortBy on QueryBuilder<Vault, Vault, QSortBy> {
   QueryBuilder<Vault, Vault, QAfterSortBy> sortByNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> sortByShowOnDashboard() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showOnDashboard', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> sortByShowOnDashboardDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showOnDashboard', Sort.desc);
     });
   }
 }
@@ -880,6 +911,18 @@ extension VaultQuerySortThenBy on QueryBuilder<Vault, Vault, QSortThenBy> {
       return query.addSortBy(r'name', Sort.desc);
     });
   }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> thenByShowOnDashboard() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showOnDashboard', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> thenByShowOnDashboardDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showOnDashboard', Sort.desc);
+    });
+  }
 }
 
 extension VaultQueryWhereDistinct on QueryBuilder<Vault, Vault, QDistinct> {
@@ -913,6 +956,12 @@ extension VaultQueryWhereDistinct on QueryBuilder<Vault, Vault, QDistinct> {
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'name', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QDistinct> distinctByShowOnDashboard() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'showOnDashboard');
     });
   }
 }
@@ -951,6 +1000,12 @@ extension VaultQueryProperty on QueryBuilder<Vault, Vault, QQueryProperty> {
   QueryBuilder<Vault, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<Vault, bool, QQueryOperations> showOnDashboardProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'showOnDashboard');
     });
   }
 }

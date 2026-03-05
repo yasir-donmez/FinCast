@@ -22,19 +22,16 @@ class _ExpandableVaultGridState extends State<ExpandableVaultGrid> {
     final List<Vault?> topItems = [];
     final List<Vault?> bottomItems = [];
 
-    for (int i = 0; i < widget.vaults.length; i++) {
-      if (i % 2 == 0) {
-        topItems.add(widget.vaults[i]);
-      } else {
-        bottomItems.add(widget.vaults[i]);
-      }
-    }
+    final List<Vault> visibleVaults = widget.vaults
+        .where((v) => v.showOnDashboard)
+        .toList();
 
-    // add the + button
-    if (widget.vaults.length % 2 == 0) {
-      topItems.add(null); // null means Add Button
-    } else {
-      bottomItems.add(null);
+    for (int i = 0; i < visibleVaults.length; i++) {
+      if (i % 2 == 0) {
+        topItems.add(visibleVaults[i]);
+      } else {
+        bottomItems.add(visibleVaults[i]);
+      }
     }
 
     return SingleChildScrollView(

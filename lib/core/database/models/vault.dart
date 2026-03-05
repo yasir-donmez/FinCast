@@ -20,4 +20,7 @@ class Vault {
 
   /// Bu kasa "genel net servet (toplam bakiye)" hesaplamasına dahil edilsin mi?
   bool isIncludedInTotal = true;
+
+  /// Ana sayfada gösterilsin mi?
+  bool showOnDashboard = true;
 }
