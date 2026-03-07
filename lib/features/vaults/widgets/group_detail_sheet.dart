@@ -101,10 +101,10 @@ class _GroupDetailSheetState extends ConsumerState<GroupDetailSheet> {
                               color: AppColors.textSecondary,
                             ),
                           ),
-                          onSubmitted: (value) {
+                          onSubmitted: (value) async {
                             if (value.trim().isNotEmpty) {
-                              ref
-                                  .read(transactionGroupsProvider.notifier)
+                              await ref
+                                  .read(transactionGroupsNotifierProvider)
                                   .renameGroup(widget.group.id, value.trim());
                             }
                             setState(() => _isEditingName = false);
@@ -226,12 +226,12 @@ class _GroupDetailSheetState extends ConsumerState<GroupDetailSheet> {
                     const SizedBox(width: 8),
                     // Gruptan çıkar butonu
                     GestureDetector(
-                      onTap: () {
-                        ref
-                            .read(transactionGroupsProvider.notifier)
+                      onTap: () async {
+                        await ref
+                            .read(transactionGroupsNotifierProvider)
                             .removeFromGroup(widget.group.id, tx.id);
-                        ref
-                            .read(transactionGroupingProvider.notifier)
+                        await ref
+                            .read(transactionGroupingProvider)
                             .setGroupId(tx.id, null);
                       },
                       child: Container(

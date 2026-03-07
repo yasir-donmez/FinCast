@@ -7,6 +7,7 @@ import 'vaults_providers.dart';
 import 'widgets/transaction_card.dart';
 import 'widgets/group_card.dart';
 import 'widgets/group_detail_sheet.dart';
+import 'widgets/vault_management_sheet.dart';
 import '../transactions/add_transaction_sheet.dart';
 
 /// Kasalar — İşlem Yönetim Merkezi
@@ -111,6 +112,26 @@ class VaultsScreen extends ConsumerWidget {
                           ? AppColors.primary
                           : AppColors.textSecondary,
                     ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Kasa Yönetimi butonu
+              GestureDetector(
+                onTap: () => _showVaultManagementSheet(context),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.darkShadow.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.account_balance_wallet_rounded,
+                    size: 18,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -265,15 +286,22 @@ class VaultsScreen extends ConsumerWidget {
       onAcceptWithDetails: (details) {
         final draggedId = details.data;
         // İki işlemi birleştirerek grup oluştur
-        final groupId = ref
-            .read(transactionGroupsProvider.notifier)
-            .createGroup(draggedId, tx.id);
-        ref
-            .read(transactionGroupingProvider.notifier)
-            .setGroupId(draggedId, groupId);
-        ref
-            .read(transactionGroupingProvider.notifier)
-            .setGroupId(tx.id, groupId);
+        // İki işlemi birleştirerek grup oluştur
+        Future<void> handleGroup() async {
+          final groupId = await ref
+              .read(transactionGroupsNotifierProvider)
+              .createGroup(draggedId, tx.id);
+          // Not: setGroupId artık createGroup içinde her iki işlemi de kapsıyor,
+          // ama manual eklemek gerekirse:
+          await ref
+              .read(transactionGroupingProvider)
+              .setGroupId(draggedId, groupId);
+          await ref
+              .read(transactionGroupingProvider)
+              .setGroupId(tx.id, groupId);
+        }
+
+        handleGroup();
         HapticFeedback.heavyImpact();
       },
       builder: (context, candidateData, rejectedData) {
@@ -340,12 +368,12 @@ class VaultsScreen extends ConsumerWidget {
           builder: (_) => GroupDetailSheet(group: group),
         );
       },
-      onDelete: () {
+      onDelete: () async {
         // Gruptaki tüm işlemlerin groupId'sini null yap
         for (final txId in group.transactionIds) {
-          ref.read(transactionGroupingProvider.notifier).setGroupId(txId, null);
+          await ref.read(transactionGroupingProvider).setGroupId(txId, null);
         }
-        ref.read(transactionGroupsProvider.notifier).deleteGroup(group.id);
+        await ref.read(transactionGroupsNotifierProvider).deleteGroup(group.id);
         HapticFeedback.lightImpact();
       },
     );
@@ -359,11 +387,8 @@ class VaultsScreen extends ConsumerWidget {
       onAcceptWithDetails: (details) {
         final draggedId = details.data;
         ref
-            .read(transactionGroupsProvider.notifier)
+            .read(transactionGroupsNotifierProvider)
             .addToGroup(group.id, draggedId);
-        ref
-            .read(transactionGroupingProvider.notifier)
-            .setGroupId(draggedId, group.id);
         HapticFeedback.heavyImpact();
       },
       builder: (context, candidateData, rejectedData) {
@@ -388,6 +413,15 @@ class VaultsScreen extends ConsumerWidget {
           child: card,
         );
       },
+    );
+  }
+
+  void _showVaultManagementSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const VaultManagementSheet(),
     );
   }
 }

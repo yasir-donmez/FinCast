@@ -27,30 +27,9 @@ class DatabaseService {
     await _seedDefaultVaults();
   }
 
-  /// İlk kullanımda varsayılan kasaları oluştur
+  /// İlk kullanımda varsayılan kasaları oluştur (Artık boş, kullanıcı grup oluşturunca eklenecek)
   static Future<void> _seedDefaultVaults() async {
-    final count = await isar.vaults.count();
-    if (count > 0) return; // Zaten var
-
-    await isar.writeTxn(() async {
-      await isar.vaults.putAll([
-        Vault()
-          ..name = 'Maaş Hesabı'
-          ..currency = 'TRY'
-          ..balance = 0
-          ..iconCode = 'account_balance_wallet_rounded',
-        Vault()
-          ..name = 'Dolar Zulası'
-          ..currency = 'USD'
-          ..balance = 0
-          ..iconCode = 'attach_money_rounded',
-        Vault()
-          ..name = 'Yastık Altı'
-          ..currency = 'GRAM'
-          ..balance = 0
-          ..iconCode = 'diamond_rounded',
-      ]);
-    });
+    // mock verileri sildik
   }
 
   // =====================
@@ -129,6 +108,13 @@ class DatabaseService {
   static Future<void> updateVault(Vault vault) async {
     await isar.writeTxn(() async {
       await isar.vaults.put(vault);
+    });
+  }
+
+  /// Kasa sil
+  static Future<void> deleteVault(int id) async {
+    await isar.writeTxn(() async {
+      await isar.vaults.delete(id);
     });
   }
 

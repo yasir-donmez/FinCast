@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_constants.dart';
 import '../../shared/widgets/neu_container.dart';
-import '../../shared/widgets/neu_button.dart';
 import 'widgets/neumorphic_numpad.dart';
 import '../../core/database/database_service.dart';
 import '../../core/database/models/transaction_record.dart';
+import '../../core/database/models/vault.dart';
 
 /// Merkez FAB ikonuna basılınca açılan Yeni Gelir/Gider Ekranı (Transaction Modal)
 class AddTransactionSheet extends StatefulWidget {
@@ -34,6 +34,13 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   // Sekme Kontrolü: 0 = Gider, 1 = Gelir
   int _tabIndex = 0;
 
+  // Kasa / Grup Seçimi
+  List<Vault> _vaults = [];
+  int? _selectedVaultId; // null = Genel Bakiye
+
+  // Gelişmiş Seçenekler Görünürlüğü
+  bool _showAdvancedOptions = false;
+
   // Numpad üzerinden girilen değerler
   String _currentAmount = "0";
   String _currentMin = "0";
@@ -59,6 +66,29 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   void initState() {
     super.initState();
     _prefillIfEditing();
+    _loadVaults();
+  }
+
+  Future<void> _loadVaults() async {
+    final vaults = await DatabaseService.getAllVaults();
+    int? editingVaultId;
+    if (widget.initialId != null) {
+      final existingTx = await DatabaseService.getTransaction(
+        widget.initialId!,
+      );
+      if (existingTx != null) {
+        editingVaultId = existingTx.vaultId;
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _vaults = vaults;
+        if (editingVaultId != null) {
+          _selectedVaultId = editingVaultId;
+        }
+      });
+    }
   }
 
   void _prefillIfEditing() {
@@ -152,7 +182,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
       ..maxAmount = _isFlexibleAmount ? maxAmt : null
       ..periodType = _periodType
       ..date = widget.initialId != null ? tx.date : DateTime.now()
-      ..vaultId = 1; // Varsayılan kasa (ileride seçilebilir)
+      ..vaultId = _selectedVaultId; // Seçilen kasa
 
     if (widget.initialId != null) {
       await DatabaseService.updateTransaction(tx);
@@ -480,47 +510,89 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
           ),
           const SizedBox(height: AppSizes.paddingMedium),
 
-          // 1. GELİR / GİDER SEKMELERİ
-          _buildTypeToggle(),
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  // 1. GELİR / GİDER SEKMELERİ
+                  _buildTypeToggle(),
 
-          const SizedBox(height: AppSizes.paddingMedium),
+                  const SizedBox(height: AppSizes.paddingMedium),
 
-          // 2. GİRİLEN MİKTAR / ESNEK MİKTAR GÖSTERGESİ
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: _isFlexibleAmount
-                ? _buildFlexibleAmountDisplay()
-                : _buildSingleAmountDisplay(),
+                  // 2. GİRİLEN MİKTAR / ESNEK MİKTAR GÖSTERGESİ
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _isFlexibleAmount
+                        ? _buildFlexibleAmountDisplay()
+                        : _buildSingleAmountDisplay(),
+                  ),
+
+                  const SizedBox(height: AppSizes.paddingMedium),
+
+                  // 3. HİYERARŞİK KATEGORİ SEÇİCİ
+                  _buildHierarchicalCategorySelector(activeCategories),
+
+                  const SizedBox(height: AppSizes.paddingMedium),
+                ],
+              ),
+            ),
           ),
-
-          const SizedBox(height: AppSizes.paddingMedium),
-
-          // 3. HİYERARŞİK KATEGORİ SEÇİCİ
-          _buildHierarchicalCategorySelector(activeCategories),
-
-          const SizedBox(height: AppSizes.paddingMedium),
-
-          // Boşluk doldurucu
-          const Spacer(),
 
           // 4. GELİŞMİŞ SEÇENEKLER BUTONU (numpad üstünde)
           _buildAdvancedOptionsButton(context),
 
           const SizedBox(height: 8),
 
-          // 5. NUMPAD (Her zaman görünür)
-          Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).padding.bottom + 10,
-            ),
-            child: NeumorphicNumpad(
-              key: const ValueKey('numpad'),
-              onNumberTapped: _onNumpadTap,
-              onBackspaceTapped: _onBackspaceTap,
-              onDoneTapped: () async {
-                await _saveTransaction();
-                if (mounted) Navigator.pop(context);
-              },
+          // 5. NUMPAD VEYA GELİŞMİŞ SEÇENEKLER
+          Flexible(
+            fit: FlexFit
+                .loose, // Loose kullanıyoruz, Numpad boyutunda kalsın ama taşmasın
+            child: SizedBox(
+              height: 350,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (child, animation) {
+                  // Sola / sağa kayarak gelme efekti
+                  final inAnimation = Tween<Offset>(
+                    begin: const Offset(1.0, 0.0), // Sağdan gelsin
+                    end: Offset.zero,
+                  ).animate(animation);
+
+                  final outAnimation = Tween<Offset>(
+                    begin: const Offset(-1.0, 0.0), // Sola gitsin
+                    end: Offset.zero,
+                  ).animate(animation);
+
+                  if (child.key == const ValueKey('numpad')) {
+                    return SlideTransition(
+                      position: outAnimation,
+                      child: child,
+                    );
+                  } else {
+                    return SlideTransition(position: inAnimation, child: child);
+                  }
+                },
+                child: _showAdvancedOptions
+                    ? SingleChildScrollView(
+                        key: const ValueKey('advanced_options'),
+                        child: _buildAdvancedOptionsPanel(context),
+                      )
+                    : Padding(
+                        key: const ValueKey('numpad'),
+                        padding: const EdgeInsets.only(
+                          bottom: 10,
+                        ), // Taşmayı önlemek için padding azaltıldı
+                        child: NeumorphicNumpad(
+                          onNumberTapped: _onNumpadTap,
+                          onBackspaceTapped: _onBackspaceTap,
+                          onDoneTapped: () async {
+                            await _saveTransaction();
+                            if (mounted) Navigator.pop(context);
+                          },
+                        ),
+                      ),
+              ),
             ),
           ),
         ],
@@ -796,13 +868,15 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
 
   // TEK SEFERLİK SABİT TUTAR GÖSTERGESİ
   Widget _buildSingleAmountDisplay() {
-    return Padding(
+    return Container(
+      key: const ValueKey('single_amount'),
+      height: 85, // İki durumun yüksekliğini eşitleyerek zıplamayı önler
+      alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: Text(
           "₺ $_currentAmount",
-          key: const ValueKey('single_amount'),
           style: const TextStyle(
             fontSize: 48,
             fontWeight: FontWeight.bold,
@@ -816,8 +890,10 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
 
   // ESNEK (MİN-MAX) TUTAR GÖSTERGESİ
   Widget _buildFlexibleAmountDisplay() {
-    return Padding(
+    return Container(
       key: const ValueKey('flex_amount'),
+      height: 85, // İki durumun yüksekliğini eşitleyerek zıplamayı önler
+      alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -911,16 +987,26 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          NeuButton(
-            width: 64,
-            height: 36,
-            borderRadius: 18,
-            padding: EdgeInsets.zero,
-            onTap: () => _openAdvancedOptionsSheet(context),
-            child: const Icon(
-              Icons.tune_rounded,
-              size: 20,
-              color: AppColors.textSecondary,
+          GestureDetector(
+            onTap: () =>
+                setState(() => _showAdvancedOptions = !_showAdvancedOptions),
+            child: NeuContainer(
+              width: 64,
+              height: 36,
+              borderRadius: 18,
+              padding: EdgeInsets.zero,
+              isInnerShadow: _showAdvancedOptions, // Aktifken içe basık dursun
+              child: Center(
+                child: Icon(
+                  _showAdvancedOptions
+                      ? Icons.apps_rounded
+                      : Icons.tune_rounded,
+                  size: 20,
+                  color: _showAdvancedOptions
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
+                ),
+              ),
             ),
           ),
         ],
@@ -928,272 +1014,363 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
     );
   }
 
-  // Modal bottom sheet olarak gelişmiş seçenekleri açar
-  void _openAdvancedOptionsSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (ctx, setSheetState) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(AppSizes.radiusLarge),
+  // Inline Gelişmiş Seçenekler Paneli
+  Widget _buildAdvancedOptionsPanel(BuildContext context) {
+    return StatefulBuilder(
+      builder: (ctx, setSheetState) {
+        return Padding(
+          padding: const EdgeInsets.only(
+            left: AppSizes.paddingMedium,
+            right: AppSizes.paddingMedium,
+            bottom: 10,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 8),
+              // --- KASA / GRUP SEÇİMİ ---
+              _buildVaultSelector(context, setSheetState),
+              const SizedBox(height: 16),
+              // 1. Esnek (Min/Max) Bütçe Anahtarı
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Esnek (Min-Max) Tutar Gir',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  Switch(
+                    value: _isFlexibleAmount,
+                    activeColor: AppColors.primary,
+                    onChanged: (val) {
+                      setState(() {
+                        _isFlexibleAmount = val;
+                        _activeAmountField = val ? 'min' : 'amount';
+                      });
+                      setSheetState(() {});
+                    },
+                  ),
+                ],
+              ),
+              const Divider(color: AppColors.darkShadow),
+              // 2. Tekrarlama Periyodu
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: Text(
+                  'Tekrarlama Periyodu',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
-              padding: EdgeInsets.only(
-                bottom:
-                    MediaQuery.of(ctx).viewInsets.bottom +
-                    MediaQuery.of(ctx).padding.bottom +
-                    16,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.spaceBetween,
                 children: [
-                  const SizedBox(height: 12),
-                  // Handle çizgisi
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Başlık
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.paddingMedium,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(
-                              AppSizes.radiusDefault,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.tune_rounded,
-                            color: AppColors.primary,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Gelişmiş Seçenekler',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: () => Navigator.pop(ctx),
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              shape: BoxShape.circle,
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: AppColors.darkShadow,
-                                  offset: Offset(2, 2),
-                                  blurRadius: 4,
-                                ),
-                                BoxShadow(
-                                  color: AppColors.lightShadow,
-                                  offset: Offset(-2, -2),
-                                  blurRadius: 4,
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.close_rounded,
-                              size: 16,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Panel içeriği (StatefulBuilder sayesinde kendi state'ini yönetir)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.paddingMedium,
-                    ),
-                    child: NeuContainer(
-                      padding: const EdgeInsets.all(AppSizes.paddingMedium),
-                      borderRadius: AppSizes.radiusLarge,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  _buildPeriodBtnSheet('Tek Sefer', 0, setSheetState),
+                  _buildPeriodBtnSheet('Haftalık', 1, setSheetState),
+                  _buildPeriodBtnSheet('Aylık', 2, setSheetState),
+                  _buildPeriodBtnSheet('Yıllık', 3, setSheetState),
+                ],
+              ),
+              // 3. Tekrarlama Günü / Tarihi ve Süre (Zıplamayı Önlemek İçin Sabit Alan)
+              SizedBox(
+                height: 130, // Dönem seçenekleri için sabit alan tahsisi
+                child: Column(
+                  children: [
+                    if (_periodType == 1) ...[
+                      // Haftalık (Gün Adı)
+                      const SizedBox(height: AppSizes.paddingMedium),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // 1. Esnek (Min/Max) Bütçe Anahtarı
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Expanded(
-                                child: Text(
-                                  'Esnek (Min-Max) Tutar Gir',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                              ),
-                              Switch(
-                                value: _isFlexibleAmount,
-                                activeColor: AppColors.primary,
-                                onChanged: (val) {
-                                  setState(() {
-                                    _isFlexibleAmount = val;
-                                    _activeAmountField = val ? 'min' : 'amount';
-                                  });
-                                  setSheetState(() {});
-                                },
-                              ),
-                            ],
-                          ),
-                          const Divider(color: AppColors.darkShadow),
-                          // 2. Tekrarlama Periyodu
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8.0),
-                            child: Text(
-                              'Tekrarlama Periyodu',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                              ),
+                          const Text(
+                            'Haftanın Günü',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
                             ),
                           ),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            alignment: WrapAlignment.spaceBetween,
-                            children: [
-                              _buildPeriodBtnSheet(
-                                'Tek Sefer',
-                                0,
-                                setSheetState,
-                              ),
-                              _buildPeriodBtnSheet(
-                                'Haftalık',
-                                1,
-                                setSheetState,
-                              ),
-                              _buildPeriodBtnSheet('Aylık', 2, setSheetState),
-                              _buildPeriodBtnSheet('Yıllık', 3, setSheetState),
-                            ],
-                          ),
-                          // 3. Tekrarlama Günü / Tarihi
-                          if (_periodType == 1) ...[
-                            // Haftalık (Gün Adı)
-                            const SizedBox(height: AppSizes.paddingMedium),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Haftanın Günü',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    int tempDayIndex =
-                                        _selectedDay - 1; // 0-6 index
+                          GestureDetector(
+                            onTap: () {
+                              int tempDayIndex = _selectedDay - 1; // 0-6 index
 
-                                    showModalBottomSheet(
-                                      context: context,
-                                      backgroundColor: Colors.transparent,
-                                      builder: (pickerContext) {
-                                        return StatefulBuilder(
-                                          builder: (context, setPickerState) {
-                                            return Container(
-                                              height: 300,
-                                              decoration: const BoxDecoration(
-                                                color: AppColors.background,
-                                                borderRadius:
-                                                    BorderRadius.vertical(
-                                                      top: Radius.circular(
-                                                        AppSizes.radiusLarge,
+                              showModalBottomSheet(
+                                context: context,
+                                backgroundColor: Colors.transparent,
+                                builder: (pickerContext) {
+                                  return StatefulBuilder(
+                                    builder: (context, setPickerState) {
+                                      return Container(
+                                        height: 300,
+                                        decoration: const BoxDecoration(
+                                          color: AppColors.background,
+                                          borderRadius: BorderRadius.vertical(
+                                            top: Radius.circular(
+                                              AppSizes.radiusLarge,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.all(
+                                                AppSizes.paddingMedium,
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                          pickerContext,
+                                                        ),
+                                                    child: const Text(
+                                                      'İptal',
+                                                      style: TextStyle(
+                                                        color: AppColors.error,
                                                       ),
                                                     ),
-                                              ),
-                                              child: Column(
-                                                children: [
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                          AppSizes
-                                                              .paddingMedium,
-                                                        ),
-                                                    child: Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
-                                                      children: [
-                                                        TextButton(
-                                                          onPressed: () =>
-                                                              Navigator.pop(
-                                                                pickerContext,
-                                                              ),
-                                                          child: const Text(
-                                                            'İptal',
-                                                            style: TextStyle(
-                                                              color: AppColors
-                                                                  .error,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const Text(
-                                                          'Gün Seç',
-                                                          style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            fontSize: 16,
-                                                            color: AppColors
-                                                                .textPrimary,
-                                                          ),
-                                                        ),
-                                                        TextButton(
-                                                          onPressed: () {
-                                                            setState(() {
-                                                              _selectedDay =
-                                                                  tempDayIndex +
-                                                                  1; // 1-7 gün no
-                                                            });
-                                                            setSheetState(
-                                                              () {},
-                                                            );
-                                                            Navigator.pop(
-                                                              pickerContext,
-                                                            );
-                                                          },
-                                                          child: const Text(
-                                                            'Tamam',
-                                                            style: TextStyle(
-                                                              color: AppColors
-                                                                  .primary,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
+                                                  ),
+                                                  const Text(
+                                                    'Gün Seç',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 16,
+                                                      color:
+                                                          AppColors.textPrimary,
                                                     ),
                                                   ),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        _selectedDay =
+                                                            tempDayIndex +
+                                                            1; // 1-7 gün no
+                                                      });
+                                                      setSheetState(() {});
+                                                      Navigator.pop(
+                                                        pickerContext,
+                                                      );
+                                                    },
+                                                    child: const Text(
+                                                      'Tamam',
+                                                      style: TextStyle(
+                                                        color:
+                                                            AppColors.primary,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: ListWheelScrollView.useDelegate(
+                                                itemExtent: 40,
+                                                perspective: 0.005,
+                                                physics:
+                                                    const FixedExtentScrollPhysics(),
+                                                onSelectedItemChanged: (index) {
+                                                  setPickerState(
+                                                    () => tempDayIndex = index,
+                                                  );
+                                                },
+                                                controller:
+                                                    FixedExtentScrollController(
+                                                      initialItem: tempDayIndex,
+                                                    ),
+                                                childDelegate:
+                                                    ListWheelChildBuilderDelegate(
+                                                      childCount: 7,
+                                                      builder: (context, index) {
+                                                        final isSelected =
+                                                            index ==
+                                                            tempDayIndex;
+                                                        return Center(
+                                                          child: Text(
+                                                            _weekDays[index],
+                                                            style: TextStyle(
+                                                              fontSize:
+                                                                  isSelected
+                                                                  ? 24
+                                                                  : 18,
+                                                              fontWeight:
+                                                                  isSelected
+                                                                  ? FontWeight
+                                                                        .bold
+                                                                  : FontWeight
+                                                                        .normal,
+                                                              color: isSelected
+                                                                  ? AppColors
+                                                                        .primary
+                                                                  : AppColors
+                                                                        .textSecondary,
+                                                            ),
+                                                          ),
+                                                        );
+                                                      },
+                                                    ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.background,
+                                borderRadius: BorderRadius.circular(
+                                  AppSizes.radiusLarge,
+                                ),
+                                border: Border.all(
+                                  color: AppColors.surface,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.calendar_view_week_rounded,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _weekDays[_selectedDay - 1],
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else if (_periodType == 2 || _periodType == 3) ...[
+                      // Aylık veya Yıllık (Takvimden Seçim)
+                      const SizedBox(height: AppSizes.paddingMedium),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _periodType == 2 ? 'Ayın Günü' : 'Yılın Günü',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              int tempDay = _selectedDateForRecurrence.day;
+                              int tempMonth = _selectedDateForRecurrence.month;
+
+                              showModalBottomSheet(
+                                context: context,
+                                backgroundColor: Colors.transparent,
+                                builder: (pickerContext) {
+                                  return StatefulBuilder(
+                                    builder: (context, setPickerState) {
+                                      return Container(
+                                        height: 300,
+                                        decoration: const BoxDecoration(
+                                          color: AppColors.background,
+                                          borderRadius: BorderRadius.vertical(
+                                            top: Radius.circular(
+                                              AppSizes.radiusLarge,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.all(
+                                                AppSizes.paddingMedium,
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                          pickerContext,
+                                                        ),
+                                                    child: const Text(
+                                                      'İptal',
+                                                      style: TextStyle(
+                                                        color: AppColors.error,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const Text(
+                                                    'Tarih Seç',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 16,
+                                                      color:
+                                                          AppColors.textPrimary,
+                                                    ),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        _selectedDateForRecurrence =
+                                                            DateTime(
+                                                              _selectedDateForRecurrence
+                                                                  .year,
+                                                              tempMonth,
+                                                              tempDay,
+                                                            );
+                                                        _selectedDay = tempDay;
+                                                      });
+                                                      setSheetState(() {});
+                                                      Navigator.pop(
+                                                        pickerContext,
+                                                      );
+                                                    },
+                                                    child: const Text(
+                                                      'Tamam',
+                                                      style: TextStyle(
+                                                        color:
+                                                            AppColors.primary,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: Row(
+                                                children: [
+                                                  // Gün Seçici
                                                   Expanded(
                                                     child: ListWheelScrollView.useDelegate(
                                                       itemExtent: 40,
@@ -1203,25 +1380,25 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                                                       onSelectedItemChanged:
                                                           (index) {
                                                             setPickerState(
-                                                              () =>
-                                                                  tempDayIndex =
-                                                                      index,
+                                                              () => tempDay =
+                                                                  index + 1,
                                                             );
                                                           },
                                                       controller:
                                                           FixedExtentScrollController(
                                                             initialItem:
-                                                                tempDayIndex,
+                                                                tempDay - 1,
                                                           ),
                                                       childDelegate: ListWheelChildBuilderDelegate(
-                                                        childCount: 7,
+                                                        childCount: 31,
                                                         builder: (context, index) {
                                                           final isSelected =
-                                                              index ==
-                                                              tempDayIndex;
+                                                              (index + 1) ==
+                                                              tempDay;
                                                           return Center(
                                                             child: Text(
-                                                              _weekDays[index],
+                                                              (index + 1)
+                                                                  .toString(),
                                                               style: TextStyle(
                                                                 fontSize:
                                                                     isSelected
@@ -1246,403 +1423,193 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                                                       ),
                                                     ),
                                                   ),
+                                                  // Yıllık ise Ay Seçici
+                                                  if (_periodType == 3)
+                                                    Expanded(
+                                                      flex: 2,
+                                                      child: ListWheelScrollView.useDelegate(
+                                                        itemExtent: 40,
+                                                        perspective: 0.005,
+                                                        physics:
+                                                            const FixedExtentScrollPhysics(),
+                                                        onSelectedItemChanged:
+                                                            (index) {
+                                                              setPickerState(
+                                                                () =>
+                                                                    tempMonth =
+                                                                        index +
+                                                                        1,
+                                                              );
+                                                            },
+                                                        controller:
+                                                            FixedExtentScrollController(
+                                                              initialItem:
+                                                                  tempMonth - 1,
+                                                            ),
+                                                        childDelegate: ListWheelChildBuilderDelegate(
+                                                          childCount: 12,
+                                                          builder: (context, index) {
+                                                            final isSelected =
+                                                                (index + 1) ==
+                                                                tempMonth;
+                                                            return Center(
+                                                              child: Text(
+                                                                _months[index],
+                                                                style: TextStyle(
+                                                                  fontSize:
+                                                                      isSelected
+                                                                      ? 22
+                                                                      : 16,
+                                                                  fontWeight:
+                                                                      isSelected
+                                                                      ? FontWeight
+                                                                            .bold
+                                                                      : FontWeight
+                                                                            .normal,
+                                                                  color:
+                                                                      isSelected
+                                                                      ? AppColors
+                                                                            .primary
+                                                                      : AppColors
+                                                                            .textSecondary,
+                                                                ),
+                                                              ),
+                                                            );
+                                                          },
+                                                        ),
+                                                      ),
+                                                    ),
                                                 ],
                                               ),
-                                            );
-                                          },
-                                        );
-                                      },
-                                    );
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.background,
-                                      borderRadius: BorderRadius.circular(
-                                        AppSizes.radiusLarge,
-                                      ),
-                                      border: Border.all(
-                                        color: AppColors.surface,
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(
-                                          Icons.calendar_view_week_rounded,
-                                          size: 16,
-                                          color: AppColors.primary,
+                                            ),
+                                          ],
                                         ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          _weekDays[_selectedDay - 1],
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                            color: AppColors.textPrimary,
-                                          ),
-                                        ),
-                                      ],
+                                      );
+                                    },
+                                  );
+                                },
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.background,
+                                borderRadius: BorderRadius.circular(
+                                  AppSizes.radiusLarge,
+                                ),
+                                border: Border.all(
+                                  color: AppColors.surface,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.calendar_month_rounded,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _periodType == 2
+                                        ? "Ayın ${_selectedDateForRecurrence.day}'i"
+                                        : "${_selectedDateForRecurrence.day} ${_months[_selectedDateForRecurrence.month - 1]}",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ] else if (_periodType == 2 || _periodType == 3) ...[
-                            // Aylık veya Yıllık (Takvimden Seçim)
-                            const SizedBox(height: AppSizes.paddingMedium),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          ),
+                        ],
+                      ),
+                    ],
+                    // 4. Süre
+                    if (_periodType != 0) ...[
+                      const SizedBox(height: AppSizes.paddingMedium),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  _periodType == 2 ? 'Ayın Günü' : 'Yılın Günü',
-                                  style: const TextStyle(
+                                const Text(
+                                  'Bitiş Süresi',
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textPrimary,
                                   ),
                                 ),
-                                GestureDetector(
-                                  onTap: () {
-                                    int tempDay =
-                                        _selectedDateForRecurrence.day;
-                                    int tempMonth =
-                                        _selectedDateForRecurrence.month;
-
-                                    showModalBottomSheet(
-                                      context: context,
-                                      backgroundColor: Colors.transparent,
-                                      builder: (pickerContext) {
-                                        return StatefulBuilder(
-                                          builder: (context, setPickerState) {
-                                            return Container(
-                                              height: 300,
-                                              decoration: const BoxDecoration(
-                                                color: AppColors.background,
-                                                borderRadius:
-                                                    BorderRadius.vertical(
-                                                      top: Radius.circular(
-                                                        AppSizes.radiusLarge,
-                                                      ),
-                                                    ),
-                                              ),
-                                              child: Column(
-                                                children: [
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                          AppSizes
-                                                              .paddingMedium,
-                                                        ),
-                                                    child: Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
-                                                      children: [
-                                                        TextButton(
-                                                          onPressed: () =>
-                                                              Navigator.pop(
-                                                                pickerContext,
-                                                              ),
-                                                          child: const Text(
-                                                            'İptal',
-                                                            style: TextStyle(
-                                                              color: AppColors
-                                                                  .error,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const Text(
-                                                          'Tarih Seç',
-                                                          style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            fontSize: 16,
-                                                            color: AppColors
-                                                                .textPrimary,
-                                                          ),
-                                                        ),
-                                                        TextButton(
-                                                          onPressed: () {
-                                                            setState(() {
-                                                              _selectedDateForRecurrence =
-                                                                  DateTime(
-                                                                    _selectedDateForRecurrence
-                                                                        .year,
-                                                                    tempMonth,
-                                                                    tempDay,
-                                                                  );
-                                                              _selectedDay =
-                                                                  tempDay;
-                                                            });
-                                                            setSheetState(
-                                                              () {},
-                                                            );
-                                                            Navigator.pop(
-                                                              pickerContext,
-                                                            );
-                                                          },
-                                                          child: const Text(
-                                                            'Tamam',
-                                                            style: TextStyle(
-                                                              color: AppColors
-                                                                  .primary,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    child: Row(
-                                                      children: [
-                                                        // Gün Seçici
-                                                        Expanded(
-                                                          child: ListWheelScrollView.useDelegate(
-                                                            itemExtent: 40,
-                                                            perspective: 0.005,
-                                                            physics:
-                                                                const FixedExtentScrollPhysics(),
-                                                            onSelectedItemChanged:
-                                                                (index) {
-                                                                  setPickerState(
-                                                                    () => tempDay =
-                                                                        index +
-                                                                        1,
-                                                                  );
-                                                                },
-                                                            controller:
-                                                                FixedExtentScrollController(
-                                                                  initialItem:
-                                                                      tempDay -
-                                                                      1,
-                                                                ),
-                                                            childDelegate: ListWheelChildBuilderDelegate(
-                                                              childCount: 31,
-                                                              builder: (context, index) {
-                                                                final isSelected =
-                                                                    (index +
-                                                                        1) ==
-                                                                    tempDay;
-                                                                return Center(
-                                                                  child: Text(
-                                                                    (index + 1)
-                                                                        .toString(),
-                                                                    style: TextStyle(
-                                                                      fontSize:
-                                                                          isSelected
-                                                                          ? 24
-                                                                          : 18,
-                                                                      fontWeight:
-                                                                          isSelected
-                                                                          ? FontWeight.bold
-                                                                          : FontWeight.normal,
-                                                                      color:
-                                                                          isSelected
-                                                                          ? AppColors.primary
-                                                                          : AppColors.textSecondary,
-                                                                    ),
-                                                                  ),
-                                                                );
-                                                              },
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        // Yıllık ise Ay Seçici
-                                                        if (_periodType == 3)
-                                                          Expanded(
-                                                            flex: 2,
-                                                            child: ListWheelScrollView.useDelegate(
-                                                              itemExtent: 40,
-                                                              perspective:
-                                                                  0.005,
-                                                              physics:
-                                                                  const FixedExtentScrollPhysics(),
-                                                              onSelectedItemChanged:
-                                                                  (index) {
-                                                                    setPickerState(
-                                                                      () => tempMonth =
-                                                                          index +
-                                                                          1,
-                                                                    );
-                                                                  },
-                                                              controller:
-                                                                  FixedExtentScrollController(
-                                                                    initialItem:
-                                                                        tempMonth -
-                                                                        1,
-                                                                  ),
-                                                              childDelegate: ListWheelChildBuilderDelegate(
-                                                                childCount: 12,
-                                                                builder: (context, index) {
-                                                                  final isSelected =
-                                                                      (index +
-                                                                          1) ==
-                                                                      tempMonth;
-                                                                  return Center(
-                                                                    child: Text(
-                                                                      _months[index],
-                                                                      style: TextStyle(
-                                                                        fontSize:
-                                                                            isSelected
-                                                                            ? 22
-                                                                            : 16,
-                                                                        fontWeight:
-                                                                            isSelected
-                                                                            ? FontWeight.bold
-                                                                            : FontWeight.normal,
-                                                                        color:
-                                                                            isSelected
-                                                                            ? AppColors.primary
-                                                                            : AppColors.textSecondary,
-                                                                      ),
-                                                                    ),
-                                                                  );
-                                                                },
-                                                              ),
-                                                            ),
-                                                          ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        );
-                                      },
-                                    );
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.background,
-                                      borderRadius: BorderRadius.circular(
-                                        AppSizes.radiusLarge,
-                                      ),
-                                      border: Border.all(
-                                        color: AppColors.surface,
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(
-                                          Icons.calendar_month_rounded,
-                                          size: 16,
-                                          color: AppColors.primary,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          _periodType == 2
-                                              ? "Ayın ${_selectedDateForRecurrence.day}'i"
-                                              : "${_selectedDateForRecurrence.day} ${_months[_selectedDateForRecurrence.month - 1]}",
+                                Text(
+                                  _duration == 0
+                                      ? 'Sürekli Tekrar Eder'
+                                      : '$_duration ${_getPeriodName(_periodType)} Sonra Biter',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: _duration == 0
+                                        ? AppColors.textSecondary
+                                        : AppColors.primary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildDurationBtn(Icons.remove, () {
+                                if (_duration > 0) {
+                                  setState(() => _duration--);
+                                  setSheetState(() {});
+                                }
+                              }),
+                              const SizedBox(width: 8),
+                              SizedBox(
+                                width: 32,
+                                child: Center(
+                                  child: _duration == 0
+                                      ? const Icon(
+                                          Icons.all_inclusive_rounded,
+                                          color: AppColors.textPrimary,
+                                          size: 20,
+                                        )
+                                      : Text(
+                                          _duration.toString(),
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                            color: AppColors.textPrimary,
+                                            fontSize: 16,
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
                                 ),
-                              ],
-                            ),
-                          ],
-                          // 4. Süre
-                          if (_periodType != 0) ...[
-                            const SizedBox(height: AppSizes.paddingMedium),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Bitiş Süresi',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                      Text(
-                                        _duration == 0
-                                            ? 'Sürekli Tekrar Eder'
-                                            : '$_duration ${_getPeriodName(_periodType)} Sonra Biter',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: _duration == 0
-                                              ? AppColors.textSecondary
-                                              : AppColors.primary,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 2,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    _buildDurationBtn(Icons.remove, () {
-                                      if (_duration > 0) {
-                                        setState(() => _duration--);
-                                        setSheetState(() {});
-                                      }
-                                    }),
-                                    const SizedBox(width: 8),
-                                    SizedBox(
-                                      width: 32,
-                                      child: Center(
-                                        child: _duration == 0
-                                            ? const Icon(
-                                                Icons.all_inclusive_rounded,
-                                                color: AppColors.textPrimary,
-                                                size: 20,
-                                              )
-                                            : Text(
-                                                _duration.toString(),
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 16,
-                                                ),
-                                              ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    _buildDurationBtn(Icons.add, () {
-                                      if (_duration < 120) {
-                                        setState(() => _duration++);
-                                        setSheetState(() {});
-                                      }
-                                    }),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
+                              ),
+                              const SizedBox(width: 8),
+                              _buildDurationBtn(Icons.add, () {
+                                if (_duration < 120) {
+                                  setState(() => _duration++);
+                                  setSheetState(() {});
+                                }
+                              }),
+                            ],
+                          ),
                         ],
                       ),
-                    ),
-                  ),
-                ],
+                    ],
+                  ],
+                ),
               ),
-            );
-          },
+            ],
+          ),
         );
       },
     );
@@ -1810,6 +1777,216 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
           ],
         ),
       ),
+    );
+  }
+
+  // Kasa / Grup Seçici (Periyot Seçici Formatında)
+  Widget _buildVaultSelector(BuildContext context, StateSetter setSheetState) {
+    if (_vaults.isEmpty) return const SizedBox();
+
+    // Seçili kasayı bul, yoksa Genel Bakiye (null)
+    Vault? selectedVault;
+    if (_selectedVaultId != null) {
+      try {
+        selectedVault = _vaults.firstWhere((v) => v.id == _selectedVaultId);
+      } catch (_) {}
+    }
+
+    // Seçenekler listesi: İlk eleman Genel Bakiye, sonrakiler kasalar
+    final List<Vault?> vaultOptions = [null, ..._vaults];
+
+    // Aktif indexi bul
+    int currentIndex = vaultOptions.indexWhere(
+      (v) => v?.id == _selectedVaultId,
+    );
+    if (currentIndex == -1) currentIndex = 0;
+
+    // Helper: isme/koda göre ikon
+    IconData getIconData(String? code) {
+      if (code == null) return Icons.account_balance_wallet_rounded;
+      switch (code) {
+        case 'account_balance_wallet_rounded':
+          return Icons.account_balance_wallet_rounded;
+        case 'attach_money_rounded':
+          return Icons.attach_money_rounded;
+        case 'diamond_rounded':
+          return Icons.diamond_rounded;
+        default:
+          return Icons.account_balance_wallet_rounded;
+      }
+    }
+
+    return Column(
+      children: [
+        const SizedBox(height: AppSizes.paddingMedium),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Kasa veya Grup',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                int tempIndex = currentIndex;
+
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.transparent,
+                  builder: (pickerContext) {
+                    return StatefulBuilder(
+                      builder: (context, setPickerState) {
+                        return Container(
+                          height: 300,
+                          decoration: const BoxDecoration(
+                            color: AppColors.background,
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(AppSizes.radiusLarge),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(
+                                  AppSizes.paddingMedium,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(pickerContext),
+                                      child: const Text(
+                                        'İptal',
+                                        style: TextStyle(
+                                          color: AppColors.error,
+                                        ),
+                                      ),
+                                    ),
+                                    const Text(
+                                      'Kasa Seç',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _selectedVaultId =
+                                              vaultOptions[tempIndex]?.id;
+                                        });
+                                        setSheetState(() {});
+                                        Navigator.pop(pickerContext);
+                                      },
+                                      child: const Text(
+                                        'Tamam',
+                                        style: TextStyle(
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: ListWheelScrollView.useDelegate(
+                                  itemExtent: 40,
+                                  perspective: 0.005,
+                                  physics: const FixedExtentScrollPhysics(),
+                                  onSelectedItemChanged: (index) {
+                                    setPickerState(() => tempIndex = index);
+                                  },
+                                  controller: FixedExtentScrollController(
+                                    initialItem: tempIndex,
+                                  ),
+                                  childDelegate: ListWheelChildBuilderDelegate(
+                                    childCount: vaultOptions.length,
+                                    builder: (context, index) {
+                                      final isSelected = index == tempIndex;
+                                      final option = vaultOptions[index];
+                                      final label =
+                                          option?.name ?? 'Genel Bakiye';
+
+                                      return Center(
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              getIconData(option?.iconCode),
+                                              size: isSelected ? 24 : 18,
+                                              color: isSelected
+                                                  ? AppColors.primary
+                                                  : AppColors.textSecondary,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              label,
+                                              style: TextStyle(
+                                                fontSize: isSelected ? 24 : 18,
+                                                fontWeight: isSelected
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal,
+                                                color: isSelected
+                                                    ? AppColors.primary
+                                                    : AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+                  border: Border.all(color: AppColors.surface, width: 1.5),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      getIconData(selectedVault?.iconCode),
+                      size: 16,
+                      color: AppColors.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      selectedVault?.name ?? 'Genel Bakiye',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

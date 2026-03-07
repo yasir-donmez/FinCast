@@ -27,23 +27,56 @@ final expenseTransactionsProvider = Provider<List<TransactionRecord>>((ref) {
   return ref.watch(allTransactionsProvider).where((t) => !t.isIncome).toList();
 });
 
+double _getEffectiveAmount(TransactionRecord t) {
+  if (t.amount == 0 && (t.minAmount != null || t.maxAmount != null)) {
+    return ((t.minAmount ?? 0) + (t.maxAmount ?? 0)) /
+        ((t.minAmount != null && t.maxAmount != null) ? 2 : 1);
+  }
+  return t.amount;
+}
+
 /// Toplam gelir
 final totalIncomeProvider = Provider<double>((ref) {
   return ref
       .watch(incomeTransactionsProvider)
-      .fold<double>(0, (sum, t) => sum + t.amount);
+      .fold<double>(0, (sum, t) => sum + _getEffectiveAmount(t));
 });
 
 /// Toplam gider
 final totalExpenseProvider = Provider<double>((ref) {
   return ref
       .watch(expenseTransactionsProvider)
-      .fold<double>(0, (sum, t) => sum + t.amount);
+      .fold<double>(0, (sum, t) => sum + _getEffectiveAmount(t));
 });
 
 /// Net bakiye (gelir - gider)
 final netBalanceProvider = Provider<double>((ref) {
   return ref.watch(totalIncomeProvider) - ref.watch(totalExpenseProvider);
+});
+
+/// Net Min bakiye (Kötü senaryo)
+final netMinBalanceProvider = Provider<double>((ref) {
+  return ref.watch(allTransactionsProvider).fold<double>(0, (sum, t) {
+    if (t.isIncome) {
+      return sum + (t.minAmount ?? t.amount);
+    } else {
+      return sum -
+          (t.maxAmount ??
+              t.amount); // Giderin en yükseği = bakiyeyi en aza indirir
+    }
+  });
+});
+
+/// Net Max bakiye (İyi senaryo)
+final netMaxBalanceProvider = Provider<double>((ref) {
+  return ref.watch(allTransactionsProvider).fold<double>(0, (sum, t) {
+    if (t.isIncome) {
+      return sum +
+          (t.maxAmount ?? t.amount); // Gelirin en yükseği = bakiyeyi artırır
+    } else {
+      return sum - (t.minAmount ?? t.amount);
+    }
+  });
 });
 
 /// === KASA PROVİDER'LARI ===

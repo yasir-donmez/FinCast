@@ -28,7 +28,7 @@ class TransactionRecord {
   /// Eğer true ise algoritma (Yapay Zeka) tasarruf tavsiyesi verirken bu kaleme asla dokunmaz!
   bool isLocked = false;
 
-  /// "Taksit/Süreli Borç Mekanizması" 
+  /// "Taksit/Süreli Borç Mekanizması"
   /// Eğer null değilse, bu giderin kalan ay sayısıdır. Her ay bu rakam düşer.
   int? remainingInstallments;
 
@@ -40,5 +40,8 @@ class TransactionRecord {
 
   /// Hangi Kasa (Vault) ile ilişkili? (İlişkisel Veritabanı kullanımı)
   /// Bu, ID üzerinden ilişki tutar
-  late int vaultId;
+  int? vaultId;
+
+  /// Ana sayfada gösterilsin mi?
+  bool showOnDashboard = false;
 }

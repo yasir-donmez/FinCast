@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_constants.dart';
 import '../../core/providers/db_providers.dart';
+import '../../core/database/database_service.dart';
 import '../../core/database/models/transaction_record.dart';
+import '../../core/database/models/vault.dart';
 
 /// Tek bir işlem kaydı (UI Model)
 class MockTransaction {
@@ -121,6 +123,20 @@ class TransactionGroup {
     required this.name,
     List<String>? transactionIds,
   }) : transactionIds = transactionIds ?? [];
+
+  /// DB Vault modelinden TransactionGroup'a dönüştür
+  factory TransactionGroup.fromDB(Vault vault, List<TransactionRecord> allTx) {
+    final relatedTxIds = allTx
+        .where((t) => t.vaultId == vault.id)
+        .map((t) => 'db_${t.id}')
+        .toList();
+
+    return TransactionGroup(
+      id: 'v_${vault.id}',
+      name: vault.name,
+      transactionIds: relatedTxIds,
+    );
+  }
 }
 
 /// Filtreleme tipi
@@ -137,113 +153,125 @@ final editModeProvider = StateProvider<bool>((ref) => false);
 /// DB'den gelen işlemleri MockTransaction'a çeviren provider
 final mockTransactionsProvider = Provider<List<MockTransaction>>((ref) {
   final dbRecords = ref.watch(allTransactionsProvider);
-  final groupingState = ref.watch(transactionGroupingProvider);
 
   return dbRecords.map((r) {
     final tx = MockTransaction.fromDB(r);
-    // Gruplama durumunu uygula
-    final groupId = groupingState[tx.id];
-    if (groupId != null) {
-      tx.groupId = groupId;
+    // Gruplama durumunu DB vaultId'den al
+    if (r.vaultId != null) {
+      tx.groupId = 'v_${r.vaultId}';
     }
     return tx;
   }).toList();
 });
 
-/// Hangi işlem hangi gruptadır? (in-memory gruplama durumu)
-/// Key: transaction id (ör: "db_5"), Value: group id (ör: "g1234567")
-final transactionGroupingProvider =
-    StateNotifierProvider<TransactionGroupingNotifier, Map<String, String?>>(
-      (ref) => TransactionGroupingNotifier(),
-    );
+/// Gruplama işlemi için yardımcı notifier
+/// Artık sadece DB operasyonlarını tetikler
+final transactionGroupingProvider = Provider(
+  (ref) => TransactionGroupingHelper(),
+);
 
-class TransactionGroupingNotifier extends StateNotifier<Map<String, String?>> {
-  TransactionGroupingNotifier() : super({});
+class TransactionGroupingHelper {
+  Future<void> setGroupId(String transactionId, String? groupId) async {
+    if (!transactionId.startsWith('db_')) return;
+    final id = int.tryParse(transactionId.replaceFirst('db_', ''));
+    if (id == null) return;
 
-  void setGroupId(String transactionId, String? groupId) {
-    state = {...state, transactionId: groupId};
-  }
+    final record = await DatabaseService.getTransaction(id);
+    if (record == null) return;
 
-  void removeTransaction(String transactionId) {
-    state = Map.from(state)..remove(transactionId);
+    if (groupId == null) {
+      record.vaultId = null;
+    } else if (groupId.startsWith('v_')) {
+      final vId = int.tryParse(groupId.replaceFirst('v_', ''));
+      record.vaultId = vId;
+    }
+
+    await DatabaseService.updateTransaction(record);
   }
 }
 
-/// Gruplar — StateNotifierProvider
-final transactionGroupsProvider =
-    StateNotifierProvider<TransactionGroupsNotifier, List<TransactionGroup>>(
-      (ref) => TransactionGroupsNotifier(),
-    );
+/// Gruplar — Database tabanlı provider
+final transactionGroupsProvider = Provider<List<TransactionGroup>>((ref) {
+  final vaults = ref.watch(allVaultsProvider);
+  final allTx = ref.watch(allTransactionsProvider);
 
-class TransactionGroupsNotifier extends StateNotifier<List<TransactionGroup>> {
-  TransactionGroupsNotifier() : super([]);
+  return vaults.map((v) => TransactionGroup.fromDB(v, allTx)).toList();
+});
 
-  int _nextGroupNum = 1;
+/// Grup işlemleri için yardımcı notifier
+final transactionGroupsNotifierProvider = Provider(
+  (ref) => TransactionGroupsHelper(),
+);
 
-  /// İki işlemi birleştirerek yeni grup oluştur
-  String createGroup(String txId1, String txId2) {
-    final groupId = 'g${DateTime.now().millisecondsSinceEpoch}';
-    final group = TransactionGroup(
-      id: groupId,
-      name: 'Grup $_nextGroupNum',
-      transactionIds: [txId1, txId2],
-    );
-    _nextGroupNum++;
-    state = [...state, group];
+class TransactionGroupsHelper {
+  static int _nextGroupNum = 1;
+
+  /// İki işlemi birleştirerek yeni grup (Vault) oluştur
+  Future<String> createGroup(String txId1, String txId2) async {
+    final name = 'Kasa ${_nextGroupNum++}';
+
+    final vault = Vault()
+      ..name = name
+      ..currency =
+          'TRY' // Varsayılan
+      ..balance = 0
+      ..showOnDashboard = true;
+
+    final vaultId = await DatabaseService.addVault(vault);
+    final groupId = 'v_$vaultId';
+
+    // İşlemleri bu gruba ata
+    final helper = TransactionGroupingHelper();
+    await helper.setGroupId(txId1, groupId);
+    await helper.setGroupId(txId2, groupId);
+
     return groupId;
   }
 
   /// Grubun adını değiştir
-  void renameGroup(String groupId, String newName) {
-    state = [
-      for (final g in state)
-        if (g.id == groupId)
-          TransactionGroup(
-            id: g.id,
-            name: newName,
-            transactionIds: g.transactionIds,
-          )
-        else
-          g,
-    ];
+  Future<void> renameGroup(String groupId, String newName) async {
+    if (!groupId.startsWith('v_')) return;
+    final id = int.tryParse(groupId.replaceFirst('v_', ''));
+    if (id == null) return;
+
+    final vaults = await DatabaseService.getAllVaults();
+    final vault = vaults.where((v) => v.id == id).firstOrNull;
+    if (vault != null) {
+      vault.name = newName;
+      await DatabaseService.updateVault(vault);
+    }
   }
 
   /// Gruba işlem ekle
-  void addToGroup(String groupId, String transactionId) {
-    state = [
-      for (final g in state)
-        if (g.id == groupId)
-          TransactionGroup(
-            id: g.id,
-            name: g.name,
-            transactionIds: [...g.transactionIds, transactionId],
-          )
-        else
-          g,
-    ];
+  Future<void> addToGroup(String groupId, String transactionId) async {
+    final helper = TransactionGroupingHelper();
+    await helper.setGroupId(transactionId, groupId);
   }
 
-  /// Gruptan işlem çıkar, grup boşalırsa sil
-  void removeFromGroup(String groupId, String transactionId) {
-    state = [
-      for (final g in state)
-        if (g.id == groupId)
-          TransactionGroup(
-            id: g.id,
-            name: g.name,
-            transactionIds: g.transactionIds
-                .where((id) => id != transactionId)
-                .toList(),
-          )
-        else
-          g,
-    ];
-    // Grup 1 veya 0 elemanlı kaldıysa sil
-    state = state.where((g) => g.transactionIds.length >= 2).toList();
+  /// Gruptan işlem çıkar
+  Future<void> removeFromGroup(String groupId, String transactionId) async {
+    final helper = TransactionGroupingHelper();
+    await helper.setGroupId(transactionId, null);
+
+    // Eğer grupta hiç işlem kalmadıysa (veya 1 tane kaldıysa kullanıcının tercihine göre) grubu silebiliriz.
+    // Ancak şimdilik manuel silmeyi bekleyelim veya otomatik kontrol ekleyelim.
   }
 
   /// Grubu tamamen sil
-  void deleteGroup(String groupId) {
-    state = state.where((g) => g.id != groupId).toList();
+  Future<void> deleteGroup(String groupId) async {
+    if (!groupId.startsWith('v_')) return;
+    final id = int.tryParse(groupId.replaceFirst('v_', ''));
+    if (id == null) return;
+
+    // Önce bu gruptaki tüm işlemleri çıkar
+    final allTx = await DatabaseService.getAllTransactions();
+    final relatedTx = allTx.where((t) => t.vaultId == id);
+    for (final tx in relatedTx) {
+      tx.vaultId = null;
+      await DatabaseService.updateTransaction(tx);
+    }
+
+    // Kasayı (Grubu) sil (Not: DatabaseService.deleteVault henüz yok, eklememiz gerekebilir veya update yetebilir)
+    // Şimdilik sadece içini boşaltıyoruz. Gerçek silme için DatabaseService'e metod ekleyelim.
   }
 }

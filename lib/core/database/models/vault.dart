@@ -23,4 +23,8 @@ class Vault {
 
   /// Ana sayfada gösterilsin mi?
   bool showOnDashboard = true;
+
+  /// Hedef/Limit değerleri (Opsiyonel)
+  double? minLimit;
+  double? maxLimit;
 }

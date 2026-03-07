@@ -14,9 +14,16 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Riverpod'dan verileri çekiyoruz (Artık DB'den geliyor + Simülasyon Ekli)
-    final vaults = ref.watch(allVaultsProvider);
+    // Riverpod'dan verileri çekiyoruz (Kasa/Grup + Tekil İşlemler)
+    final dashboardItems = ref.watch(dashboardItemsProvider);
     final totalBalance = ref.watch(displayBalanceProvider);
+
+    final bonus = ref.watch(simulationBonusProvider);
+    final minBalance = ref.watch(netMinBalanceProvider) + bonus;
+    final maxBalance = ref.watch(netMaxBalanceProvider) + bonus;
+
+    final bool hasFlexibleRange =
+        minBalance != totalBalance || maxBalance != totalBalance;
 
     return SafeArea(
       child: Column(
@@ -25,7 +32,11 @@ class DashboardScreen extends ConsumerWidget {
           const SizedBox(height: AppSizes.paddingLarge),
 
           // 1. ÜST BÖLÜM: Dinamik Kasa (Vault) Kartları (Yatay Scroll, 2 Satır)
-          ExpandableVaultGrid(vaults: vaults),
+          // Sabit yükseklik verilerek alt bileşenlerin kasa yokken yukarı zıplaması engelleniyor.
+          SizedBox(
+            height: 250,
+            child: ExpandableVaultGrid(items: dashboardItems),
+          ),
 
           const SizedBox(height: AppSizes.paddingLarge),
 
@@ -39,6 +50,8 @@ class DashboardScreen extends ConsumerWidget {
                 AnimatedCurrencySelector(
                   fontSize: 28,
                   totalBalance: totalBalance,
+                  minBalance: hasFlexibleRange ? minBalance : null,
+                  maxBalance: hasFlexibleRange ? maxBalance : null,
                 ),
               ],
             ),
@@ -59,11 +72,15 @@ class DashboardScreen extends ConsumerWidget {
 class AnimatedCurrencySelector extends ConsumerStatefulWidget {
   final double fontSize;
   final double totalBalance;
+  final double? minBalance;
+  final double? maxBalance;
 
   const AnimatedCurrencySelector({
     super.key,
     this.fontSize = 24,
     required this.totalBalance,
+    this.minBalance,
+    this.maxBalance,
   });
 
   @override
@@ -369,52 +386,105 @@ class _AnimatedCurrencySelectorState
           const SizedBox(width: AppSizes.paddingMedium),
           // Bakiye ve Para Birimi Etiketi (Taşma yapmaması için Expanded + FittedBox)
           Expanded(
-            child: SizedBox(
-              height:
-                  65, // Sabit yüksekliğimiz var, yazılar ufalınca satır çökmeyecek (Aşağıdaki Butonu Titretmeyecek)
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      widget.totalBalance.toStringAsFixed(2),
-                      style: TextStyle(
-                        color: activeColor, // Dinamik iOS premium rengi
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -1.5,
-                        shadows: [
-                          Shadow(
-                            color: activeColor,
-                            blurRadius: 15, // Glow Efekti
+            child: Container(
+              constraints: const BoxConstraints(
+                minHeight: 65,
+              ), // Limitler varsa biraz daha yüksek
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          widget.totalBalance.toStringAsFixed(2),
+                          style: TextStyle(
+                            color: activeColor, // Dinamik iOS premium rengi
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -1.5,
+                            shadows: [
+                              Shadow(
+                                color: activeColor,
+                                blurRadius: 15, // Glow Efekti
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width:
+                              70, // Sabit genişlik 50'den 70'e çıkarıldı: "USD", "EUR" gibi 3 harflilerin sığması ve alt satıra inmemesi için
+                          child: Text(
+                            _getCurrencyCode(_currencies[_currentIndex]),
+                            style: TextStyle(
+                              color: activeColor.withOpacity(0.8),
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              shadows: [
+                                Shadow(
+                                  color: activeColor.withOpacity(0.5),
+                                  blurRadius: 10,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (widget.minBalance != null && widget.maxBalance != null)
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.arrow_downward_rounded,
+                            size: 14,
+                            color: const Color(0xFFE57373),
+                          ),
+                          Text(
+                            widget.minBalance!.toStringAsFixed(0),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFFE57373),
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          Text(
+                            '  ~  ',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: activeColor.withOpacity(0.5),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_upward_rounded,
+                            size: 14,
+                            color: Colors.greenAccent,
+                          ),
+                          Text(
+                            widget.maxBalance!.toStringAsFixed(0),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.greenAccent,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      width:
-                          70, // Sabit genişlik 50'den 70'e çıkarıldı: "USD", "EUR" gibi 3 harflilerin sığması ve alt satıra inmemesi için
-                      child: Text(
-                        _getCurrencyCode(_currencies[_currentIndex]),
-                        style: TextStyle(
-                          color: activeColor.withOpacity(0.8),
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          shadows: [
-                            Shadow(
-                              color: activeColor.withOpacity(0.5),
-                              blurRadius: 10,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                ],
               ),
             ),
           ),
