@@ -83,7 +83,14 @@ final netMaxBalanceProvider = Provider<double>((ref) {
 
 /// Kasaları canlı dinleyen stream provider
 final vaultsStreamProvider = StreamProvider<List<Vault>>((ref) {
-  return DatabaseService.watchAllVaults();
+  return DatabaseService.watchAllVaults().map(
+    (vaults) => vaults.toList()
+      ..sort((a, b) {
+        final cmp = a.dashboardOrder.compareTo(b.dashboardOrder);
+        if (cmp != 0) return cmp;
+        return a.id.compareTo(b.id);
+      }),
+  );
 });
 
 /// Kasaların anlık listesi

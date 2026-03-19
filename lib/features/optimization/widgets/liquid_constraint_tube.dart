@@ -79,10 +79,10 @@ class _LiquidConstraintTubeState extends State<LiquidConstraintTube>
               double currentVal = widget.currentBudget * _fluidAnimation.value;
               return Text(
                 "₺${currentVal.toInt()}",
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
+                style: TextStyle(
+                  color: AppColors.getTextPrimary(context),
                   fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                  fontSize: 13,
                 ),
               );
             },
@@ -130,8 +130,8 @@ class _LiquidConstraintTubeState extends State<LiquidConstraintTube>
           // Kategori Adı
           Text(
             widget.title,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              color: AppColors.getTextSecondary(context),
               fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.2,

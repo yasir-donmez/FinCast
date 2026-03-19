@@ -1,44 +1,66 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // --- Realistic Dark Skeuomorphism (Neumorphism) Temel Renkleri ---
+  // --- Dark Colors ---
+  static const Color darkBackground = Color(0xFF292C31);
+  static const Color darkSurface = Color(0xFF2F3237);
+  static const Color darkLightShadow = Color(0x1AFFFFFF);
+  static const Color darkDarkShadow = Color(0x80000000);
+  static const Color darkInnerSurface = Color(0xFF22252A);
+  static const Color darkTextPrimary = Color(0xFFE0E0E0);
+  static const Color darkTextSecondary = Color(0xFF8A8F99);
 
-  /// Ana Zemin Rengi (Tam siyah değil, sıcak ve derin koyu gri / antrasit)
-  static const Color background = Color(0xFF292C31);
+  // --- Light Colors (Premium Glassmorphism) ---
+  static const Color lightBackground = Color(0xFFF5F7FA); // Crisp, modern bg
+  static const Color lightSurface = Color(0xFFFFFFFF);
+  static const Color lightLightShadow = Color(0xFFFFFFFF);
+  static const Color lightDarkShadow = Color(0xFFD1D9E6);
+  static const Color lightInnerSurface = Color(0xFFEDF1F7);
+  static const Color lightTextPrimary = Color(0xFF1A1D21); // Darker for better contrast
+  static const Color lightTextSecondary = Color(0xFF636E72);
 
-  /// Kart / Element Rengi (Zemine çok yakın, hafif açık/koyu olabilir)
-  static const Color surface = Color(0xFF2F3237);
+  // --- Dynamic Color Helpers ---
+  static Color getBackground(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? darkBackground : lightBackground;
+  static Color getSurface(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? darkSurface : lightSurface;
+  static Color getLightShadow(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? darkLightShadow : lightLightShadow;
+  static Color getDarkShadow(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? darkDarkShadow : lightDarkShadow;
+  static Color getInnerSurface(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? darkInnerSurface : lightInnerSurface;
+  static Color getTextPrimary(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? darkTextPrimary : lightTextPrimary;
+  static Color getTextSecondary(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? darkTextSecondary : lightTextSecondary;
+  static Color getPrimary(BuildContext context) => primary; 
+  static Color getSecondary(BuildContext context) => secondary;
+  static Color getError(BuildContext context) => error;
+  static Color getSuccess(BuildContext context) => success;
+  static Color getWarning(BuildContext context) => warning;
+  static Color getInfo(BuildContext context) => info;
+  static Color getIncome(BuildContext context) => income;
+  static Color getExpense(BuildContext context) => expense;
 
-  /// Işık Yansıması (Sol üstten vuran yumuşak beyaz/gri ışık)
-  static const Color lightShadow = Color(0x1AFFFFFF); // %10 Beyaz
+  // --- Legacy Proxies (Deprecated: Use dynamic getters with context) ---
+  // Renamed to prompt refactoring where context is available.
+  static const Color legacyDarkBackground = darkBackground;
+  static const Color legacyDarkSurface = darkSurface;
+  static const Color legacyDarkShadow = darkDarkShadow;
+  static const Color legacyTextPrimary = darkTextPrimary;
+  static const Color legacyTextSecondary = darkTextSecondary;
+  
+  // Backwards compatibility for strictly non-context areas (AI service, etc)
+  static const Color staticPrimary = primary;
+  static const Color staticSecondary = secondary;
 
-  /// Karanlık Gölge (Sağ alttan vuran derin siyah gölge)
-  static const Color darkShadow = Color(0x80000000); // %50 Siyah
-
-  /// İçeri Göçme (Deboss) arkaplanı (Zeminden bir tık daha karanlık)
-  static const Color innerSurface = Color(0xFF22252A);
-
-  // --- Vurgu (Accent) Renkleri (Görseldeki gibi parlak Cyan) ---
-
-  /// Ana Vurgu Rengi (Parlak Neon Camgöbeği)
+  // --- Accents ---
   static const Color primary = Color(0xFF00E5FF);
-
-  /// İkincil Vurgu Rengi (Opsiyonel, mor ya da turkuaz)
   static const Color secondary = Color(0xFFB388FF);
-
   static const Color error = Color(0xFFFF5252);
-
-  // --- Yazı (Text) Renkleri ---
-
-  static const Color textPrimary = Color(0xFFE0E0E0); // Kırık beyaz
-
-  static const Color textSecondary = Color(
-    0xFF8A8F99,
-  ); // Koyu gri okunaklı metin
+  static const Color success = Color(0xFF00E676);
+  static const Color warning = Color(0xFFFFAB40);
+  static const Color info = Color(0xFF29B6F6);
+  static const Color income = Color(0xFF00E676); // Same as success
+  static const Color expense = Color(0xFFFF5252); // Same as error
 }
 
 class AppSizes {
-  // Radüs ve Boşluk Sabitleri
+  static const double radiusSmall = 8.0;
   static const double radiusDefault = 16.0;
   static const double radiusLarge = 24.0;
   static const double radiusRound = 100.0;

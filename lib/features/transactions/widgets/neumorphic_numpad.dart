@@ -21,11 +21,11 @@ class NeumorphicNumpad extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildRow(['1', '2', '3']),
+        _buildRow(context, ['1', '2', '3']),
         const SizedBox(height: AppSizes.paddingMedium),
-        _buildRow(['4', '5', '6']),
+        _buildRow(context, ['4', '5', '6']),
         const SizedBox(height: AppSizes.paddingMedium),
-        _buildRow(['7', '8', '9']),
+        _buildRow(context, ['7', '8', '9']),
         const SizedBox(height: AppSizes.paddingMedium),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -35,7 +35,7 @@ class NeumorphicNumpad extends StatelessWidget {
               color: AppColors.error,
               onTap: onBackspaceTapped,
             ),
-            _buildNumberKey('0'),
+            _buildNumberKey(context, '0'),
             _buildActionKey(
               icon: Icons.check_rounded,
               color: AppColors.primary,
@@ -48,14 +48,14 @@ class NeumorphicNumpad extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(List<String> numbers) {
+  Widget _buildRow(BuildContext context, List<String> numbers) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: numbers.map((numberVal) => _buildNumberKey(numberVal)).toList(),
+      children: numbers.map((numberVal) => _buildNumberKey(context, numberVal)).toList(),
     );
   }
 
-  Widget _buildNumberKey(String number) {
+  Widget _buildNumberKey(BuildContext context, String number) {
     return NeuButton(
       width: 70,
       height: 70,
@@ -66,10 +66,10 @@ class NeumorphicNumpad extends StatelessWidget {
       },
       child: Text(
         number,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          color: AppColors.getTextPrimary(context),
         ),
       ),
     );

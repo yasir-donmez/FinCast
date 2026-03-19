@@ -27,4 +27,10 @@ class Vault {
   /// Hedef/Limit değerleri (Opsiyonel)
   double? minLimit;
   double? maxLimit;
+
+  /// Dashboard'daki sıralama
+  int dashboardOrder = 0;
+
+  /// Dashboard'da bu vault'un dahil olduğu sayfanın yerleşim tipi (1, 2, 3, 4)
+  int dashboardLayoutType = 4;
 }

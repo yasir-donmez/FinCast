@@ -1,26 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_constants.dart';
 import '../../shared/widgets/neu_container.dart';
+import '../../core/providers/settings_provider.dart';
 
 /// Kullanıcının ve uygulamanın genel ayarlarını içeren
 /// Premium "Kişisel CFO" Ayarlar Ekranı (Settings / Profile)
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
-  // Örnek Ayar Durumları (İleride Riverpod / SharedPreferences'a bağlanacak)
-  bool _isDarkMode = true;
-  bool _isAiNotificationsEnabled = true;
-  bool _isBiometricEnabled = false;
-  String _selectedLanguage = "Türkçe";
-
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final settings = ref.watch(settingsProvider);
+    final selectedLanguageName = _getLanguageName(settings.languageCode);
+
     return SafeArea(
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -29,93 +31,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             const SizedBox(height: AppSizes.paddingMedium),
 
-            // 1. ÜST: Profil Kartı (Yetişkin / Profesyonel Tasarım)
-            NeuContainer(
-              borderRadius: AppSizes.radiusLarge,
-              child: Row(
-                children: [
-                  NeuContainer(
-                    width: 60,
-                    height: 60,
-                    borderRadius: 30, // Tam yuvarlak avatar yuvası
-                    isInnerShadow: true,
-                    padding: EdgeInsets.zero,
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(30),
-                        child: Image.network(
-                          'https://i.pravatar.cc/150?img=11',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSizes.paddingLarge),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Yasir Dönmez",
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          "FinCast Premium", // Rozet yerine ciddi statü
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Profili Düzenle (Küçük İleri Oku veya Kalem)
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    color: AppColors.textSecondary,
-                  ),
-                ],
-              ),
-            ),
+            // 1. ÜST: Profil Kartı
+            _buildProfileCard(l10n),
 
             const SizedBox(height: AppSizes.paddingXLarge),
 
             // 2. TERCİHLER & UYGULAMA GRUBU
-            _buildSectionHeader("TERCİHLER & UYGULAMA"),
+            _buildSectionHeader(l10n.preferences),
             NeuContainer(
               padding: const EdgeInsets.symmetric(vertical: 8),
               borderRadius: AppSizes.radiusLarge,
               child: Column(
                 children: [
-                  _buildToggleSetting(
-                    icon: Icons.dark_mode_rounded,
-                    title: "Karanlık Tema",
-                    value: _isDarkMode,
-                    onChanged: (val) => setState(() => _isDarkMode = val),
+                  _buildNavSetting(
+                    icon: Icons.palette_rounded,
+                    title: l10n.themeMode,
+                    trailingText: _getThemeModeName(settings.themeModeIndex, l10n),
+                    onTap: () => _showThemePicker(settings.themeModeIndex, l10n),
                   ),
                   _buildDivider(),
                   _buildNavSetting(
                     icon: Icons.language_rounded,
-                    title: "Uygulama Dili",
-                    trailingText: _selectedLanguage,
-                    onTap: _showLanguagePicker,
+                    title: l10n.language,
+                    trailingText: selectedLanguageName,
+                    onTap: () => _showLanguagePicker(settings.languageCode, l10n),
                   ),
                   _buildDivider(),
                   _buildToggleSetting(
                     icon: Icons.notifications_active_rounded,
-                    title: "AI Asistan Uyarıları",
-                    value: _isAiNotificationsEnabled,
-                    onChanged: (val) =>
-                        setState(() => _isAiNotificationsEnabled = val),
+                    title: l10n.aiNotifications,
+                    value: settings.isAiNotificationsEnabled,
+                    onChanged: (val) => ref.read(settingsProvider.notifier).toggleAiNotifications(val),
                   ),
                 ],
               ),
@@ -123,33 +69,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: AppSizes.paddingXLarge),
 
-            // 3. GÜVENLİK & VERİ GRUBU
-            _buildSectionHeader("GÜVENLİK & VERİ"),
+            // 3.5 VERİ & AI GRUBU
+            _buildSectionHeader(l10n.dataAndAiSettings),
+            NeuContainer(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              borderRadius: AppSizes.radiusLarge,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.history_rounded, color: AppColors.getSecondary(context), size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(l10n.dataRetention, style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 14, fontWeight: FontWeight.w500)),
+                            const SizedBox(height: 2),
+                            Text(l10n.dataRetentionDesc, style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11, height: 1.4)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _retentionChip(l10n.oneMonth, 30, settings.dataRetentionDays),
+                      _retentionChip(l10n.threeMonths, 90, settings.dataRetentionDays),
+                      _retentionChip(l10n.sixMonths, 180, settings.dataRetentionDays),
+                      _retentionChip(l10n.oneYear, 365, settings.dataRetentionDays),
+                      _retentionChip(l10n.infinite, -1, settings.dataRetentionDays),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: AppSizes.paddingXLarge),
+
+            // 4. VERİ YÖNETİMİ
+            _buildSectionHeader(l10n.dataManagement),
             NeuContainer(
               padding: const EdgeInsets.symmetric(vertical: 8),
               borderRadius: AppSizes.radiusLarge,
               child: Column(
                 children: [
-                  _buildToggleSetting(
-                    icon: Icons.fingerprint_rounded,
-                    title: "Biyometrik Kilit (FaceID)",
-                    value: _isBiometricEnabled,
-                    onChanged: (val) =>
-                        setState(() => _isBiometricEnabled = val),
-                  ),
-                  _buildDivider(),
                   _buildActionSetting(
                     icon: Icons.cloud_upload_rounded,
-                    title: "Verileri Drive'a Yedekle",
-                    onTap: () {
-                      // Yedekleme İşlemi (İpucu: Snackbar gösterilebilir)
-                    },
+                    title: l10n.driveBackup,
+                    onTap: () => _showComingSoon(l10n.driveBackup, l10n),
                   ),
                   _buildDivider(),
                   _buildActionSetting(
-                    icon: Icons.download_rounded,
-                    title: "Tüm Verileri Dışa Aktar (CSV)",
-                    onTap: () {},
+                    icon: Icons.table_view_rounded,
+                    title: l10n.exportExcel,
+                    onTap: () => _showComingSoon(l10n.exportExcel, l10n),
                   ),
                 ],
               ),
@@ -157,8 +135,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: AppSizes.paddingXLarge),
 
-            // 4. DESTEK & HAKKINDA GRUBU
-            _buildSectionHeader("DESTEK"),
+            // 5. DESTEK & HAKKINDA GRUBU
+            _buildSectionHeader(l10n.support),
             NeuContainer(
               padding: const EdgeInsets.symmetric(vertical: 8),
               borderRadius: AppSizes.radiusLarge,
@@ -166,28 +144,218 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   _buildActionSetting(
                     icon: Icons.support_agent_rounded,
-                    title: "FinCast ile İletişim",
-                    onTap: () {},
+                    title: l10n.contact,
+                    onTap: _launchEmail,
                   ),
                   _buildDivider(),
                   _buildNavSetting(
                     icon: Icons.info_outline_rounded,
-                    title: "Uygulama Hakkında",
+                    title: l10n.about,
                     trailingText: "v1.0.0",
-                    onTap: () {},
+                    onTap: () => _showAboutDialog(l10n),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 100), // BottomNav payı
+            const SizedBox(height: 100),
           ],
         ),
       ),
     );
   }
 
-  // Grupların (Güvenlik, Tercihler vs) başlık yazısı
+  Widget _buildProfileCard(AppLocalizations l10n) {
+    return NeuContainer(
+      borderRadius: AppSizes.radiusLarge,
+      child: Row(
+        children: [
+          NeuContainer(
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            isInnerShadow: true,
+            padding: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(30),
+                child: Image.network(
+                  'https://i.pravatar.cc/150?img=11',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSizes.paddingLarge),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Yasir Dönmez",
+                  style: TextStyle(
+                    color: AppColors.getTextPrimary(context),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.memberPremium,
+                  style: TextStyle(
+                    color: AppColors.getPrimary(context),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.edit_rounded, color: AppColors.getTextSecondary(context), size: 20),
+            onPressed: () => _showComingSoon(l10n.editProfile, l10n),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showComingSoon(String feature, AppLocalizations l10n) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(feature),
+        content: Text("\n${l10n.comingSoon}"),
+        actions: [
+          CupertinoDialogAction(
+            child: Text(l10n.ok),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAboutDialog(AppLocalizations l10n) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => NeuContainer(
+        borderRadius: 24,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.auto_awesome_rounded, color: AppColors.getPrimary(context), size: 48),
+            const SizedBox(height: 16),
+            Text(
+              "FinCast",
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.getTextPrimary(context)),
+            ),
+            Text("v1.0.0", style: TextStyle(color: AppColors.getTextSecondary(context))),
+            const SizedBox(height: 16),
+            Text(
+              l10n.aboutFinCast,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.getTextPrimary(context), height: 1.5),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: CupertinoButton(
+                color: AppColors.getPrimary(context),
+                child: Text(l10n.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _launchEmail() async {
+    final Uri emailLaunchUri = Uri(
+      scheme: 'mailto',
+      path: 'destek@fincast.app',
+      query: 'subject=FinCast Destek Talebi',
+    );
+    if (!await launchUrl(emailLaunchUri)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('E-posta uygulaması bulunamadı.')),
+        );
+      }
+    }
+  }
+
+  String _getLanguageName(String code) {
+    switch (code) {
+      case 'tr': return "Türkçe";
+      case 'en': return "English";
+      case 'de': return "Deutsch";
+      case 'es': return "Español";
+      case 'fr': return "Français";
+      case 'pt': return "Português";
+      case 'it': return "Italiano";
+      case 'ja': return "日本語";
+      default: return "Türkçe";
+    }
+  }
+
+  String _getLanguageCode(String name) {
+    switch (name) {
+      case "Türkçe": return 'tr';
+      case "English": return 'en';
+      case "Deutsch": return 'de';
+      case "Español": return 'es';
+      case "Français": return 'fr';
+      case "Português": return 'pt';
+      case "Italiano": return 'it';
+      case "日本語": return 'ja';
+      default: return 'tr';
+    }
+  }
+
+  String _getThemeModeName(int index, AppLocalizations l10n) {
+    switch (index) {
+      case 0: return l10n.themeSystem;
+      case 1: return l10n.themeLight;
+      case 2: return l10n.themeDark;
+      default: return l10n.themeSystem;
+    }
+  }
+
+  Widget _retentionChip(String label, int days, int currentDays) {
+    final isActive = currentDays == days;
+    return GestureDetector(
+      onTap: () => ref.read(settingsProvider.notifier).setDataRetention(days),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.getSecondary(context).withValues(alpha: 0.15) : AppColors.getInnerSurface(context),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isActive ? AppColors.getSecondary(context) : AppColors.getDarkShadow(context).withValues(alpha: 0.3),
+            width: isActive ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+            color: isActive ? AppColors.getSecondary(context) : AppColors.getTextSecondary(context),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
@@ -195,8 +363,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         alignment: Alignment.centerLeft,
         child: Text(
           title,
-          style: const TextStyle(
-            color: AppColors.textSecondary,
+          style: TextStyle(
+            color: AppColors.getTextSecondary(context),
             fontSize: 12,
             fontWeight: FontWeight.bold,
             letterSpacing: 1.5,
@@ -206,18 +374,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Gruplar (Kartlar) içindeki ayırıcı çizgi
   Widget _buildDivider() {
     return Divider(
-      color: AppColors.surface.withValues(alpha: 0.5),
+      color: AppColors.getSurface(context).withValues(alpha: 0.5),
       height: 1,
       thickness: 1,
-      indent: 56, // İkondan sonrası için hizalı
+      indent: 56,
       endIndent: 16,
     );
   }
 
-  // AÇ/KAPA (Toggle) Ayar Satırı
   Widget _buildToggleSetting({
     required IconData icon,
     required String title,
@@ -228,22 +394,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.primary, size: 22),
+          Icon(icon, color: AppColors.getPrimary(context), size: 22),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
+              style: TextStyle(
+                color: AppColors.getTextPrimary(context),
                 fontSize: 14,
               ),
             ),
           ),
-          // iOS Tarzı Şık Cupertino Switch
           CupertinoSwitch(
             value: value,
-            activeTrackColor: AppColors.primary,
-            inactiveTrackColor: AppColors.darkShadow.withValues(alpha: 0.3),
+            activeTrackColor: AppColors.getPrimary(context),
+            inactiveTrackColor: AppColors.getDarkShadow(context).withValues(alpha: 0.3),
             onChanged: onChanged,
           ),
         ],
@@ -251,7 +416,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // YÖNLENDİREN (Tıklanabilir İleri İzli) Ayar Satırı
   Widget _buildNavSetting({
     required IconData icon,
     required String title,
@@ -264,13 +428,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: Row(
           children: [
-            Icon(icon, color: AppColors.textSecondary, size: 22),
+            Icon(icon, color: AppColors.getTextSecondary(context), size: 22),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
+                style: TextStyle(
+                  color: AppColors.getTextPrimary(context),
                   fontSize: 14,
                 ),
               ),
@@ -278,16 +442,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             if (trailingText != null) ...[
               Text(
                 trailingText,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
+                style: TextStyle(
+                  color: AppColors.getTextSecondary(context),
                   fontSize: 12,
                 ),
               ),
               const SizedBox(width: 8),
             ],
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
-              color: AppColors.textSecondary,
+              color: AppColors.getTextSecondary(context),
               size: 20,
             ),
           ],
@@ -296,7 +460,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // TIKLANABİLİR AKSİYON (Sadece Buton) Ayar Satırı
   Widget _buildActionSetting({
     required IconData icon,
     required String title,
@@ -308,13 +471,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: Row(
           children: [
-            Icon(icon, color: AppColors.secondary, size: 22),
+            Icon(icon, color: AppColors.getSecondary(context), size: 22),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
+                style: TextStyle(
+                  color: AppColors.getTextPrimary(context),
                   fontSize: 14,
                 ),
               ),
@@ -325,40 +488,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // IOS Alarm Picker Tarzı "Dil Seçici" Alt Penceresi (Bottom Sheet)
-  void _showLanguagePicker() {
+  void _showLanguagePicker(String currentCode, AppLocalizations l10n) {
     final List<String> languages = [
       "Türkçe",
       "English",
       "Deutsch",
       "Español",
       "Français",
+      "Português",
+      "Italiano",
+      "日本語",
     ];
-    int tempSelectedIndex = languages.indexOf(_selectedLanguage);
+    final currentName = _getLanguageName(currentCode);
+    int tempSelectedIndex = languages.indexOf(currentName);
     if (tempSelectedIndex == -1) tempSelectedIndex = 0;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor:
-          Colors.transparent, // Arka plan tamamen Neumorphic Container'a kalsın
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return NeuContainer(
-          borderRadius: 24,
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColors.getSurface(context),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
           padding: const EdgeInsets.all(AppSizes.paddingLarge),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                "Uygulama Dili Seçin",
+              Text(
+                l10n.selectLanguage,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: AppColors.getTextPrimary(context),
                 ),
               ),
               const SizedBox(height: AppSizes.paddingLarge),
               SizedBox(
-                height: 200, // Picker yüksekliği
+                height: 200,
                 child: CupertinoPicker(
                   itemExtent: 40,
                   magnification: 1.2,
@@ -373,8 +548,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     return Center(
                       child: Text(
                         lang,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
+                        style: TextStyle(
+                          color: AppColors.getTextPrimary(context),
                           fontSize: 18,
                         ),
                       ),
@@ -383,25 +558,159 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: AppSizes.paddingMedium),
-              // Onay Butonu
               SizedBox(
                 width: double.infinity,
                 child: CupertinoButton(
-                  color: AppColors.primary,
-                  onPressed: () {
-                    setState(() {
-                      _selectedLanguage = languages[tempSelectedIndex];
-                    });
+                  color: AppColors.getPrimary(context),
+                  onPressed: () async {
+                    final selectedName = languages[tempSelectedIndex];
+                    final selectedCode = _getLanguageCode(selectedName);
                     Navigator.pop(context);
+                    await Future.delayed(const Duration(milliseconds: 300));
+                    ref.read(settingsProvider.notifier).setLanguage(selectedCode);
                   },
-                  child: const Text(
-                    "Kaydet",
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  child: Text(
+                    l10n.save,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _showThemePicker(int currentIndex, AppLocalizations l10n) {
+    final List<String> themeOptions = [
+      l10n.themeSystem,
+      l10n.themeLight,
+      l10n.themeDark,
+    ];
+    final List<IconData> themeIcons = [
+      Icons.brightness_auto_rounded,
+      Icons.light_mode_rounded,
+      Icons.dark_mode_rounded,
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        int tempSelectedIndex = currentIndex;
+        return StatefulBuilder(
+          builder: (builderContext, setSheetState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: AppColors.getSurface(builderContext),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(AppSizes.paddingLarge),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.getTextSecondary(builderContext).withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: AppSizes.paddingMedium),
+                  Text(
+                    l10n.themeMode,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.getTextPrimary(builderContext),
+                    ),
+                  ),
+                  const SizedBox(height: AppSizes.paddingLarge),
+                  ...List.generate(themeOptions.length, (index) {
+                    final isSelected = tempSelectedIndex == index;
+                    return GestureDetector(
+                      onTap: () => setSheetState(() => tempSelectedIndex = index),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.getPrimary(builderContext).withValues(alpha: 0.1)
+                              : AppColors.getInnerSurface(builderContext),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.getPrimary(builderContext)
+                                : AppColors.getDarkShadow(builderContext).withValues(alpha: 0.15),
+                            width: isSelected ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              themeIcons[index],
+                              color: isSelected
+                                  ? AppColors.getPrimary(builderContext)
+                                  : AppColors.getTextSecondary(builderContext),
+                              size: 22,
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Text(
+                                themeOptions[index],
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                  color: isSelected
+                                      ? AppColors.getTextPrimary(builderContext)
+                                      : AppColors.getTextSecondary(builderContext),
+                                ),
+                              ),
+                            ),
+                            AnimatedOpacity(
+                              duration: const Duration(milliseconds: 200),
+                              opacity: isSelected ? 1.0 : 0.0,
+                              child: Icon(
+                                Icons.check_circle_rounded,
+                                color: AppColors.getPrimary(builderContext),
+                                size: 22,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: AppSizes.paddingMedium),
+                  SizedBox(
+                    width: double.infinity,
+                    child: CupertinoButton(
+                      color: AppColors.getPrimary(builderContext),
+                      onPressed: () async {
+                        Navigator.pop(builderContext);
+                        await Future.delayed(const Duration(milliseconds: 300));
+                        ref.read(settingsProvider.notifier).setThemeMode(tempSelectedIndex);
+                      },
+                      child: Text(
+                        l10n.save,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );

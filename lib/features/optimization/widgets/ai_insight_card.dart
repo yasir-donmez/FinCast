@@ -90,10 +90,10 @@ class _AiInsightCardState extends State<AiInsightCard>
                         '\n',
                         ' ',
                       ), // Satır atlamaları temizle
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        color: AppColors.getTextPrimary(context),
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -111,7 +111,7 @@ class _AiInsightCardState extends State<AiInsightCard>
                         color: widget.themeColor,
                         shadows: [
                           Shadow(
-                            color: widget.themeColor.withOpacity(0.5),
+                            color: widget.themeColor.withValues(alpha: 0.5),
                             blurRadius: 4,
                           ),
                         ],
@@ -119,11 +119,10 @@ class _AiInsightCardState extends State<AiInsightCard>
                     ),
                     Text(
                       "Şu an: ₺${widget.currentBudget.toInt()}",
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: AppColors.textSecondary,
-                        decoration: TextDecoration
-                            .lineThrough, // Çizik çekilmiş eski bütçe hissi
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.getTextSecondary(context),
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -172,10 +171,15 @@ class _AiInsightCardState extends State<AiInsightCard>
 
   // Başlığa göre mantıklı ikon döndüren yardımcı metod
   IconData _getIconForCategory(String title) {
-    if (title.toLowerCase().contains("eğlence"))
+    if (title.toLowerCase().contains("eğlence")) {
       return Icons.movie_creation_rounded;
-    if (title.toLowerCase().contains("kafe")) return Icons.local_cafe_rounded;
-    if (title.toLowerCase().contains("giyim")) return Icons.checkroom_rounded;
+    }
+    if (title.toLowerCase().contains("kafe")) {
+      return Icons.local_cafe_rounded;
+    }
+    if (title.toLowerCase().contains("giyim")) {
+      return Icons.checkroom_rounded;
+    }
     return Icons.category_rounded;
   }
 }

@@ -1,62 +1,111 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app_constants.dart';
 
 class AppTheme {
-  /// Uygulamanın Tek ve Ana Teması: Premium Glassmorphism
+  static ThemeData? _darkTheme;
+  static ThemeData? _lightTheme;
+
   static ThemeData get darkTheme {
+    _darkTheme ??= _buildDarkTheme();
+    return _darkTheme!;
+  }
+
+  static ThemeData get lightTheme {
+    _lightTheme ??= _buildLightTheme();
+    return _lightTheme!;
+  }
+
+  /// Premium Glassmorphism - Karanlık Tema
+  static ThemeData _buildDarkTheme() {
     return ThemeData(
       useMaterial3: true,
-
-      // Arkaplan transparan ayarlıyoruz ki Scaffold içinde kendimiz Gradient verebilelim
-      scaffoldBackgroundColor: Colors.transparent,
-
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: AppColors.darkBackground,
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
-        onPrimary: AppColors.textPrimary,
+        onPrimary: Colors.white,
         secondary: AppColors.secondary,
-        onSecondary: AppColors.textPrimary,
-        surface: AppColors.surface,
-        onSurface: AppColors.textPrimary,
+        onSecondary: Colors.white,
+        surface: AppColors.darkSurface,
+        onSurface: AppColors.darkTextPrimary,
         error: AppColors.error,
       ),
+      textTheme: _buildTextTheme(
+        Typography.material2021(platform: TargetPlatform.android).white,
+        AppColors.darkTextPrimary,
+        AppColors.darkTextSecondary,
+      ),
+      iconTheme: const IconThemeData(color: AppColors.darkTextSecondary, size: 24),
+    );
+  }
 
-      // Tipografi: Fütüristik, premium ve okunaklı 'Inter' fontu
-      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme)
-          .copyWith(
-            displayLarge: GoogleFonts.inter(
-              fontSize: 48,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-              letterSpacing: -1.5,
-            ),
-            displayMedium: GoogleFonts.inter(
-              fontSize: 32,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-              letterSpacing: -0.5,
-            ),
-            bodyLarge: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.normal,
-              color: AppColors.textPrimary,
-            ),
-            bodyMedium: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.normal,
-              color: AppColors.textSecondary,
-            ),
-            labelLarge: GoogleFonts.inter(
-              // Buton Yazıları
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-              letterSpacing: 1.2,
-            ),
-          ),
+  /// Premium Glassmorphism - Aydınlık Tema
+  static ThemeData _buildLightTheme() {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      primaryColor: AppColors.primary,
+      scaffoldBackgroundColor: AppColors.lightBackground,
+      colorScheme: const ColorScheme.light(
+        primary: AppColors.primary,
+        secondary: AppColors.secondary,
+        surface: AppColors.lightSurface,
+        onSurface: AppColors.lightTextPrimary,
+        error: AppColors.error,
+      ),
+      textTheme: _buildTextTheme(
+        Typography.material2021(platform: TargetPlatform.android).black,
+        AppColors.lightTextPrimary,
+        AppColors.lightTextSecondary,
+      ),
+      iconTheme: const IconThemeData(color: AppColors.lightTextSecondary, size: 24),
+    );
+  }
 
-      // Standart İkon Teması
-      iconTheme: const IconThemeData(color: AppColors.textSecondary, size: 24),
+  static TextTheme _buildTextTheme(TextTheme base, Color primaryColor, Color secondaryColor) {
+    TextStyle premiumTextStyle({
+      double? fontSize,
+      FontWeight? fontWeight,
+      Color? color,
+      double? letterSpacing,
+    }) {
+      return TextStyle(
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        color: color,
+        letterSpacing: letterSpacing,
+      );
+    }
+
+    return base.copyWith(
+      displayLarge: premiumTextStyle(
+        fontSize: 48,
+        fontWeight: FontWeight.w800,
+        color: primaryColor,
+        letterSpacing: -1.5,
+      ),
+      displayMedium: premiumTextStyle(
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
+        color: primaryColor,
+        letterSpacing: -0.5,
+      ),
+      bodyLarge: premiumTextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: primaryColor,
+      ),
+      bodyMedium: premiumTextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.normal,
+        color: secondaryColor,
+      ),
+      labelLarge: premiumTextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: primaryColor,
+        letterSpacing: 1.2,
+      ),
     );
   }
 }

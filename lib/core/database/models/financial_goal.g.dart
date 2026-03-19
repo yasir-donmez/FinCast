@@ -1,0 +1,1479 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'financial_goal.dart';
+
+// **************************************************************************
+// IsarCollectionGenerator
+// **************************************************************************
+
+// coverage:ignore-file
+// ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters, always_specify_types
+
+extension GetFinancialGoalCollection on Isar {
+  IsarCollection<FinancialGoal> get financialGoals => this.collection();
+}
+
+const FinancialGoalSchema = CollectionSchema(
+  name: r'FinancialGoal',
+  id: -4634083842245294579,
+  properties: {
+    r'aiPersonaText': PropertySchema(
+      id: 0,
+      name: r'aiPersonaText',
+      type: IsarType.string,
+    ),
+    r'aiStrategyText': PropertySchema(
+      id: 1,
+      name: r'aiStrategyText',
+      type: IsarType.string,
+    ),
+    r'createdAt': PropertySchema(
+      id: 2,
+      name: r'createdAt',
+      type: IsarType.dateTime,
+    ),
+    r'rejectedCategories': PropertySchema(
+      id: 3,
+      name: r'rejectedCategories',
+      type: IsarType.stringList,
+    ),
+    r'targetAmount': PropertySchema(
+      id: 4,
+      name: r'targetAmount',
+      type: IsarType.double,
+    ),
+    r'targetDate': PropertySchema(
+      id: 5,
+      name: r'targetDate',
+      type: IsarType.dateTime,
+    ),
+    r'userApproved': PropertySchema(
+      id: 6,
+      name: r'userApproved',
+      type: IsarType.bool,
+    ),
+    r'vaultId': PropertySchema(
+      id: 7,
+      name: r'vaultId',
+      type: IsarType.long,
+    )
+  },
+  estimateSize: _financialGoalEstimateSize,
+  serialize: _financialGoalSerialize,
+  deserialize: _financialGoalDeserialize,
+  deserializeProp: _financialGoalDeserializeProp,
+  idName: r'id',
+  indexes: {},
+  links: {},
+  embeddedSchemas: {},
+  getId: _financialGoalGetId,
+  getLinks: _financialGoalGetLinks,
+  attach: _financialGoalAttach,
+  version: '3.1.0+1',
+);
+
+int _financialGoalEstimateSize(
+  FinancialGoal object,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  var bytesCount = offsets.last;
+  {
+    final value = object.aiPersonaText;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.aiStrategyText;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.rejectedCategories.length * 3;
+  {
+    for (var i = 0; i < object.rejectedCategories.length; i++) {
+      final value = object.rejectedCategories[i];
+      bytesCount += value.length * 3;
+    }
+  }
+  return bytesCount;
+}
+
+void _financialGoalSerialize(
+  FinancialGoal object,
+  IsarWriter writer,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  writer.writeString(offsets[0], object.aiPersonaText);
+  writer.writeString(offsets[1], object.aiStrategyText);
+  writer.writeDateTime(offsets[2], object.createdAt);
+  writer.writeStringList(offsets[3], object.rejectedCategories);
+  writer.writeDouble(offsets[4], object.targetAmount);
+  writer.writeDateTime(offsets[5], object.targetDate);
+  writer.writeBool(offsets[6], object.userApproved);
+  writer.writeLong(offsets[7], object.vaultId);
+}
+
+FinancialGoal _financialGoalDeserialize(
+  Id id,
+  IsarReader reader,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  final object = FinancialGoal();
+  object.aiPersonaText = reader.readStringOrNull(offsets[0]);
+  object.aiStrategyText = reader.readStringOrNull(offsets[1]);
+  object.createdAt = reader.readDateTime(offsets[2]);
+  object.id = id;
+  object.rejectedCategories = reader.readStringList(offsets[3]) ?? [];
+  object.targetAmount = reader.readDouble(offsets[4]);
+  object.targetDate = reader.readDateTimeOrNull(offsets[5]);
+  object.userApproved = reader.readBoolOrNull(offsets[6]);
+  object.vaultId = reader.readLongOrNull(offsets[7]);
+  return object;
+}
+
+P _financialGoalDeserializeProp<P>(
+  IsarReader reader,
+  int propertyId,
+  int offset,
+  Map<Type, List<int>> allOffsets,
+) {
+  switch (propertyId) {
+    case 0:
+      return (reader.readStringOrNull(offset)) as P;
+    case 1:
+      return (reader.readStringOrNull(offset)) as P;
+    case 2:
+      return (reader.readDateTime(offset)) as P;
+    case 3:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 4:
+      return (reader.readDouble(offset)) as P;
+    case 5:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 6:
+      return (reader.readBoolOrNull(offset)) as P;
+    case 7:
+      return (reader.readLongOrNull(offset)) as P;
+    default:
+      throw IsarError('Unknown property with id $propertyId');
+  }
+}
+
+Id _financialGoalGetId(FinancialGoal object) {
+  return object.id;
+}
+
+List<IsarLinkBase<dynamic>> _financialGoalGetLinks(FinancialGoal object) {
+  return [];
+}
+
+void _financialGoalAttach(
+    IsarCollection<dynamic> col, Id id, FinancialGoal object) {
+  object.id = id;
+}
+
+extension FinancialGoalQueryWhereSort
+    on QueryBuilder<FinancialGoal, FinancialGoal, QWhere> {
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterWhere> anyId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(const IdWhereClause.any());
+    });
+  }
+}
+
+extension FinancialGoalQueryWhere
+    on QueryBuilder<FinancialGoal, FinancialGoal, QWhereClause> {
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterWhereClause> idEqualTo(
+      Id id) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IdWhereClause.between(
+        lower: id,
+        upper: id,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterWhereClause> idNotEqualTo(
+      Id id) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(
+              IdWhereClause.lessThan(upper: id, includeUpper: false),
+            )
+            .addWhereClause(
+              IdWhereClause.greaterThan(lower: id, includeLower: false),
+            );
+      } else {
+        return query
+            .addWhereClause(
+              IdWhereClause.greaterThan(lower: id, includeLower: false),
+            )
+            .addWhereClause(
+              IdWhereClause.lessThan(upper: id, includeUpper: false),
+            );
+      }
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterWhereClause> idGreaterThan(
+      Id id,
+      {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IdWhereClause.greaterThan(lower: id, includeLower: include),
+      );
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterWhereClause> idLessThan(
+      Id id,
+      {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IdWhereClause.lessThan(upper: id, includeUpper: include),
+      );
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterWhereClause> idBetween(
+    Id lowerId,
+    Id upperId, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IdWhereClause.between(
+        lower: lowerId,
+        includeLower: includeLower,
+        upper: upperId,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+}
+
+extension FinancialGoalQueryFilter
+    on QueryBuilder<FinancialGoal, FinancialGoal, QFilterCondition> {
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiPersonaTextIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'aiPersonaText',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiPersonaTextIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'aiPersonaText',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiPersonaTextEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'aiPersonaText',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiPersonaTextGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'aiPersonaText',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiPersonaTextLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'aiPersonaText',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiPersonaTextBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'aiPersonaText',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiPersonaTextStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'aiPersonaText',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiPersonaTextEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'aiPersonaText',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiPersonaTextContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'aiPersonaText',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiPersonaTextMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'aiPersonaText',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiPersonaTextIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'aiPersonaText',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiPersonaTextIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'aiPersonaText',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiStrategyTextIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'aiStrategyText',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiStrategyTextIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'aiStrategyText',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiStrategyTextEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'aiStrategyText',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiStrategyTextGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'aiStrategyText',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiStrategyTextLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'aiStrategyText',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiStrategyTextBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'aiStrategyText',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiStrategyTextStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'aiStrategyText',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiStrategyTextEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'aiStrategyText',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiStrategyTextContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'aiStrategyText',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiStrategyTextMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'aiStrategyText',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiStrategyTextIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'aiStrategyText',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      aiStrategyTextIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'aiStrategyText',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      createdAtEqualTo(DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      createdAtGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      createdAtLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      createdAtBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'createdAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition> idEqualTo(
+      Id value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'id',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      idGreaterThan(
+    Id value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'id',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition> idLessThan(
+    Id value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'id',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition> idBetween(
+    Id lower,
+    Id upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'id',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      rejectedCategoriesElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'rejectedCategories',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      rejectedCategoriesElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'rejectedCategories',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      rejectedCategoriesElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'rejectedCategories',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      rejectedCategoriesElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'rejectedCategories',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      rejectedCategoriesElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'rejectedCategories',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      rejectedCategoriesElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'rejectedCategories',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      rejectedCategoriesElementContains(String value,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'rejectedCategories',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      rejectedCategoriesElementMatches(String pattern,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'rejectedCategories',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      rejectedCategoriesElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'rejectedCategories',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      rejectedCategoriesElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'rejectedCategories',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      rejectedCategoriesLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'rejectedCategories',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      rejectedCategoriesIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'rejectedCategories',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      rejectedCategoriesIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'rejectedCategories',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      rejectedCategoriesLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'rejectedCategories',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      rejectedCategoriesLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'rejectedCategories',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      rejectedCategoriesLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'rejectedCategories',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      targetAmountEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'targetAmount',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      targetAmountGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'targetAmount',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      targetAmountLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'targetAmount',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      targetAmountBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'targetAmount',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      targetDateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'targetDate',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      targetDateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'targetDate',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      targetDateEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'targetDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      targetDateGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'targetDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      targetDateLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'targetDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      targetDateBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'targetDate',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      userApprovedIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'userApproved',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      userApprovedIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'userApproved',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      userApprovedEqualTo(bool? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'userApproved',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      vaultIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'vaultId',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      vaultIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'vaultId',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      vaultIdEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'vaultId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      vaultIdGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'vaultId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      vaultIdLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'vaultId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      vaultIdBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'vaultId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+}
+
+extension FinancialGoalQueryObject
+    on QueryBuilder<FinancialGoal, FinancialGoal, QFilterCondition> {}
+
+extension FinancialGoalQueryLinks
+    on QueryBuilder<FinancialGoal, FinancialGoal, QFilterCondition> {}
+
+extension FinancialGoalQuerySortBy
+    on QueryBuilder<FinancialGoal, FinancialGoal, QSortBy> {
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      sortByAiPersonaText() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'aiPersonaText', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      sortByAiPersonaTextDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'aiPersonaText', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      sortByAiStrategyText() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'aiStrategyText', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      sortByAiStrategyTextDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'aiStrategyText', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy> sortByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      sortByCreatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      sortByTargetAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetAmount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      sortByTargetAmountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetAmount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy> sortByTargetDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      sortByTargetDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      sortByUserApproved() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userApproved', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      sortByUserApprovedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userApproved', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy> sortByVaultId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'vaultId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy> sortByVaultIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'vaultId', Sort.desc);
+    });
+  }
+}
+
+extension FinancialGoalQuerySortThenBy
+    on QueryBuilder<FinancialGoal, FinancialGoal, QSortThenBy> {
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      thenByAiPersonaText() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'aiPersonaText', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      thenByAiPersonaTextDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'aiPersonaText', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      thenByAiStrategyText() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'aiStrategyText', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      thenByAiStrategyTextDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'aiStrategyText', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy> thenByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      thenByCreatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy> thenById() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'id', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy> thenByIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'id', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      thenByTargetAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetAmount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      thenByTargetAmountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetAmount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy> thenByTargetDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      thenByTargetDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'targetDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      thenByUserApproved() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userApproved', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      thenByUserApprovedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userApproved', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy> thenByVaultId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'vaultId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy> thenByVaultIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'vaultId', Sort.desc);
+    });
+  }
+}
+
+extension FinancialGoalQueryWhereDistinct
+    on QueryBuilder<FinancialGoal, FinancialGoal, QDistinct> {
+  QueryBuilder<FinancialGoal, FinancialGoal, QDistinct> distinctByAiPersonaText(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'aiPersonaText',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QDistinct>
+      distinctByAiStrategyText({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'aiStrategyText',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QDistinct> distinctByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'createdAt');
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QDistinct>
+      distinctByRejectedCategories() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'rejectedCategories');
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QDistinct>
+      distinctByTargetAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'targetAmount');
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QDistinct> distinctByTargetDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'targetDate');
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QDistinct>
+      distinctByUserApproved() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'userApproved');
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QDistinct> distinctByVaultId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'vaultId');
+    });
+  }
+}
+
+extension FinancialGoalQueryProperty
+    on QueryBuilder<FinancialGoal, FinancialGoal, QQueryProperty> {
+  QueryBuilder<FinancialGoal, int, QQueryOperations> idProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<FinancialGoal, String?, QQueryOperations>
+      aiPersonaTextProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'aiPersonaText');
+    });
+  }
+
+  QueryBuilder<FinancialGoal, String?, QQueryOperations>
+      aiStrategyTextProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'aiStrategyText');
+    });
+  }
+
+  QueryBuilder<FinancialGoal, DateTime, QQueryOperations> createdAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'createdAt');
+    });
+  }
+
+  QueryBuilder<FinancialGoal, List<String>, QQueryOperations>
+      rejectedCategoriesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'rejectedCategories');
+    });
+  }
+
+  QueryBuilder<FinancialGoal, double, QQueryOperations> targetAmountProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'targetAmount');
+    });
+  }
+
+  QueryBuilder<FinancialGoal, DateTime?, QQueryOperations>
+      targetDateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'targetDate');
+    });
+  }
+
+  QueryBuilder<FinancialGoal, bool?, QQueryOperations> userApprovedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'userApproved');
+    });
+  }
+
+  QueryBuilder<FinancialGoal, int?, QQueryOperations> vaultIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'vaultId');
+    });
+  }
+}

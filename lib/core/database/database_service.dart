@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'models/transaction_record.dart';
 import 'models/vault.dart';
+import 'models/financial_goal.dart';
+import 'models/app_settings.dart';
 
 /// Isar Veritabanı Servisi — Singleton
 class DatabaseService {
@@ -15,16 +18,31 @@ class DatabaseService {
 
   /// DB'yi başlat (main.dart'ta çağrılacak)
   static Future<void> init() async {
-    if (_isar != null) return; // Zaten açık
+    try {
+      if (_isar != null) return; // Zaten açık
 
-    final dir = await getApplicationDocumentsDirectory();
-    _isar = await Isar.open([
-      TransactionRecordSchema,
-      VaultSchema,
-    ], directory: dir.path);
+      debugPrint('📂 [DatabaseService] Belgeler dizini alınıyor...');
+      final dir = await getApplicationDocumentsDirectory();
+      debugPrint('📂 [DatabaseService] Dizin: ${dir.path}');
 
-    // İlk açılışta varsayılan kasaları ekle
-    await _seedDefaultVaults();
+      debugPrint('⚙️ [DatabaseService] Isar.open() çağrılıyor...');
+      _isar = await Isar.open([
+        TransactionRecordSchema,
+        VaultSchema,
+        FinancialGoalSchema,
+        AppSettingsSchema,
+      ], directory: dir.path);
+      debugPrint('✅ [DatabaseService] Isar başarıyla açıldı.');
+
+      // İlk açılışta varsayılan kasaları ekle
+      debugPrint('🌱 [DatabaseService] Varsayılan veriler kontrol ediliyor...');
+      await _seedDefaultVaults();
+      debugPrint('✅ [DatabaseService] Veri tohumlama tamamlandı.');
+    } catch (e, stack) {
+      debugPrint('❌ [DatabaseService ERROR] Başlatma hatası: $e');
+      debugPrint('📜 [DatabaseService ERROR] Stack Trace:\n$stack');
+      rethrow; // main.dart'ın yakalaması için
+    }
   }
 
   /// İlk kullanımda varsayılan kasaları oluştur (Artık boş, kullanıcı grup oluşturunca eklenecek)
@@ -54,6 +72,13 @@ class DatabaseService {
   static Future<void> deleteTransaction(int id) async {
     await isar.writeTxn(() async {
       await isar.transactionRecords.delete(id);
+    });
+  }
+
+  /// Birden fazla işlemi tek işlemde güncelle
+  static Future<void> updateAllTransactions(List<TransactionRecord> txs) async {
+    await isar.writeTxn(() async {
+      await isar.transactionRecords.putAll(txs);
     });
   }
 
@@ -111,6 +136,13 @@ class DatabaseService {
     });
   }
 
+  /// Birden fazla kasayı tek işlemde güncelle
+  static Future<void> updateAllVaults(List<Vault> vaults) async {
+    await isar.writeTxn(() async {
+      await isar.vaults.putAll(vaults);
+    });
+  }
+
   /// Kasa sil
   static Future<void> deleteVault(int id) async {
     await isar.writeTxn(() async {
@@ -121,5 +153,81 @@ class DatabaseService {
   /// Kasaları canlı dinle
   static Stream<List<Vault>> watchAllVaults() {
     return isar.vaults.where().watch(fireImmediately: true);
+  }
+
+  // =====================
+  // FINANCIAL GOAL CRUD
+  // =====================
+
+  /// Yeni analiz hedefi kaydet
+  static Future<int> addGoal(FinancialGoal goal) async {
+    return await isar.writeTxn(() async {
+      return await isar.financialGoals.put(goal);
+    });
+  }
+
+  /// Hedefi güncelle (onay durumu vb.)
+  static Future<void> updateGoal(FinancialGoal goal) async {
+    await isar.writeTxn(() async {
+      await isar.financialGoals.put(goal);
+    });
+  }
+
+  /// ID ile tek hedef getir
+  static Future<FinancialGoal?> getGoal(int id) async {
+    return await isar.financialGoals.get(id);
+  }
+
+  /// Son 3 analizi getir (tarih sırası)
+  static Future<List<FinancialGoal>> getRecentGoals() async {
+    return await isar.financialGoals
+        .where()
+        .sortByCreatedAtDesc()
+        .limit(3)
+        .findAll();
+  }
+
+  /// Tüm analizleri getir
+  static Future<List<FinancialGoal>> getAllGoals() async {
+    return await isar.financialGoals
+        .where()
+        .sortByCreatedAtDesc()
+        .findAll();
+  }
+
+  /// Analiz sil
+  static Future<void> deleteGoal(int id) async {
+    await isar.writeTxn(() async {
+      await isar.financialGoals.delete(id);
+    });
+  }
+
+  /// Analizleri canlı dinle
+  static Stream<List<FinancialGoal>> watchGoals() {
+    return isar.financialGoals
+        .where()
+        .sortByCreatedAtDesc()
+        .watch(fireImmediately: true);
+  }
+
+  // =====================
+  // APP SETTINGS
+  // =====================
+
+  /// Ayarları getir (her zaman bir kayıt döner, yoksa varsayılanla oluşturur)
+  static Future<AppSettings> getSettings() async {
+    final existing = await isar.appSettings.get(1);
+    if (existing != null) return existing;
+    // İlk kullanım: varsayılan ayarları oluştur ve kaydet
+    final defaults = AppSettings();
+    await isar.writeTxn(() async => await isar.appSettings.put(defaults));
+    return defaults;
+  }
+
+  /// Ayarları kaydet
+  static Future<void> saveSettings(AppSettings settings) async {
+    await isar.writeTxn(() async {
+      await isar.appSettings.put(settings);
+    });
   }
 }

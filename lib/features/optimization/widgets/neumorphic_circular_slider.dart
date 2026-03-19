@@ -82,6 +82,7 @@ class _NeumorphicCircularSliderState extends State<NeumorphicCircularSlider> {
                 painter: _NeonRingPainter(
                   sweepAngle: sweepAngle,
                   neonColor: AppColors.primary,
+                  darkShadowColor: AppColors.getDarkShadow(context),
                 ),
               ),
 
@@ -94,12 +95,12 @@ class _NeumorphicCircularSliderState extends State<NeumorphicCircularSlider> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       "HEDEF BAKİYE",
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondary(context),
                         letterSpacing: 2.0,
                       ),
                     ),
@@ -107,11 +108,11 @@ class _NeumorphicCircularSliderState extends State<NeumorphicCircularSlider> {
                     // Değer Yazısı
                     Text(
                       "₺${(_currentValue / 500).round() * 500}",
-                      style: const TextStyle(
-                        fontSize: 34,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                        letterSpacing: -1.0,
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.getTextPrimary(context),
+                        letterSpacing: -1,
                         shadows: [
                           Shadow(color: AppColors.primary, blurRadius: 10),
                         ],
@@ -143,8 +144,13 @@ class _NeumorphicCircularSliderState extends State<NeumorphicCircularSlider> {
 class _NeonRingPainter extends CustomPainter {
   final double sweepAngle;
   final Color neonColor;
+  final Color darkShadowColor;
 
-  _NeonRingPainter({required this.sweepAngle, required this.neonColor});
+  _NeonRingPainter({
+    required this.sweepAngle,
+    required this.neonColor,
+    required this.darkShadowColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -153,7 +159,7 @@ class _NeonRingPainter extends CustomPainter {
 
     // Arka plan mat izi (Boş kısım)
     Paint trackPaint = Paint()
-      ..color = AppColors.darkShadow.withValues(alpha: 0.3)
+      ..color = darkShadowColor.withValues(alpha: 0.3)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 14
       ..strokeCap = StrokeCap.round;

@@ -4,21 +4,24 @@ import '../../../core/theme/app_constants.dart';
 import '../../../core/database/database_service.dart';
 import '../../../core/providers/db_providers.dart';
 import '../../../shared/widgets/neu_container.dart';
+import '../../../core/utils/icon_utils.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class VaultManagementSheet extends ConsumerWidget {
   const VaultManagementSheet({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final vaults = ref.watch(allVaultsProvider);
     final transactions = ref.watch(allTransactionsProvider);
     final ungroupedTx = transactions.where((t) => t.vaultId == null).toList();
 
     return Container(
       padding: const EdgeInsets.all(AppSizes.paddingMedium),
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      decoration: BoxDecoration(
+        color: AppColors.getSurface(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -30,24 +33,24 @@ class VaultManagementSheet extends ConsumerWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: AppColors.getSurface(context),
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Görünürlük Yönetimi',
+          Text(
+            l10n.visibilityManagement,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: AppColors.getTextPrimary(context),
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Ana sayfada hangi grup veya işlemlerin görüneceğini seçin.',
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          Text(
+            l10n.visibilityDesc,
+            style: TextStyle(fontSize: 13, color: AppColors.getTextSecondary(context)),
           ),
           const SizedBox(height: 24),
 
@@ -57,7 +60,7 @@ class VaultManagementSheet extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (vaults.isNotEmpty) ...[
-                    _buildSectionHeader('Kasalar & Gruplar'),
+                    _buildSectionHeader(context, l10n.vaultsAndGroups),
                     const SizedBox(height: 12),
                     ListView.separated(
                       shrinkWrap: true,
@@ -66,10 +69,22 @@ class VaultManagementSheet extends ConsumerWidget {
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final vault = vaults[index];
+                        final vaultTx = transactions
+                            .where((t) => t.vaultId == vault.id)
+                            .toList();
+                        final dominantIcon =
+                            IconUtils.getDominantIconCode(
+                              vaultTx
+                                  .map((t) => t.iconCode ?? t.title)
+                                  .toList(),
+                            ) ??
+                            vault.iconCode;
+
                         return _buildManagementItem(
+                          context: context,
                           title: vault.name,
-                          subtitle: '${vault.currency}',
-                          iconCode: vault.iconCode,
+                          subtitle: vault.currency,
+                          iconCode: dominantIcon,
                           value: vault.showOnDashboard,
                           onChanged: (val) async {
                             vault.showOnDashboard = val;
@@ -82,7 +97,7 @@ class VaultManagementSheet extends ConsumerWidget {
                   ],
 
                   if (ungroupedTx.isNotEmpty) ...[
-                    _buildSectionHeader('Tekil İşlemler'),
+                    _buildSectionHeader(context, l10n.individualTransactions),
                     const SizedBox(height: 12),
                     ListView.separated(
                       shrinkWrap: true,
@@ -92,8 +107,12 @@ class VaultManagementSheet extends ConsumerWidget {
                       itemBuilder: (context, index) {
                         final tx = ungroupedTx[index];
                         return _buildManagementItem(
+                          context: context,
                           title: tx.title,
                           subtitle: '₺${tx.amount.toStringAsFixed(0)}',
+                          subtitleColor: tx.isIncome
+                              ? AppColors.getIncome(context)
+                              : AppColors.getExpense(context),
                           iconCode: tx.iconCode,
                           value: tx.showOnDashboard,
                           onChanged: (val) async {
@@ -114,21 +133,23 @@ class VaultManagementSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Text(
       title.toUpperCase(),
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.bold,
-        color: AppColors.textSecondary,
+        color: AppColors.getTextSecondary(context),
         letterSpacing: 1.2,
       ),
     );
   }
 
   Widget _buildManagementItem({
+    required BuildContext context,
     required String title,
     required String subtitle,
+    Color? subtitleColor,
     String? iconCode,
     required bool value,
     required ValueChanged<bool> onChanged,
@@ -138,7 +159,10 @@ class VaultManagementSheet extends ConsumerWidget {
       borderRadius: AppSizes.radiusDefault,
       child: Row(
         children: [
-          Icon(_getIconData(iconCode ?? ''), color: _getColorForTitle(title)),
+          Icon(
+            IconUtils.getIcon(iconCode ?? title),
+            color: IconUtils.getColor(iconCode ?? title),
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -146,16 +170,16 @@ class VaultManagementSheet extends ConsumerWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: AppColors.getTextPrimary(context),
                   ),
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: subtitleColor ?? AppColors.getTextSecondary(context),
                   ),
                 ),
               ],
@@ -163,34 +187,11 @@ class VaultManagementSheet extends ConsumerWidget {
           ),
           Switch(
             value: value,
-            activeColor: AppColors.primary,
+            activeThumbColor: AppColors.getPrimary(context),
             onChanged: onChanged,
           ),
         ],
       ),
     );
-  }
-
-  IconData _getIconData(String code) {
-    switch (code) {
-      case 'account_balance_wallet_rounded':
-        return Icons.account_balance_wallet_rounded;
-      case 'attach_money_rounded':
-        return Icons.attach_money_rounded;
-      case 'diamond_rounded':
-        return Icons.diamond_rounded;
-      default:
-        return Icons.receipt_rounded;
-    }
-  }
-
-  Color _getColorForTitle(String name) {
-    final n = name.toLowerCase();
-    if (n.contains('maaş')) return AppColors.primary;
-    if (n.contains('dolar')) return Colors.greenAccent;
-    if (n.contains('yastık') || n.contains('altın')) {
-      return Colors.amberAccent;
-    }
-    return AppColors.secondary;
   }
 }

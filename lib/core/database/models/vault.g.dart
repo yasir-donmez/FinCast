@@ -27,23 +27,43 @@ const VaultSchema = CollectionSchema(
       name: r'currency',
       type: IsarType.string,
     ),
-    r'iconCode': PropertySchema(
+    r'dashboardLayoutType': PropertySchema(
       id: 2,
+      name: r'dashboardLayoutType',
+      type: IsarType.long,
+    ),
+    r'dashboardOrder': PropertySchema(
+      id: 3,
+      name: r'dashboardOrder',
+      type: IsarType.long,
+    ),
+    r'iconCode': PropertySchema(
+      id: 4,
       name: r'iconCode',
       type: IsarType.string,
     ),
     r'isIncludedInTotal': PropertySchema(
-      id: 3,
+      id: 5,
       name: r'isIncludedInTotal',
       type: IsarType.bool,
     ),
+    r'maxLimit': PropertySchema(
+      id: 6,
+      name: r'maxLimit',
+      type: IsarType.double,
+    ),
+    r'minLimit': PropertySchema(
+      id: 7,
+      name: r'minLimit',
+      type: IsarType.double,
+    ),
     r'name': PropertySchema(
-      id: 4,
+      id: 8,
       name: r'name',
       type: IsarType.string,
     ),
     r'showOnDashboard': PropertySchema(
-      id: 5,
+      id: 9,
       name: r'showOnDashboard',
       type: IsarType.bool,
     )
@@ -87,10 +107,14 @@ void _vaultSerialize(
 ) {
   writer.writeDouble(offsets[0], object.balance);
   writer.writeString(offsets[1], object.currency);
-  writer.writeString(offsets[2], object.iconCode);
-  writer.writeBool(offsets[3], object.isIncludedInTotal);
-  writer.writeString(offsets[4], object.name);
-  writer.writeBool(offsets[5], object.showOnDashboard);
+  writer.writeLong(offsets[2], object.dashboardLayoutType);
+  writer.writeLong(offsets[3], object.dashboardOrder);
+  writer.writeString(offsets[4], object.iconCode);
+  writer.writeBool(offsets[5], object.isIncludedInTotal);
+  writer.writeDouble(offsets[6], object.maxLimit);
+  writer.writeDouble(offsets[7], object.minLimit);
+  writer.writeString(offsets[8], object.name);
+  writer.writeBool(offsets[9], object.showOnDashboard);
 }
 
 Vault _vaultDeserialize(
@@ -102,11 +126,15 @@ Vault _vaultDeserialize(
   final object = Vault();
   object.balance = reader.readDouble(offsets[0]);
   object.currency = reader.readString(offsets[1]);
-  object.iconCode = reader.readStringOrNull(offsets[2]);
+  object.dashboardLayoutType = reader.readLong(offsets[2]);
+  object.dashboardOrder = reader.readLong(offsets[3]);
+  object.iconCode = reader.readStringOrNull(offsets[4]);
   object.id = id;
-  object.isIncludedInTotal = reader.readBool(offsets[3]);
-  object.name = reader.readString(offsets[4]);
-  object.showOnDashboard = reader.readBool(offsets[5]);
+  object.isIncludedInTotal = reader.readBool(offsets[5]);
+  object.maxLimit = reader.readDoubleOrNull(offsets[6]);
+  object.minLimit = reader.readDoubleOrNull(offsets[7]);
+  object.name = reader.readString(offsets[8]);
+  object.showOnDashboard = reader.readBool(offsets[9]);
   return object;
 }
 
@@ -122,12 +150,20 @@ P _vaultDeserializeProp<P>(
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 3:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 5:
+      return (reader.readBool(offset)) as P;
+    case 6:
+      return (reader.readDoubleOrNull(offset)) as P;
+    case 7:
+      return (reader.readDoubleOrNull(offset)) as P;
+    case 8:
+      return (reader.readString(offset)) as P;
+    case 9:
       return (reader.readBool(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -414,6 +450,113 @@ extension VaultQueryFilter on QueryBuilder<Vault, Vault, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> dashboardLayoutTypeEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'dashboardLayoutType',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition>
+      dashboardLayoutTypeGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'dashboardLayoutType',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> dashboardLayoutTypeLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'dashboardLayoutType',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> dashboardLayoutTypeBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'dashboardLayoutType',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> dashboardOrderEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'dashboardOrder',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> dashboardOrderGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'dashboardOrder',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> dashboardOrderLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'dashboardOrder',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> dashboardOrderBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'dashboardOrder',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<Vault, Vault, QAfterFilterCondition> iconCodeIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -622,6 +765,162 @@ extension VaultQueryFilter on QueryBuilder<Vault, Vault, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> maxLimitIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'maxLimit',
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> maxLimitIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'maxLimit',
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> maxLimitEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'maxLimit',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> maxLimitGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'maxLimit',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> maxLimitLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'maxLimit',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> maxLimitBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'maxLimit',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> minLimitIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'minLimit',
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> minLimitIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'minLimit',
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> minLimitEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'minLimit',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> minLimitGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'minLimit',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> minLimitLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'minLimit',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterFilterCondition> minLimitBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'minLimit',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
   QueryBuilder<Vault, Vault, QAfterFilterCondition> nameEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -790,6 +1089,30 @@ extension VaultQuerySortBy on QueryBuilder<Vault, Vault, QSortBy> {
     });
   }
 
+  QueryBuilder<Vault, Vault, QAfterSortBy> sortByDashboardLayoutType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dashboardLayoutType', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> sortByDashboardLayoutTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dashboardLayoutType', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> sortByDashboardOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dashboardOrder', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> sortByDashboardOrderDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dashboardOrder', Sort.desc);
+    });
+  }
+
   QueryBuilder<Vault, Vault, QAfterSortBy> sortByIconCode() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'iconCode', Sort.asc);
@@ -811,6 +1134,30 @@ extension VaultQuerySortBy on QueryBuilder<Vault, Vault, QSortBy> {
   QueryBuilder<Vault, Vault, QAfterSortBy> sortByIsIncludedInTotalDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isIncludedInTotal', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> sortByMaxLimit() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'maxLimit', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> sortByMaxLimitDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'maxLimit', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> sortByMinLimit() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'minLimit', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> sortByMinLimitDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'minLimit', Sort.desc);
     });
   }
 
@@ -864,6 +1211,30 @@ extension VaultQuerySortThenBy on QueryBuilder<Vault, Vault, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Vault, Vault, QAfterSortBy> thenByDashboardLayoutType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dashboardLayoutType', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> thenByDashboardLayoutTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dashboardLayoutType', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> thenByDashboardOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dashboardOrder', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> thenByDashboardOrderDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dashboardOrder', Sort.desc);
+    });
+  }
+
   QueryBuilder<Vault, Vault, QAfterSortBy> thenByIconCode() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'iconCode', Sort.asc);
@@ -897,6 +1268,30 @@ extension VaultQuerySortThenBy on QueryBuilder<Vault, Vault, QSortThenBy> {
   QueryBuilder<Vault, Vault, QAfterSortBy> thenByIsIncludedInTotalDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isIncludedInTotal', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> thenByMaxLimit() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'maxLimit', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> thenByMaxLimitDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'maxLimit', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> thenByMinLimit() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'minLimit', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QAfterSortBy> thenByMinLimitDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'minLimit', Sort.desc);
     });
   }
 
@@ -939,6 +1334,18 @@ extension VaultQueryWhereDistinct on QueryBuilder<Vault, Vault, QDistinct> {
     });
   }
 
+  QueryBuilder<Vault, Vault, QDistinct> distinctByDashboardLayoutType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'dashboardLayoutType');
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QDistinct> distinctByDashboardOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'dashboardOrder');
+    });
+  }
+
   QueryBuilder<Vault, Vault, QDistinct> distinctByIconCode(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -949,6 +1356,18 @@ extension VaultQueryWhereDistinct on QueryBuilder<Vault, Vault, QDistinct> {
   QueryBuilder<Vault, Vault, QDistinct> distinctByIsIncludedInTotal() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isIncludedInTotal');
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QDistinct> distinctByMaxLimit() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'maxLimit');
+    });
+  }
+
+  QueryBuilder<Vault, Vault, QDistinct> distinctByMinLimit() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'minLimit');
     });
   }
 
@@ -985,6 +1404,18 @@ extension VaultQueryProperty on QueryBuilder<Vault, Vault, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Vault, int, QQueryOperations> dashboardLayoutTypeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'dashboardLayoutType');
+    });
+  }
+
+  QueryBuilder<Vault, int, QQueryOperations> dashboardOrderProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'dashboardOrder');
+    });
+  }
+
   QueryBuilder<Vault, String?, QQueryOperations> iconCodeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'iconCode');
@@ -994,6 +1425,18 @@ extension VaultQueryProperty on QueryBuilder<Vault, Vault, QQueryProperty> {
   QueryBuilder<Vault, bool, QQueryOperations> isIncludedInTotalProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isIncludedInTotal');
+    });
+  }
+
+  QueryBuilder<Vault, double?, QQueryOperations> maxLimitProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'maxLimit');
+    });
+  }
+
+  QueryBuilder<Vault, double?, QQueryOperations> minLimitProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'minLimit');
     });
   }
 

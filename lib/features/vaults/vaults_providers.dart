@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/theme/app_constants.dart';
 import '../../core/providers/db_providers.dart';
 import '../../core/database/database_service.dart';
 import '../../core/database/models/transaction_record.dart';
 import '../../core/database/models/vault.dart';
+import '../../core/utils/icon_utils.dart';
 
 /// Tek bir işlem kaydı (UI Model)
 class MockTransaction {
@@ -16,7 +16,11 @@ class MockTransaction {
   final double? minAmount;
   final double? maxAmount;
   final bool isIncome;
+  final int periodType; // 0: Tek Seferlik, 1: Haftalık, 2: Aylık, 3: Yıllık
+  final DateTime date;
+  final int? remainingInstallments; // Taksit sayısı (varsa)
   final int? dbId; // Isar DB ID (null = henüz kaydedilmemiş)
+  final String? categoryId; // Multi-language desteği için benzersiz anahtar
   String? groupId; // null ise grupsuz
 
   MockTransaction({
@@ -26,90 +30,79 @@ class MockTransaction {
     required this.color,
     required this.amount,
     this.minAmount,
-    this.maxAmount,
+    required this.maxAmount,
     required this.isIncome,
+    required this.periodType,
+    required this.date,
+    this.remainingInstallments,
     this.dbId,
+    this.categoryId,
     this.groupId,
   });
 
+  /// Belirli bir tutarın aylık karşılığını hesaplar.
+  double _calculateMonthly(double baseAmount) {
+    switch (periodType) {
+      case 1: // Haftalık
+        return baseAmount * (52 / 12);
+      case 2: // Aylık
+        return baseAmount;
+      case 3: // Yıllık
+        return baseAmount / 12;
+      case 4: // 2 Haftada Bir
+        return baseAmount * (26 / 12);
+      case 5: // 3 Haftada Bir
+        return baseAmount * (52 / 3 / 12);
+      case 6: // 3 Ayda Bir
+        return baseAmount / 3;
+      case 7: // 6 Ayda Bir
+        return baseAmount / 6;
+      case 8: // Günlük
+        return baseAmount * (365 / 12);
+      case 9: // 2 Günde Bir
+        return baseAmount * (365 / 2 / 12);
+      case 10: // 3 Günde Bir
+        return baseAmount * (365 / 3 / 12);
+      default: // Tek seferlik
+        return 0;
+    }
+  }
+
+  /// İşlemin aylık karşılığını hesaplar.
+  double get monthlyEquivalent => _calculateMonthly(amount);
+
+  /// Minimum aylık karşılık (esnek işlemler için)
+  double get minMonthlyEquivalent => _calculateMonthly(minAmount ?? amount);
+
+  /// Maksimum aylık karşılık (esnek işlemler için)
+  double get maxMonthlyEquivalent => _calculateMonthly(maxAmount ?? amount);
+
+  /// Ortalama aylık karşılık (esnek işlemler için)
+  double get avgMonthlyEquivalent {
+    if (minAmount != null && maxAmount != null) {
+      return _calculateMonthly((minAmount! + maxAmount!) / 2);
+    }
+    return monthlyEquivalent;
+  }
+
   /// TransactionRecord'dan MockTransaction'a dönüştür
   factory MockTransaction.fromDB(TransactionRecord record) {
-    final mapping =
-        _categoryMapping[record.title] ??
-        _categoryMapping[record.iconCode] ??
-        {'icon': Icons.receipt_rounded, 'color': AppColors.textSecondary};
-
     return MockTransaction(
       id: 'db_${record.id}',
       name: record.title,
-      icon: mapping['icon'] as IconData,
-      color: mapping['color'] as Color,
+      icon: IconUtils.getIcon(record.iconCode ?? record.title),
+      color: IconUtils.getColor(record.iconCode ?? record.title),
       amount: record.amount,
       minAmount: record.minAmount,
       maxAmount: record.maxAmount,
       isIncome: record.isIncome,
+      periodType: record.periodType,
+      date: record.date,
+      remainingInstallments: record.remainingInstallments,
       dbId: record.id,
+      categoryId: record.categoryId,
     );
   }
-
-  /// Kategori ismi → ikon & renk eşleştirmesi
-  static final Map<String, Map<String, dynamic>> _categoryMapping = {
-    'Market': {'icon': Icons.shopping_basket_rounded, 'color': Colors.orange},
-    'Yemek': {
-      'icon': Icons.restaurant_rounded,
-      'color': Colors.deepOrangeAccent,
-    },
-    'Kira': {'icon': Icons.home_rounded, 'color': Colors.blue},
-    'Fatura': {'icon': Icons.receipt_long_rounded, 'color': Colors.lightBlue},
-    'Elektrik': {'icon': Icons.bolt_rounded, 'color': Colors.amber},
-    'Su': {'icon': Icons.water_drop_rounded, 'color': Colors.cyan},
-    'İnternet': {'icon': Icons.wifi_rounded, 'color': Colors.lightBlue},
-    'Telefon': {'icon': Icons.phone_android_rounded, 'color': Colors.lightBlue},
-    'Ulaşım': {'icon': Icons.directions_car_rounded, 'color': Colors.teal},
-    'Taksi': {'icon': Icons.local_taxi_rounded, 'color': Colors.teal},
-    'Otobüs': {'icon': Icons.directions_bus_rounded, 'color': Colors.teal},
-    'Eğlence': {
-      'icon': Icons.movie_creation_rounded,
-      'color': AppColors.secondary,
-    },
-    'Abonelik': {'icon': Icons.subscriptions_rounded, 'color': AppColors.error},
-    'Netflix': {'icon': Icons.smart_display_rounded, 'color': AppColors.error},
-    'Spotify': {'icon': Icons.headphones_rounded, 'color': Colors.green},
-    'Sağlık': {
-      'icon': Icons.medical_services_rounded,
-      'color': Colors.greenAccent,
-    },
-    'Giyim': {'icon': Icons.checkroom_rounded, 'color': Colors.pink},
-    'Eğitim': {'icon': Icons.school_rounded, 'color': Colors.indigo},
-    'Borç Ödeme': {
-      'icon': Icons.credit_card_rounded,
-      'color': Colors.redAccent,
-    },
-    'Restoran': {
-      'icon': Icons.restaurant_rounded,
-      'color': Colors.deepOrangeAccent,
-    },
-    'Spor Salonu': {
-      'icon': Icons.fitness_center_rounded,
-      'color': Colors.pinkAccent,
-    },
-    'Maaş': {
-      'icon': Icons.account_balance_wallet_rounded,
-      'color': AppColors.primary,
-    },
-    'Freelance': {'icon': Icons.laptop_mac_rounded, 'color': Colors.green},
-    'Kira Geliri': {
-      'icon': Icons.real_estate_agent_rounded,
-      'color': Colors.blue,
-    },
-    'Faiz': {'icon': Icons.savings_rounded, 'color': Colors.blueAccent},
-    'Ek İş': {'icon': Icons.work_rounded, 'color': Colors.orange},
-    'Burs': {'icon': Icons.school_rounded, 'color': Colors.indigo},
-    'Diğer': {
-      'icon': Icons.more_horiz_rounded,
-      'color': AppColors.textSecondary,
-    },
-  };
 }
 
 /// İşlem grubu (Klasör mantığı)
@@ -126,15 +119,15 @@ class TransactionGroup {
 
   /// DB Vault modelinden TransactionGroup'a dönüştür
   factory TransactionGroup.fromDB(Vault vault, List<TransactionRecord> allTx) {
-    final relatedTxIds = allTx
-        .where((t) => t.vaultId == vault.id)
-        .map((t) => 'db_${t.id}')
-        .toList();
+    final relatedTxIds = allTx.where((t) => t.vaultId == vault.id).toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+
+    final txIds = relatedTxIds.map((t) => 'db_${t.id}').toList();
 
     return TransactionGroup(
       id: 'v_${vault.id}',
       name: vault.name,
-      transactionIds: relatedTxIds,
+      transactionIds: txIds,
     );
   }
 }
@@ -193,9 +186,18 @@ class TransactionGroupingHelper {
 /// Gruplar — Database tabanlı provider
 final transactionGroupsProvider = Provider<List<TransactionGroup>>((ref) {
   final vaults = ref.watch(allVaultsProvider);
-  final allTx = ref.watch(allTransactionsProvider);
+  final allTx = ref.watch(mockTransactionsProvider);
 
-  return vaults.map((v) => TransactionGroup.fromDB(v, allTx)).toList();
+  return vaults.map((v) {
+    final relatedTxIds = allTx.where((t) => t.groupId == 'v_${v.id}').toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+
+    return TransactionGroup(
+      id: 'v_${v.id}',
+      name: v.name,
+      transactionIds: relatedTxIds.map((t) => t.id).toList(),
+    );
+  }).toList();
 });
 
 /// Grup işlemleri için yardımcı notifier
@@ -204,30 +206,6 @@ final transactionGroupsNotifierProvider = Provider(
 );
 
 class TransactionGroupsHelper {
-  static int _nextGroupNum = 1;
-
-  /// İki işlemi birleştirerek yeni grup (Vault) oluştur
-  Future<String> createGroup(String txId1, String txId2) async {
-    final name = 'Kasa ${_nextGroupNum++}';
-
-    final vault = Vault()
-      ..name = name
-      ..currency =
-          'TRY' // Varsayılan
-      ..balance = 0
-      ..showOnDashboard = true;
-
-    final vaultId = await DatabaseService.addVault(vault);
-    final groupId = 'v_$vaultId';
-
-    // İşlemleri bu gruba ata
-    final helper = TransactionGroupingHelper();
-    await helper.setGroupId(txId1, groupId);
-    await helper.setGroupId(txId2, groupId);
-
-    return groupId;
-  }
-
   /// Grubun adını değiştir
   Future<void> renameGroup(String groupId, String newName) async {
     if (!groupId.startsWith('v_')) return;
@@ -271,7 +249,36 @@ class TransactionGroupsHelper {
       await DatabaseService.updateTransaction(tx);
     }
 
-    // Kasayı (Grubu) sil (Not: DatabaseService.deleteVault henüz yok, eklememiz gerekebilir veya update yetebilir)
-    // Şimdilik sadece içini boşaltıyoruz. Gerçek silme için DatabaseService'e metod ekleyelim.
+    // Kasayı (Grubu) sil
+    await DatabaseService.deleteVault(id);
+  }
+
+  /// Kasaların sırasını güncelle (Sıralama özelliği için)
+  Future<void> reorderGroups(List<String> groupIds) async {
+    final vaults = await DatabaseService.getAllVaults();
+    final updatedVaults = <Vault>[];
+
+    for (int i = 0; i < groupIds.length; i++) {
+      final groupId = groupIds[i];
+      if (!groupId.startsWith('v_')) continue;
+      final id = int.tryParse(groupId.replaceFirst('v_', ''));
+      if (id == null) continue;
+
+      final vault = vaults.where((v) => v.id == id).firstOrNull;
+      if (vault != null) {
+        vault.dashboardOrder = i;
+        updatedVaults.add(vault);
+      }
+    }
+
+    if (updatedVaults.isNotEmpty) {
+      await DatabaseService.updateAllVaults(updatedVaults);
+    }
   }
 }
+
+/// Seçili kasa (null = Ana Kasa / Tümü)
+final selectedVaultProvider = StateProvider<String?>((ref) => null);
+
+/// Seçili periyot (null = Tümü, 0: Tek Seferlik, 1: Haftalık, 2: Aylık, 3: Yıllık)
+final selectedPeriodProvider = StateProvider<int?>((ref) => null);

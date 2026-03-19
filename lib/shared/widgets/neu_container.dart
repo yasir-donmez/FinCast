@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_constants.dart';
 
-/// Premium Dark Neumorphism (Skeuomorphism) kart / yüzey bileşeni.
-/// Dışa Kabartma (Embossed) ve İçe Çökük (Debossed) efektleri sağlar.
+/// Premium Neumorphism (Skeuomorphism) kart / yüzey bileşeni.
+/// Temaya (Aydınlık/Karanlık) duyarlıdır.
 class NeuContainer extends StatelessWidget {
   final Widget child;
   final double? width;
@@ -20,13 +20,19 @@ class NeuContainer extends StatelessWidget {
     this.padding,
     this.margin,
     this.borderRadius = AppSizes.radiusDefault,
-    this.isInnerShadow = false, // Varsayılan: Dışa kabartık (Embossed)
+    this.isInnerShadow = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final surfaceColor = AppColors.getSurface(context);
+    final darkShadowColor = AppColors.getDarkShadow(context);
+    final lightShadowColor = AppColors.getLightShadow(context);
+    final innerSurfaceColor = AppColors.getInnerSurface(context);
+
     if (isInnerShadow) {
-      // Çukur / Kuyu Görünümü (Gerçek Debossed simülasyonu)
       return Container(
         width: width,
         height: height,
@@ -34,22 +40,16 @@ class NeuContainer extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(borderRadius),
           border: Border.all(
-            color: AppColors.darkShadow.withValues(
-              alpha: 0.8,
-            ), // Çukurun üst-sol karanlık sınırı
+            color: darkShadowColor.withValues(alpha: isDark ? 0.8 : 0.3),
             width: 1.5,
           ),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppColors.darkShadow.withValues(
-                alpha: 0.6,
-              ), // Yukarıdan düşen iç gölge
-              AppColors.innerSurface,
-              AppColors.lightShadow.withValues(
-                alpha: 0.05,
-              ), // Aşağıdan vuran cılız ışık
+              darkShadowColor.withValues(alpha: isDark ? 0.6 : 0.2),
+              innerSurfaceColor,
+              lightShadowColor.withValues(alpha: isDark ? 0.05 : 0.7),
             ],
             stops: const [0.0, 0.4, 1.0],
           ),
@@ -64,29 +64,25 @@ class NeuContainer extends StatelessWidget {
       );
     }
 
-    // Fiziksel Yüzey / Dışa Kabartma (Embossed)
-    // Fiziksel Kartlar, Çevirmeli Kadranın Zemini vb.
     return Container(
       width: width,
       height: height,
       margin: margin,
       padding: padding ?? const EdgeInsets.all(AppSizes.paddingMedium),
       decoration: BoxDecoration(
-        color: AppColors.surface, // Mat antresit gri
+        color: surfaceColor,
         borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: const [
-          // Sağ Alt - Derin Karanlık Gölge
+        boxShadow: [
           BoxShadow(
-            color: AppColors.darkShadow,
-            offset: Offset(8, 8),
-            blurRadius: 16,
-            spreadRadius: 1,
+            color: darkShadowColor.withValues(alpha: isDark ? 0.7 : 0.3),
+            offset: Offset(isDark ? 6 : 4, isDark ? 6 : 4),
+            blurRadius: 12,
+            spreadRadius: 0,
           ),
-          // Sol Üst - Yumuşak Işık Yansıması
           BoxShadow(
-            color: AppColors.lightShadow,
-            offset: Offset(-6, -6),
-            blurRadius: 16,
+            color: lightShadowColor.withValues(alpha: isDark ? 0.05 : 0.9),
+            offset: Offset(isDark ? -6 : -4, isDark ? -6 : -4),
+            blurRadius: 12,
             spreadRadius: 0,
           ),
         ],

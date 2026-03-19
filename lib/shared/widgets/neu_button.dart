@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_constants.dart';
 
-/// Premium Dark Neumorphism (Skeuomorphism) fiziksel buton.
-/// Basıldığında gerçekçi bir şekilde içeri doğru göçer (Debossed).
+/// Premium Neumorphism (Skeuomorphism) fiziksel buton.
+/// Temaya (Aydınlık/Karanlık) duyarlıdır.
 class NeuButton extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;
@@ -10,7 +10,7 @@ class NeuButton extends StatefulWidget {
   final double? height;
   final EdgeInsetsGeometry? padding;
   final double borderRadius;
-  final bool isPrimary; // True ise parıldayan bir ışık veya ikon barındırabilir
+  final bool isPrimary;
 
   const NeuButton({
     super.key,
@@ -36,7 +36,6 @@ class _NeuButtonState extends State<NeuButton> {
 
   void _handleTapUp(TapUpDetails details) {
     setState(() => _isPressed = false);
-    // Tıklandıktan çok kısa süre sonra tetiklensin ki basma hissi tam geçsin
     Future.delayed(const Duration(milliseconds: 50), () {
       widget.onTap();
     });
@@ -48,55 +47,54 @@ class _NeuButtonState extends State<NeuButton> {
 
   @override
   Widget build(BuildContext context) {
+    final surfaceColor = AppColors.getSurface(context);
+    final darkShadowColor = AppColors.getDarkShadow(context);
+    final lightShadowColor = AppColors.getLightShadow(context);
+    final innerSurfaceColor = AppColors.getInnerSurface(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTapDown: _handleTapDown,
       onTapUp: _handleTapUp,
       onTapCancel: _handleTapCancel,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150), // Fiziksel yaylanma hızı
+        duration: const Duration(milliseconds: 150),
         curve: Curves.easeOutCubic,
         width: widget.width,
         height: widget.height,
-        // Basılı değilse Dışa Kabartık (isInnerShadow: false)
-        // Basılıysa İçe Çökük (isInnerShadow: true)
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(widget.borderRadius),
-          color: _isPressed ? null : AppColors.surface,
+          color: _isPressed ? null : surfaceColor,
           gradient: _isPressed
               ? LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.darkShadow.withValues(
-                      alpha: 0.8,
-                    ), // Derin iç gölge
-                    AppColors.innerSurface,
-                    AppColors.lightShadow.withValues(
-                      alpha: 0.05,
-                    ), // Hafif ışık sekmesi
+                    darkShadowColor.withValues(alpha: isDark ? 0.8 : 0.3),
+                    innerSurfaceColor,
+                    lightShadowColor.withValues(alpha: isDark ? 0.05 : 0.7),
                   ],
                   stops: const [0.0, 0.4, 1.0],
                 )
               : null,
           border: _isPressed
               ? Border.all(
-                  color: AppColors.darkShadow.withValues(alpha: 0.8),
+                  color: darkShadowColor.withValues(alpha: isDark ? 0.8 : 0.3),
                   width: 1.5,
                 )
               : null,
           boxShadow: _isPressed
               ? null
-              : const [
-                  // Fiziksel buton kabartma gölgeleri (Embossed)
+              : [
                   BoxShadow(
-                    color: AppColors.darkShadow,
-                    offset: Offset(6, 6),
+                    color: darkShadowColor.withValues(alpha: isDark ? 1.0 : 0.5),
+                    offset: const Offset(6, 6),
                     blurRadius: 12,
                     spreadRadius: 1,
                   ),
                   BoxShadow(
-                    color: AppColors.lightShadow,
-                    offset: Offset(-4, -4),
+                    color: lightShadowColor.withValues(alpha: isDark ? 0.1 : 1.0),
+                    offset: const Offset(-4, -4),
                     blurRadius: 10,
                     spreadRadius: 0,
                   ),
@@ -105,14 +103,11 @@ class _NeuButtonState extends State<NeuButton> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(widget.borderRadius),
           child: Padding(
-            padding:
-                widget.padding ?? const EdgeInsets.all(AppSizes.paddingMedium),
+            padding: widget.padding ?? const EdgeInsets.all(AppSizes.paddingMedium),
             child: Center(
               child: AnimatedScale(
                 duration: const Duration(milliseconds: 150),
-                scale: _isPressed
-                    ? 0.95
-                    : 1.0, // İçindeki ikon/metin basılınca azıcık küçülsün
+                scale: _isPressed ? 0.95 : 1.0,
                 child: widget.child,
               ),
             ),

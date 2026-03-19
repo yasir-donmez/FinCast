@@ -22,58 +22,78 @@ const TransactionRecordSchema = CollectionSchema(
       name: r'amount',
       type: IsarType.double,
     ),
-    r'date': PropertySchema(
+    r'categoryId': PropertySchema(
       id: 1,
+      name: r'categoryId',
+      type: IsarType.string,
+    ),
+    r'dashboardLayoutType': PropertySchema(
+      id: 2,
+      name: r'dashboardLayoutType',
+      type: IsarType.long,
+    ),
+    r'dashboardOrder': PropertySchema(
+      id: 3,
+      name: r'dashboardOrder',
+      type: IsarType.long,
+    ),
+    r'date': PropertySchema(
+      id: 4,
       name: r'date',
       type: IsarType.dateTime,
     ),
     r'iconCode': PropertySchema(
-      id: 2,
+      id: 5,
       name: r'iconCode',
       type: IsarType.string,
     ),
+    r'isArchived': PropertySchema(
+      id: 6,
+      name: r'isArchived',
+      type: IsarType.bool,
+    ),
     r'isIncome': PropertySchema(
-      id: 3,
+      id: 7,
       name: r'isIncome',
       type: IsarType.bool,
     ),
     r'isLocked': PropertySchema(
-      id: 4,
+      id: 8,
       name: r'isLocked',
       type: IsarType.bool,
     ),
     r'maxAmount': PropertySchema(
-      id: 5,
+      id: 9,
       name: r'maxAmount',
       type: IsarType.double,
     ),
     r'minAmount': PropertySchema(
-      id: 6,
+      id: 10,
       name: r'minAmount',
       type: IsarType.double,
     ),
     r'periodType': PropertySchema(
-      id: 7,
+      id: 11,
       name: r'periodType',
       type: IsarType.long,
     ),
     r'remainingInstallments': PropertySchema(
-      id: 8,
+      id: 12,
       name: r'remainingInstallments',
       type: IsarType.long,
     ),
     r'showOnDashboard': PropertySchema(
-      id: 9,
+      id: 13,
       name: r'showOnDashboard',
       type: IsarType.bool,
     ),
     r'title': PropertySchema(
-      id: 10,
+      id: 14,
       name: r'title',
       type: IsarType.string,
     ),
     r'vaultId': PropertySchema(
-      id: 11,
+      id: 15,
       name: r'vaultId',
       type: IsarType.long,
     )
@@ -99,6 +119,12 @@ int _transactionRecordEstimateSize(
 ) {
   var bytesCount = offsets.last;
   {
+    final value = object.categoryId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.iconCode;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -115,17 +141,21 @@ void _transactionRecordSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDouble(offsets[0], object.amount);
-  writer.writeDateTime(offsets[1], object.date);
-  writer.writeString(offsets[2], object.iconCode);
-  writer.writeBool(offsets[3], object.isIncome);
-  writer.writeBool(offsets[4], object.isLocked);
-  writer.writeDouble(offsets[5], object.maxAmount);
-  writer.writeDouble(offsets[6], object.minAmount);
-  writer.writeLong(offsets[7], object.periodType);
-  writer.writeLong(offsets[8], object.remainingInstallments);
-  writer.writeBool(offsets[9], object.showOnDashboard);
-  writer.writeString(offsets[10], object.title);
-  writer.writeLong(offsets[11], object.vaultId);
+  writer.writeString(offsets[1], object.categoryId);
+  writer.writeLong(offsets[2], object.dashboardLayoutType);
+  writer.writeLong(offsets[3], object.dashboardOrder);
+  writer.writeDateTime(offsets[4], object.date);
+  writer.writeString(offsets[5], object.iconCode);
+  writer.writeBool(offsets[6], object.isArchived);
+  writer.writeBool(offsets[7], object.isIncome);
+  writer.writeBool(offsets[8], object.isLocked);
+  writer.writeDouble(offsets[9], object.maxAmount);
+  writer.writeDouble(offsets[10], object.minAmount);
+  writer.writeLong(offsets[11], object.periodType);
+  writer.writeLong(offsets[12], object.remainingInstallments);
+  writer.writeBool(offsets[13], object.showOnDashboard);
+  writer.writeString(offsets[14], object.title);
+  writer.writeLong(offsets[15], object.vaultId);
 }
 
 TransactionRecord _transactionRecordDeserialize(
@@ -136,18 +166,22 @@ TransactionRecord _transactionRecordDeserialize(
 ) {
   final object = TransactionRecord();
   object.amount = reader.readDouble(offsets[0]);
-  object.date = reader.readDateTime(offsets[1]);
-  object.iconCode = reader.readStringOrNull(offsets[2]);
+  object.categoryId = reader.readStringOrNull(offsets[1]);
+  object.dashboardLayoutType = reader.readLong(offsets[2]);
+  object.dashboardOrder = reader.readLong(offsets[3]);
+  object.date = reader.readDateTime(offsets[4]);
+  object.iconCode = reader.readStringOrNull(offsets[5]);
   object.id = id;
-  object.isIncome = reader.readBool(offsets[3]);
-  object.isLocked = reader.readBool(offsets[4]);
-  object.maxAmount = reader.readDoubleOrNull(offsets[5]);
-  object.minAmount = reader.readDoubleOrNull(offsets[6]);
-  object.periodType = reader.readLong(offsets[7]);
-  object.remainingInstallments = reader.readLongOrNull(offsets[8]);
-  object.showOnDashboard = reader.readBool(offsets[9]);
-  object.title = reader.readString(offsets[10]);
-  object.vaultId = reader.readLongOrNull(offsets[11]);
+  object.isArchived = reader.readBool(offsets[6]);
+  object.isIncome = reader.readBool(offsets[7]);
+  object.isLocked = reader.readBool(offsets[8]);
+  object.maxAmount = reader.readDoubleOrNull(offsets[9]);
+  object.minAmount = reader.readDoubleOrNull(offsets[10]);
+  object.periodType = reader.readLong(offsets[11]);
+  object.remainingInstallments = reader.readLongOrNull(offsets[12]);
+  object.showOnDashboard = reader.readBool(offsets[13]);
+  object.title = reader.readString(offsets[14]);
+  object.vaultId = reader.readLongOrNull(offsets[15]);
   return object;
 }
 
@@ -161,26 +195,34 @@ P _transactionRecordDeserializeProp<P>(
     case 0:
       return (reader.readDouble(offset)) as P;
     case 1:
-      return (reader.readDateTime(offset)) as P;
-    case 2:
       return (reader.readStringOrNull(offset)) as P;
-    case 3:
-      return (reader.readBool(offset)) as P;
-    case 4:
-      return (reader.readBool(offset)) as P;
-    case 5:
-      return (reader.readDoubleOrNull(offset)) as P;
-    case 6:
-      return (reader.readDoubleOrNull(offset)) as P;
-    case 7:
+    case 2:
       return (reader.readLong(offset)) as P;
-    case 8:
-      return (reader.readLongOrNull(offset)) as P;
-    case 9:
+    case 3:
+      return (reader.readLong(offset)) as P;
+    case 4:
+      return (reader.readDateTime(offset)) as P;
+    case 5:
+      return (reader.readStringOrNull(offset)) as P;
+    case 6:
       return (reader.readBool(offset)) as P;
+    case 7:
+      return (reader.readBool(offset)) as P;
+    case 8:
+      return (reader.readBool(offset)) as P;
+    case 9:
+      return (reader.readDoubleOrNull(offset)) as P;
     case 10:
-      return (reader.readString(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 11:
+      return (reader.readLong(offset)) as P;
+    case 12:
+      return (reader.readLongOrNull(offset)) as P;
+    case 13:
+      return (reader.readBool(offset)) as P;
+    case 14:
+      return (reader.readString(offset)) as P;
+    case 15:
       return (reader.readLongOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -345,6 +387,272 @@ extension TransactionRecordQueryFilter
         upper: upper,
         includeUpper: includeUpper,
         epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      categoryIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'categoryId',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      categoryIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'categoryId',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      categoryIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'categoryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      categoryIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'categoryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      categoryIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'categoryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      categoryIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'categoryId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      categoryIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'categoryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      categoryIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'categoryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      categoryIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'categoryId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      categoryIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'categoryId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      categoryIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'categoryId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      categoryIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'categoryId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      dashboardLayoutTypeEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'dashboardLayoutType',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      dashboardLayoutTypeGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'dashboardLayoutType',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      dashboardLayoutTypeLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'dashboardLayoutType',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      dashboardLayoutTypeBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'dashboardLayoutType',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      dashboardOrderEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'dashboardOrder',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      dashboardOrderGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'dashboardOrder',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      dashboardOrderLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'dashboardOrder',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      dashboardOrderBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'dashboardOrder',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }
@@ -611,6 +919,16 @@ extension TransactionRecordQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      isArchivedEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isArchived',
+        value: value,
       ));
     });
   }
@@ -1177,6 +1495,48 @@ extension TransactionRecordQuerySortBy
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByCategoryId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'categoryId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByCategoryIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'categoryId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByDashboardLayoutType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dashboardLayoutType', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByDashboardLayoutTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dashboardLayoutType', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByDashboardOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dashboardOrder', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByDashboardOrderDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dashboardOrder', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
       sortByDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'date', Sort.asc);
@@ -1201,6 +1561,20 @@ extension TransactionRecordQuerySortBy
       sortByIconCodeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'iconCode', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByIsArchived() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isArchived', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByIsArchivedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isArchived', Sort.desc);
     });
   }
 
@@ -1348,6 +1722,48 @@ extension TransactionRecordQuerySortThenBy
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByCategoryId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'categoryId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByCategoryIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'categoryId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByDashboardLayoutType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dashboardLayoutType', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByDashboardLayoutTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dashboardLayoutType', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByDashboardOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dashboardOrder', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByDashboardOrderDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'dashboardOrder', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
       thenByDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'date', Sort.asc);
@@ -1385,6 +1801,20 @@ extension TransactionRecordQuerySortThenBy
       thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByIsArchived() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isArchived', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByIsArchivedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isArchived', Sort.desc);
     });
   }
 
@@ -1525,6 +1955,27 @@ extension TransactionRecordQueryWhereDistinct
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QDistinct>
+      distinctByCategoryId({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'categoryId', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QDistinct>
+      distinctByDashboardLayoutType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'dashboardLayoutType');
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QDistinct>
+      distinctByDashboardOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'dashboardOrder');
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QDistinct>
       distinctByDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'date');
@@ -1535,6 +1986,13 @@ extension TransactionRecordQueryWhereDistinct
       distinctByIconCode({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'iconCode', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QDistinct>
+      distinctByIsArchived() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isArchived');
     });
   }
 
@@ -1616,6 +2074,27 @@ extension TransactionRecordQueryProperty
     });
   }
 
+  QueryBuilder<TransactionRecord, String?, QQueryOperations>
+      categoryIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'categoryId');
+    });
+  }
+
+  QueryBuilder<TransactionRecord, int, QQueryOperations>
+      dashboardLayoutTypeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'dashboardLayoutType');
+    });
+  }
+
+  QueryBuilder<TransactionRecord, int, QQueryOperations>
+      dashboardOrderProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'dashboardOrder');
+    });
+  }
+
   QueryBuilder<TransactionRecord, DateTime, QQueryOperations> dateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'date');
@@ -1626,6 +2105,12 @@ extension TransactionRecordQueryProperty
       iconCodeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'iconCode');
+    });
+  }
+
+  QueryBuilder<TransactionRecord, bool, QQueryOperations> isArchivedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isArchived');
     });
   }
 

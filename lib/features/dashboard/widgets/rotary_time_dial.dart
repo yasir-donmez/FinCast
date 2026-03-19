@@ -40,10 +40,11 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> {
     setState(() {
       var delta = angle - _lastAngle;
       // Handle wrap-around
-      if (delta > pi)
+      if (delta > pi) {
         delta -= 2 * pi;
-      else if (delta < -pi)
+      } else if (delta < -pi) {
         delta += 2 * pi;
+      }
 
       _lastAngle = angle;
       _currentAngle += delta;
@@ -56,10 +57,13 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> {
       // Dinamik Rengi Hesapla ve Global Olarak Bildir
       double turns = _currentAngle / (2 * pi);
       final activeColor = _getSmoothColor(turns);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        // Build sırasında state güncellenmesini önlemek için PostFrameCallback kullanırız ya da burası zaten PanUpdate içinde olduğundan güvenlidir, fakat panupdate buildleri de tetikleyebilir.
-        ref.read(rotaryColorProvider.notifier).state = activeColor;
-      });
+      
+      // SADECE renk değiştiğinde güncelle (Gereksiz rebuild'leri önle)
+      if (ref.read(rotaryColorProvider) != activeColor) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(rotaryColorProvider.notifier).state = activeColor;
+        });
+      }
 
       // Haptic feedback every tick (40 ticks per turn)
       int currentTick = (_currentAngle / (2 * pi / 40)).floor();
@@ -175,7 +179,7 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> {
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.0,
                   shadows: [
-                    Shadow(color: activeColor.withOpacity(0.8), blurRadius: 10),
+                    Shadow(color: activeColor.withValues(alpha: 0.8), blurRadius: 10),
                   ],
                 ),
               ),
@@ -235,23 +239,23 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> {
                         height: knobSize,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: AppColors.surface,
-                          boxShadow: const [
+                          color: AppColors.getSurface(context),
+                          boxShadow: [
                             BoxShadow(
-                              color: AppColors.darkShadow,
-                              offset: Offset(15, 15),
+                              color: AppColors.getDarkShadow(context).withValues(alpha: 0.4),
+                              offset: const Offset(15, 15),
                               blurRadius: 30,
                               spreadRadius: 2,
                             ),
                             BoxShadow(
-                              color: AppColors.lightShadow,
-                              offset: Offset(-8, -8),
+                              color: AppColors.getLightShadow(context).withValues(alpha: 0.8),
+                              offset: const Offset(-8, -8),
                               blurRadius: 20,
                               spreadRadius: 0,
                             ),
                             BoxShadow(
-                              color: Colors.black45,
-                              offset: Offset(4, 4),
+                              color: Colors.black.withValues(alpha: 0.2),
+                              offset: const Offset(4, 4),
                               blurRadius: 10,
                               spreadRadius: -5,
                             ),
@@ -267,23 +271,17 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> {
                                 height: 16,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppColors.darkShadow.withValues(
-                                      alpha: 0.8,
+                                    border: Border.all(
+                                      color: AppColors.getDarkShadow(context).withValues(alpha: 0.3),
+                                      width: 1.0,
                                     ),
-                                    width: 1.0,
-                                  ),
                                   gradient: LinearGradient(
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                     colors: [
-                                      AppColors.darkShadow.withValues(
-                                        alpha: 0.9,
-                                      ),
-                                      AppColors.innerSurface,
-                                      AppColors.lightShadow.withValues(
-                                        alpha: 0.1,
-                                      ),
+                                      AppColors.getDarkShadow(context).withValues(alpha: 0.5),
+                                      AppColors.getInnerSurface(context),
+                                      AppColors.getLightShadow(context).withValues(alpha: 0.05),
                                     ],
                                     stops: const [0.0, 0.4, 1.0],
                                   ),
@@ -316,63 +314,51 @@ class _DialTicksPainter extends CustomPainter {
     required this.activeColor,
   });
 
+  // Pre-allocated Paint objects to prevent OOM
+  final Paint _tickPaint = Paint()..strokeCap = StrokeCap.round;
+  final Paint _shadowPaint = Paint()
+    ..strokeCap = StrokeCap.round
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
+    final isDark = activeColor.computeLuminance() < 0.5;
 
     double turns = currentAngle / (2 * pi);
     int level = turns.floor();
     if (level < 0) level = 0;
 
-    double progressInLevel = turns - level; // 0.0'dan 1.0'a kadar
-
-    // Kaç çubuğun "Aktif" olduğu (yanacağı)
+    double progressInLevel = turns - level;
     int activeTicks = (progressInLevel * tickCount).round();
-    Color levelColor =
-        activeColor; // Dışardan gelen smooth premium renk kullanılır
 
-    // Dönen ibrenin mevcut tam sanal konumu (Sıvı dalga hareketi için Gaussian merkezi)
     double pointerDialAngle = (currentAngle % (2 * pi));
 
     for (int i = 0; i < tickCount; i++) {
-      // Çizgiyi üstten başlat (-pi/2) ve saat yönünde diz
       double angle = (i * 2 * pi) / tickCount - pi / 2;
       double tickPos = (i * 2 * pi) / tickCount;
 
-      // En kısa açısal mesafeyi bul (Kusursuz dalga tepesi hesabı için atan2 varyasyonlu absolute)
       double dist = (pointerDialAngle - tickPos).abs();
       if (dist > pi) dist = 2 * pi - dist;
 
-      // Sıvı-animasyon için exponential Gaussian dalga hesaplaması
-      double sigma = 0.35; // Dalganın genişlik etki alanı
+      double sigma = 0.35;
       double bulgeFactor = exp(-(dist * dist) / (sigma * sigma));
 
-      // Tüm çubuklar varsayılan olarak kısa kalır (Sadece bakılan alan büyür/hacim alır)
       double tickMinHeight = radius * 0.05;
-
-      // Bulunulan zaman katmanına (Gün, Hafta, Ay) göre maksimum büyüme sınırı genişler
       double baseMaxGrowth = radius * 0.05;
       double dynamicGrowth = (level * 0.03 * radius);
-      if (dynamicGrowth > radius * 0.15) dynamicGrowth = radius * 0.15; // Limit
+      if (dynamicGrowth > radius * 0.15) dynamicGrowth = radius * 0.15;
 
-      // Çubuğun o anki dalga üzerinde aldığı form/yükseklik
       double currentHeight =
           tickMinHeight + ((baseMaxGrowth + dynamicGrowth) * bulgeFactor);
 
-      // Çubuk aktif kısımda yanıyor mu?
       bool isPassed = i <= activeTicks;
 
-      Color tickColor = isPassed
-          ? levelColor
-          : AppColors.textSecondary.withValues(alpha: 0.15);
-
-      final paint = Paint()
-        ..color = tickColor
-        ..strokeWidth =
-            2.5 +
-            (1.5 * bulgeFactor) // Yaklaştıkça fiziksel olarak kalınlaşır
-        ..strokeCap = StrokeCap.round;
+      _tickPaint.color = isPassed
+          ? activeColor
+          : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.08));
+      _tickPaint.strokeWidth = 2.5 + (1.5 * bulgeFactor);
 
       final innerRadius = radius - currentHeight;
 
@@ -385,24 +371,20 @@ class _DialTicksPainter extends CustomPainter {
         center.dy + radius * sin(angle),
       );
 
-      // Işıltı Efekti Yalnızca aktiflere ve dalganın tepe noktalarındaki bariz olanlara eklenir
       if (isPassed && bulgeFactor > 0.1) {
-        final shadowPaint = Paint()
-          ..color = levelColor
-              .withValues(alpha: 0.6 * bulgeFactor) // Parlaklık mesafeyle söner
-          ..strokeWidth = 6.0 * bulgeFactor
-          ..strokeCap = StrokeCap.round
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
-        canvas.drawLine(startPoint, endPoint, shadowPaint);
+        _shadowPaint.color = activeColor.withValues(alpha: 0.6 * bulgeFactor);
+        _shadowPaint.strokeWidth = 6.0 * bulgeFactor;
+        canvas.drawLine(startPoint, endPoint, _shadowPaint);
       }
 
-      canvas.drawLine(startPoint, endPoint, paint);
+      canvas.drawLine(startPoint, endPoint, _tickPaint);
     }
   }
 
   @override
   bool shouldRepaint(covariant _DialTicksPainter oldDelegate) {
     return oldDelegate.currentAngle != currentAngle ||
+        oldDelegate.activeColor != activeColor ||
         oldDelegate.tickCount != tickCount;
   }
 }

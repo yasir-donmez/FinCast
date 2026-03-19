@@ -32,6 +32,7 @@ void main() {
 
     if (changed) {
       file.writeAsStringSync(content);
+      // ignore: avoid_print
       print('Updated ${file.path}');
     }
   }
