@@ -9,7 +9,6 @@ class AiService {
   // Gerçek projede --dart-define veya .env dosyasından alınmalı.
   static const String _apiKey = String.fromEnvironment(
     'GEMINI_API_KEY',
-    defaultValue: 'AIzaSyBAGOLD9UmudOMMMxCowHwbSzzyh22LBi4',
   );
 
   static GenerativeModel? _model;
