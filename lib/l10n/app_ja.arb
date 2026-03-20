@@ -134,5 +134,13 @@
   "limitedTotal": "合計",
   "netBalance": "純残高",
   "bestCase": "ベストケース",
-  "worstCase": "ワーストケース"
+  "worstCase": "ワーストケース",
+  "layoutAndSorting": "レイアウトと並べ替え",
+  "layout1": "1件表示",
+  "layout2": "2件表示",
+  "layout3": "3件表示",
+  "layout4": "4件表示",
+  "moveForward": "前に移動",
+  "moveBackward": "後ろに移動",
+  "selectCurrency": "通貨を選択"
 }

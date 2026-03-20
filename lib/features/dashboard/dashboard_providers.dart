@@ -8,6 +8,7 @@ import '../vaults/vaults_providers.dart';
 class DashboardItem {
   final String id;
   final String name;
+  final String? categoryId; // ID bazlı ikon/renk için
   final double balance;
   final String currency;
   final String? iconCode;
@@ -23,6 +24,7 @@ class DashboardItem {
   DashboardItem({
     required this.id,
     required this.name,
+    this.categoryId,
     required this.balance,
     required this.currency,
     this.iconCode,
@@ -44,6 +46,12 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
 
   final List<DashboardItem> items = [];
 
+  // Pre-group transactions by groupId for O(N+M) performance
+  final Map<String?, List<MockTransaction>> groupedTransactions = {};
+  for (final t in transactions) {
+    groupedTransactions.putIfAbsent(t.groupId, () => []).add(t);
+  }
+
   // 1. Görünür Kasaları (Grupları) ekle
   final sortedVaults = vaults.where((v) => v.showOnDashboard).toList()
     ..sort((a, b) {
@@ -53,8 +61,9 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
     });
 
   for (final v in sortedVaults) {
-    // Kasa içindeki işlemleri bul
-    final groupTx = transactions.where((t) => t.groupId == 'v_${v.id}').toList()
+    final String vaultGroupId = 'v_${v.id}';
+    // Kasa içindeki işlemleri Map'ten hızlıca çek
+    final groupTx = (groupedTransactions[vaultGroupId] ?? [])
       ..sort((a, b) => b.date.compareTo(a.date));
 
     double groupBalance = 0;
@@ -80,15 +89,21 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
       groupBalance = (groupMin + groupMax) / 2;
     }
 
-    // En çok tekrar eden ismi bul (Dominant Icon için isim kullanılıyor)
+    // En çok tekrar eden ikon kodunu bul (Artık İsim yerine ID kullanıyoruz)
     final dominantIconCode =
-        IconUtils.getDominantIconCode(groupTx.map((t) => t.name).toList()) ??
+        IconUtils.getDominantIconCode(groupTx.map((t) => t.iconCode ?? t.categoryId).toList()) ??
         v.iconCode;
+
+    // Dominant categoryId'yi bul
+    final dominantCategoryId = IconUtils.getDominantIconCode(
+      groupTx.map((t) => t.categoryId).toList(),
+    );
 
     items.add(
       DashboardItem(
-        id: 'v_${v.id}',
+        id: vaultGroupId,
         name: v.name,
+        categoryId: dominantCategoryId,
         balance: groupBalance,
         currency: v.currency,
         iconCode: dominantIconCode,
@@ -111,21 +126,22 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
     );
   }
 
-  // 2. Görünür Tekil İşlemleri ekle
-  for (final t in transactions) {
-    if (t.groupId == null && t.showOnDashboard) {
-      // mockTransaction follows the UI model
+  // 2. Görünür Tekil İşlemleri ekle (Map'ten null anahtarı ile çek)
+  final standaloneTxs = groupedTransactions[null] ?? [];
+  for (final t in standaloneTxs) {
+    if (t.showOnDashboard) {
       items.add(
         DashboardItem(
-          id: 't_${t.dbId}',
+          id: t.id, // MockTransaction ID'sini doğrudan kullan (örn: 'db_1')
           name: t.name,
+          categoryId: t.categoryId,
           balance: t.isIncome ? t.amount : -t.amount,
           currency: '₺',
-          iconCode: t.name, // or icon mapping
+          iconCode: t.iconCode ?? t.categoryId,
           isGroup: false,
           minLimit: t.minAmount,
           maxLimit: t.maxAmount,
-          dashboardOrder: 0, // Default for standalone
+          dashboardOrder: 0,
           dashboardLayoutType: t.dashboardLayoutType,
         ),
       );

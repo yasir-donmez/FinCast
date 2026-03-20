@@ -1765,6 +1765,54 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'En Kötü Senaryo'**
   String get worstCase;
+
+  /// No description provided for @layoutAndSorting.
+  ///
+  /// In tr, this message translates to:
+  /// **'Görünüm ve Sıralama'**
+  String get layoutAndSorting;
+
+  /// No description provided for @layout1.
+  ///
+  /// In tr, this message translates to:
+  /// **'1\'li'**
+  String get layout1;
+
+  /// No description provided for @layout2.
+  ///
+  /// In tr, this message translates to:
+  /// **'2\'li'**
+  String get layout2;
+
+  /// No description provided for @layout3.
+  ///
+  /// In tr, this message translates to:
+  /// **'3\'lü'**
+  String get layout3;
+
+  /// No description provided for @layout4.
+  ///
+  /// In tr, this message translates to:
+  /// **'4\'lü'**
+  String get layout4;
+
+  /// No description provided for @moveForward.
+  ///
+  /// In tr, this message translates to:
+  /// **'Öne Taşı'**
+  String get moveForward;
+
+  /// No description provided for @moveBackward.
+  ///
+  /// In tr, this message translates to:
+  /// **'Arkaya Taşı'**
+  String get moveBackward;
+
+  /// No description provided for @selectCurrency.
+  ///
+  /// In tr, this message translates to:
+  /// **'Para Birimi Seçin'**
+  String get selectCurrency;
 }
 
 class _AppLocalizationsDelegate

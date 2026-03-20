@@ -852,4 +852,28 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get worstCase => 'ワーストケース';
+
+  @override
+  String get layoutAndSorting => 'レイアウトと並べ替え';
+
+  @override
+  String get layout1 => '1件表示';
+
+  @override
+  String get layout2 => '2件表示';
+
+  @override
+  String get layout3 => '3件表示';
+
+  @override
+  String get layout4 => '4件表示';
+
+  @override
+  String get moveForward => '前に移動';
+
+  @override
+  String get moveBackward => '後ろに移動';
+
+  @override
+  String get selectCurrency => '通貨を選択';
 }

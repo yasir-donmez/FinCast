@@ -21,6 +21,7 @@ class MockTransaction {
   final int? remainingInstallments; // Taksit sayısı (varsa)
   final int? dbId; // Isar DB ID (null = henüz kaydedilmemiş)
   final String? categoryId; // Multi-language desteği için benzersiz anahtar
+  final String? iconCode;   // İkon referansı (ID veya özel kod)
   final bool showOnDashboard;
   final int dashboardLayoutType;
   String? groupId; // null ise grupsuz
@@ -32,13 +33,14 @@ class MockTransaction {
     required this.color,
     required this.amount,
     this.minAmount,
-    required this.maxAmount,
+    this.maxAmount,
     required this.isIncome,
     required this.periodType,
     required this.date,
     this.remainingInstallments,
     this.dbId,
     this.categoryId,
+    this.iconCode,
     required this.showOnDashboard,
     this.dashboardLayoutType = 4,
     this.groupId,
@@ -105,6 +107,7 @@ class MockTransaction {
       remainingInstallments: record.remainingInstallments,
       dbId: record.id,
       categoryId: record.categoryId,
+      iconCode: record.iconCode,
       showOnDashboard: record.showOnDashboard,
       dashboardLayoutType: record.dashboardLayoutType,
     );

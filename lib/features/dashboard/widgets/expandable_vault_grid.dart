@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/theme/app_constants.dart';
 import '../dashboard_providers.dart';
 import '../../../shared/widgets/fluid_container.dart';
@@ -358,17 +359,17 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
                 final pageItems = pages[pageIdx];
                 final startIndex = pageStartIndices[pageIdx];
                 final int layoutType = pageItems.length;
-
-                switch (layoutType) {
-                  case 1:
-                    return _buildLayoutFor1(pageItems, width, startIndex);
-                  case 2:
-                    return _buildLayoutFor2(pageItems, width, startIndex);
-                  case 3:
-                    return _buildLayoutFor3(pageItems, width, startIndex);
-                  default:
-                    return _buildLayoutFor4(pageItems, width, startIndex);
-                }
+                
+                return AnimatedSwitcher(
+                  key: ValueKey('page_$pageIdx'),
+                  duration: const Duration(milliseconds: 500),
+                  child: switch (layoutType) {
+                    1 => _buildLayoutFor1(pageItems, width, startIndex),
+                    2 => _buildLayoutFor2(pageItems, width, startIndex),
+                    3 => _buildLayoutFor3(pageItems, width, startIndex),
+                    _ => _buildLayoutFor4(pageItems, width, startIndex),
+                  },
+                );
               },
             ),
           ),
@@ -466,11 +467,25 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
     return IconUtils.getIcon(code);
   }
 
+  IconData _getIconForItem(DashboardItem item) {
+    // Öncelik: categoryId
+    if (item.categoryId != null) return IconUtils.getIcon(item.categoryId);
+    // İkinci: Manuel atanmış iconCode
+    if (item.iconCode != null) return IconUtils.getIcon(item.iconCode);
+    // Fallback: name
+    return IconUtils.getIcon(item.name);
+  }
+
   Color _getColorForItem(DashboardItem item) {
     if (item.balance < 0) {
       return AppColors.getExpense(context);
     }
-    return IconUtils.getColor(item.iconCode ?? item.name);
+    // Öncelik: categoryId
+    if (item.categoryId != null) return IconUtils.getColor(item.categoryId);
+    // İkinci: iconCode
+    if (item.iconCode != null) return IconUtils.getColor(item.iconCode);
+    // Fallback: name
+    return IconUtils.getColor(item.name);
   }
 
   Widget _buildVaultCard(
@@ -481,8 +496,9 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
     double height,
   ) {
     final color = _getColorForItem(item);
-    final icon = _getIconData(item.iconCode ?? '');
-    final originalColor = IconUtils.getColor(item.iconCode ?? item.name);
+    final icon = _getIconForItem(item);
+    // Filigran için orijinal rengi alırken de ID öncelikli
+    final originalColor = IconUtils.getColor(item.categoryId ?? item.iconCode ?? item.name);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppSizes.radiusDefault),
@@ -872,10 +888,11 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
   }
 
   void _showLayoutSettings(DashboardItem item) {
+    final l10n = AppLocalizations.of(context)!;
     HapticFeedback.heavyImpact();
     FluidSheet.show(
       context: context,
-      title: 'Görünüm ve Sıralama',
+      title: l10n.layoutAndSorting,
       child: Column(
         mainAxisSize: MainAxisSize.min, // Sadece içerik kadar yer kaplamasını sağlar
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -883,10 +900,10 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildLayoutOption(item, 1, Icons.crop_square_rounded, '1\'li'),
-              _buildLayoutOption(item, 2, Icons.view_headline_rounded, '2\'li'),
-              _buildLayoutOption(item, 3, Icons.view_quilt_rounded, '3\'lü'),
-              _buildLayoutOption(item, 4, Icons.view_module_rounded, '4\'lü'),
+              _buildLayoutOption(item, 1, Icons.crop_square_rounded, l10n.layout1),
+              _buildLayoutOption(item, 2, Icons.view_headline_rounded, l10n.layout2),
+              _buildLayoutOption(item, 3, Icons.view_quilt_rounded, l10n.layout3),
+              _buildLayoutOption(item, 4, Icons.view_module_rounded, l10n.layout4),
             ],
           ),
           const SizedBox(height: 32),
@@ -898,10 +915,10 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
             },
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.arrow_upward_rounded, size: 18),
-                SizedBox(width: 8),
-                Text('Öne Taşı'),
+              children: [
+                const Icon(Icons.arrow_upward_rounded, size: 18),
+                const SizedBox(width: 8),
+                Text(l10n.moveForward),
               ],
             ),
           ),
@@ -914,10 +931,10 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
             },
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.arrow_downward_rounded, size: 18),
-                SizedBox(width: 8),
-                Text('Arkaya Taşı'),
+              children: [
+                const Icon(Icons.arrow_downward_rounded, size: 18),
+                const SizedBox(width: 8),
+                Text(l10n.moveBackward),
               ],
             ),
           ),
@@ -935,6 +952,7 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
   ) {
     final bool isSelected = item.dashboardLayoutType == type;
     return GestureDetector(
+      key: ValueKey('layout_option_${item.id}_$type'),
       onTap: () {
         Navigator.pop(context);
         _updateVaultLayout(item, type);
@@ -951,12 +969,12 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
               border: Border.all(
                 color: isSelected
                     ? AppColors.primary
-                    : AppColors.getTextSecondary(context).withValues(alpha: 0.2),
+                    : AppColors.getTextSecondary(context).withValues(alpha: 0.6), // Daha belirgin sınır (0.45 -> 0.6)
               ),
             ),
             child: Icon(
               icon,
-              color: isSelected ? AppColors.getPrimary(context) : AppColors.getTextSecondary(context),
+              color: isSelected ? AppColors.getPrimary(context) : AppColors.getTextPrimary(context).withValues(alpha: 0.7), // Secondary -> Primary Text ve daha opak
             ),
           ),
           const SizedBox(height: 4),
@@ -964,7 +982,7 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
             label,
             style: TextStyle(
               fontSize: 10,
-              color: isSelected ? AppColors.getPrimary(context) : AppColors.getTextSecondary(context),
+              color: isSelected ? AppColors.getPrimary(context) : AppColors.getTextPrimary(context).withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -1019,7 +1037,8 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
       vault.dashboardOrder = order1;
       await DatabaseService.updateVault(vault);
     } else {
-      final tx = ref.read(allTransactionsProvider).firstWhere((t) => 't_${t.id}' == item1.id);
+      // Artık DashboardItem.id == MockTransaction.id ('db_1')
+      final tx = ref.read(allTransactionsProvider).firstWhere((t) => 'db_${t.id}' == item1.id);
       tx.dashboardOrder = order1;
       await DatabaseService.updateTransaction(tx);
     }

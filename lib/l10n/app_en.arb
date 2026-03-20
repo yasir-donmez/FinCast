@@ -274,5 +274,13 @@
   "limitedTotal": "Total",
   "netBalance": "Net Balance",
   "bestCase": "Best Case",
-  "worstCase": "Worst Case"
+  "worstCase": "Worst Case",
+  "layoutAndSorting": "Layout & Sorting",
+  "layout1": "1-item",
+  "layout2": "2-item",
+  "layout3": "3-item",
+  "layout4": "4-item",
+  "moveForward": "Move Forward",
+  "moveBackward": "Move Backward",
+  "selectCurrency": "Select Currency"
 }

@@ -274,5 +274,13 @@
   "limitedTotal": "Toplam",
   "netBalance": "Net Bakiye",
   "bestCase": "En İyi Senaryo",
-  "worstCase": "En Kötü Senaryo"
+  "worstCase": "En Kötü Senaryo",
+  "layoutAndSorting": "Görünüm ve Sıralama",
+  "layout1": "1'li",
+  "layout2": "2'li",
+  "layout3": "3'lü",
+  "layout4": "4'lü",
+  "moveForward": "Öne Taşı",
+  "moveBackward": "Arkaya Taşı",
+  "selectCurrency": "Para Birimi Seçin"
 }

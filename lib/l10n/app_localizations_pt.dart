@@ -859,4 +859,28 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get worstCase => 'Pior Caso';
+
+  @override
+  String get layoutAndSorting => 'Layout e Ordenação';
+
+  @override
+  String get layout1 => '1 item';
+
+  @override
+  String get layout2 => '2 itens';
+
+  @override
+  String get layout3 => '3 itens';
+
+  @override
+  String get layout4 => '4 itens';
+
+  @override
+  String get moveForward => 'Mover para frente';
+
+  @override
+  String get moveBackward => 'Mover para trás';
+
+  @override
+  String get selectCurrency => 'Selecionar moeda';
 }

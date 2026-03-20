@@ -584,13 +584,10 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
         _tabIndex == 0 ? _getExpenseCategories(l10n) : _getIncomeCategories(l10n);
 
     return Container(
-      // Yukarıdan ekranın %95'ini kaplayan Bottom Sheet boyutlandırması
-      height: MediaQuery.of(context).size.height * 0.95,
-      decoration: BoxDecoration(
-        color: AppColors.getSurface(context), // Using surface as background proxy
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppSizes.radiusLarge),
-        ),
+      // Arka planı FluidSheet'in cam dokusunu bozmamak için şeffaf yaptık
+      height: MediaQuery.of(context).size.height * 0.93, // Biraz daha aşağıda, daha ferah
+      decoration: const BoxDecoration(
+        color: Colors.transparent, 
       ),
       child: Column(
         children: [
@@ -701,6 +698,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   Widget _buildHierarchicalCategorySelector(
     List<Map<String, dynamic>> categories,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final selectedCat = categories[_selectedCategoryIndex];
     final List<Map<String, dynamic>> subModels =
         (selectedCat['subModels'] as List<Map<String, dynamic>>?) ?? [];
@@ -773,17 +771,17 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                       ),
                       color: isSelected
                           ? AppColors.getInnerSurface(context)
-                          : AppColors.getSurface(context),
+                          : isDark ? AppColors.getSurface(context) : Colors.white.withValues(alpha: 0.5), // Aydınlıkta daha şeffaf taban
                       border: isSelected
                           ? Border.all(
-                              color: (cat['color'] as Color).withValues(alpha: 0.4),
+                              color: AppColors.getAccentDeep(context, cat['color'] as Color).withValues(alpha: 0.4),
                               width: 1.5,
                             )
                           : null,
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: (cat['color'] as Color).withValues(alpha: 
+                                color: AppColors.getAccentDeep(context, cat['color'] as Color).withValues(alpha: 
                                   0.15,
                                 ),
                                 blurRadius: 12,
@@ -815,9 +813,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                             duration: const Duration(milliseconds: 200),
                             child: Icon(
                               displayIcon,
-                              key: ValueKey('$index-$displayName'),
+                              key: ValueKey('icon-${showSubInfo ? (cat['subModels'] as List)[_selectedSubModelIndex]['id'] : cat['id']}'),
                               color: isSelected
-                                  ? cat['color'] as Color
+                                  ? AppColors.getAccentDeep(context, cat['color'] as Color)
                                   : AppColors.getTextSecondary(context),
                               size: isSelected ? 28 : 24,
                             ),
@@ -826,11 +824,11 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 200),
                             child: Container(
+                              key: ValueKey('text-${showSubInfo ? (cat['subModels'] as List)[_selectedSubModelIndex]['id'] : cat['id']}'),
                               height: 34,
                               alignment: Alignment.center,
                               child: Text(
                                 displayName,
-                                key: ValueKey('txt-$index-$displayName'),
                                 style: TextStyle(
                                   fontSize: 10.0,
                                   fontWeight: isSelected
@@ -858,7 +856,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                                 child: Icon(
                                   Icons.expand_more_rounded,
                                   size: 14,
-                                  color: (cat['color'] as Color).withValues(alpha: 
+                                  color: AppColors.getAccentDeep(context, cat['color'] as Color).withValues(alpha: 
                                     0.7,
                                   ),
                                 ),
@@ -918,7 +916,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                           border: Border.all(
                             color: isSubSelected
                                 ? parentColor.withValues(alpha: 0.5)
-                                : AppColors.getDarkShadow(context).withValues(alpha: 0.3), // Changed from AppColors.darkShadow
+                                : isDark 
+                                  ? AppColors.getDarkShadow(context).withValues(alpha: 0.3)
+                                  : AppColors.getDarkShadow(context).withValues(alpha: 0.6), // Aydınlıkta daha belirgin sınır
                             width: 1,
                           ),
                           boxShadow: isSubSelected

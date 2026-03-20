@@ -274,5 +274,13 @@
   "limitedTotal": "Gesamt",
   "netBalance": "Netto-Saldo",
   "bestCase": "Best-Case",
-  "worstCase": "Worst-Case"
+  "worstCase": "Worst-Case",
+  "layoutAndSorting": "Layout & Sortierung",
+  "layout1": "1er-Layout",
+  "layout2": "2er-Layout",
+  "layout3": "3er-Layout",
+  "layout4": "4er-Layout",
+  "moveForward": "Nach vorne",
+  "moveBackward": "Nach hinten",
+  "selectCurrency": "Währung wählen"
 }

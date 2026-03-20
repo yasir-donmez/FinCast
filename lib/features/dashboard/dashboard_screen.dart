@@ -25,6 +25,7 @@ class DashboardScreen extends ConsumerWidget {
     final maxBalance = ref.watch(netMaxBalanceProvider) + bonus;
 
     final bool hasFlexibleRange = minBalance != totalBalance || maxBalance != totalBalance;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeColor = ref.watch(rotaryColorProvider);
 
     return Scaffold(
@@ -32,22 +33,24 @@ class DashboardScreen extends ConsumerWidget {
       body: Stack(
         children: [
           // YENİ: Dinamik Organik Arka Plan (Sıvı Kütleler)
-          Positioned(
-            top: -100,
-            right: -50,
-            child: _LiquidBlob(
-              color: activeColor.withValues(alpha: 0.15),
-              size: 300,
+          if (isDark) ...[
+            Positioned(
+              top: -100,
+              right: -50,
+              child: _LiquidBlob(
+                color: activeColor.withValues(alpha: 0.15),
+                size: 300,
+              ),
             ),
-          ),
-          Positioned(
-            bottom: 200,
-            left: -100,
-            child: _LiquidBlob(
-              color: AppColors.getSecondary(context).withValues(alpha: 0.1),
-              size: 400,
+            Positioned(
+              bottom: 200,
+              left: -100,
+              child: _LiquidBlob(
+                color: AppColors.getSecondary(context).withValues(alpha: 0.1),
+                size: 400,
+              ),
             ),
-          ),
+          ],
           
           Positioned.fill(
             child: SafeArea(
@@ -58,7 +61,7 @@ class DashboardScreen extends ConsumerWidget {
                   const SizedBox(height: AppSizes.paddingSmall),
                   // Kasalar Alanı - ShaderMask sadece liste içeriğine uygulanır
                   SizedBox(
-                    height: 290, // Noktaların yerleşimi için alan artırıldı
+                    height: 310, // 290 -> 310: Daha ferah (Airy) bir görünüm için artırıldı
                     child: ExpandableVaultGrid(items: dashboardItems),
                   ),
                   const SizedBox(height: 4),
@@ -135,7 +138,7 @@ class AnimatedCurrencySelector extends ConsumerStatefulWidget {
 }
 
 class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelector> {
-  final List<String> _currencies = ['₺', '\$', '€', '£'];
+  final List<String> _currencies = AppCurrency.supportedSymbols;
   int _currentIndex = 0;
 
   void _showCurrencyPicker(BuildContext context) {
@@ -145,9 +148,13 @@ class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelec
       initialItem: 500 * _currencies.length + _currentIndex,
     );
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final rotaryColor = ref.read(rotaryColorProvider);
+    final activeColor = isDark ? rotaryColor : AppColors.getAccentDeep(context, rotaryColor);
+
     FluidSheet.show(
       context: context,
-      title: AppLocalizations.of(context)!.close, // Veya uygun bir başlık
+      title: AppLocalizations.of(context)!.selectCurrency,
       height: 400,
       child: Center(
         child: SizedBox(
@@ -199,12 +206,12 @@ class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelec
                               currency,
                               style: TextStyle(
                                 color: isCenter 
-                                  ? ref.read(rotaryColorProvider) 
-                                  : ref.read(rotaryColorProvider).withValues(alpha: 0.4),
+                                  ? activeColor 
+                                  : activeColor.withValues(alpha: isDark ? 0.4 : 0.65), // Aydınlıkta opacity artırıldı (0.4 -> 0.65)
                                 fontSize: dynamicFontSize,
                                 fontWeight: FontWeight.w800,
                                 shadows: isCenter ? [
-                                  Shadow(color: ref.read(rotaryColorProvider).withValues(alpha: 0.5), blurRadius: 15)
+                                  Shadow(color: activeColor.withValues(alpha: isDark ? 0.5 : 0.3), blurRadius: 15)
                                 ] : null,
                               ),
                             ),
@@ -222,15 +229,7 @@ class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelec
     );
   }
 
-  String _getCurrencyCode(String symbol) {
-    switch (symbol) {
-      case '₺': return 'TL';
-      case '\$': return 'USD';
-      case '€': return 'EUR';
-      case '£': return 'GBP';
-      default: return '';
-    }
-  }
+  String _getCurrencyCode(String symbol) => AppCurrency.getCode(symbol);
 
   @override
   Widget build(BuildContext context) {
@@ -244,49 +243,41 @@ class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelec
         height: 120, // Sabit yükseklik
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
+          crossAxisAlignment: CrossAxisAlignment.center, // Dikeyde merkezleyerek en dengeli görünümü sağla
           children: [
-            const Spacer(),
-            // Sol: Sabit Alan (Sembol) - Tam Yuvarlak ve Kart Tasarımı ile Uyumlu
-            Baseline(
-              baseline: 46, // 48px rakamın tabanına oturtmak için (64px yüksekliğe göre)
-              baselineType: TextBaseline.alphabetic,
-              child: FluidContainer(
-                width: 64,
-                height: 64,
-                padding: EdgeInsets.zero,
-                borderRadius: 32, // TAM YUVARLAK (Geri döndürüldü)
-                isGlass: true,
-                blur: 15, // KARTLARLA AYNI TASARIM (Match ExpandableVaultGrid)
-                child: Center(
-                  child: Text(
-                    _currencies[_currentIndex],
-                    style: TextStyle(
-                      color: activeColor,
-                      fontSize: 32,
-                      fontWeight: FontWeight.w900,
-                      shadows: isDark ? [
-                        Shadow(color: activeColor.withValues(alpha: 0.6), blurRadius: 10),
-                      ] : null,
-                    ),
+            // Sol: Para Birimi Simgesi (Sabit Boyut)
+            FluidContainer(
+              width: 54,
+              height: 54,
+              padding: EdgeInsets.zero,
+              borderRadius: 27,
+              isGlass: true,
+              blur: 15,
+              child: Center(
+                child: Text(
+                  _currencies[_currentIndex],
+                  style: TextStyle(
+                    color: activeColor,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w900,
+                    shadows: isDark ? [
+                      Shadow(color: activeColor.withValues(alpha: 0.6), blurRadius: 10),
+                    ] : null,
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 24), // Daha belirgin "hafif solda" duruş
-            // Sağ: Tutar ve Birim
-            Flexible(
-              flex: 4,
+            const SizedBox(width: 16),
+            // Sağ: Tutar + Min/Max (Dikey kolon içinde birbirine göre ORTALANIR)
+            Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center, // Min/Max tutarın tam altında merkezlenir
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   FittedBox(
                     fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
+                    alignment: Alignment.center,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
@@ -295,20 +286,20 @@ class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelec
                           CurrencyUtils.formatFullAmount(widget.totalBalance),
                           style: TextStyle(
                             color: activeColor,
-                            fontSize: 48,
+                            fontSize: 56,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: -2.0,
+                            letterSpacing: -2.5,
                             shadows: isDark ? [
                               Shadow(color: activeColor.withValues(alpha: 0.6), blurRadius: 20),
                             ] : null,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         Text(
                           _getCurrencyCode(_currencies[_currentIndex]),
                           style: TextStyle(
                             color: activeColor.withValues(alpha: isDark ? 0.35 : 0.55),
-                            fontSize: 22,
+                            fontSize: 24,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -0.5,
                           ),
@@ -318,10 +309,10 @@ class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelec
                   ),
                   if (widget.minBalance != null && widget.maxBalance != null)
                     Padding(
-                      padding: const EdgeInsets.only(top: 2, left: 4),
+                      padding: const EdgeInsets.only(top: 2), // Sadece üst boşluk, yatayda ortalanacak
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
+                        alignment: Alignment.center,
                         child: Row(
                           children: [
                             _buildRangeIndicator(
@@ -332,11 +323,11 @@ class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelec
                             ),
                             const SizedBox(width: 12),
                             Container(
-                              width: 4,
-                              height: 4,
+                              width: 3,
+                              height: 3,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: activeColor.withValues(alpha: 0.4),
+                                color: activeColor.withValues(alpha: 0.3),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -353,7 +344,6 @@ class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelec
                 ],
               ),
             ),
-            const Spacer(),
           ],
         ),
       ),

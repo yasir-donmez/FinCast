@@ -53,11 +53,11 @@ class FluidContainer extends StatelessWidget {
           colors: [
             isDark 
               ? Colors.white.withValues(alpha: 0.16) 
-              : Colors.white.withValues(alpha: 0.65), // Daha parlak Lustre
+              : Colors.white.withValues(alpha: 0.18), // Daha sönük Lustre (0.35 -> 0.18)
             Colors.transparent,
             isDark 
               ? Colors.black.withValues(alpha: 0.28) 
-              : AppColors.lightDarkShadow.withValues(alpha: 0.12), // Daha belirgin derinlik
+              : AppColors.lightDarkShadow.withValues(alpha: 0.1), // Daha dengeli derinlik
           ],
           stops: const [0.0, 0.55, 1.0],
         )
@@ -107,8 +107,8 @@ class FluidContainer extends StatelessWidget {
         gradient: gradient,
         boxShadow: shadows,
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.8),
-          width: 1.0,
+          color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.8), // En net beyaz sınır (0.6 -> 0.8)
+          width: 0.8,
         ),
       ),
       child: ClipRRect(

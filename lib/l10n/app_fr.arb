@@ -136,5 +136,13 @@
   "limitedTotal": "Total",
   "netBalance": "Solde Net",
   "bestCase": "Meilleur Cas",
-  "worstCase": "Pire Cas"
+  "worstCase": "Pire Cas",
+  "layoutAndSorting": "Mise en page et Tri",
+  "layout1": "1 élément",
+  "layout2": "2 éléments",
+  "layout3": "3 éléments",
+  "layout4": "4 éléments",
+  "moveForward": "Avancer",
+  "moveBackward": "Reculer",
+  "selectCurrency": "Choisir la devise"
 }

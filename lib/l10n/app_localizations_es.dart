@@ -860,4 +860,28 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get worstCase => 'Peor Caso';
+
+  @override
+  String get layoutAndSorting => 'Diseño y Orden';
+
+  @override
+  String get layout1 => '1 elemento';
+
+  @override
+  String get layout2 => '2 elementos';
+
+  @override
+  String get layout3 => '3 elementos';
+
+  @override
+  String get layout4 => '4 elementos';
+
+  @override
+  String get moveForward => 'Mover adelante';
+
+  @override
+  String get moveBackward => 'Mover atrás';
+
+  @override
+  String get selectCurrency => 'Seleccionar moneda';
 }

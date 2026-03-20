@@ -858,4 +858,28 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get worstCase => 'En Kötü Senaryo';
+
+  @override
+  String get layoutAndSorting => 'Görünüm ve Sıralama';
+
+  @override
+  String get layout1 => '1\'li';
+
+  @override
+  String get layout2 => '2\'li';
+
+  @override
+  String get layout3 => '3\'lü';
+
+  @override
+  String get layout4 => '4\'lü';
+
+  @override
+  String get moveForward => 'Öne Taşı';
+
+  @override
+  String get moveBackward => 'Arkaya Taşı';
+
+  @override
+  String get selectCurrency => 'Para Birimi Seçin';
 }

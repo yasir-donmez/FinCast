@@ -21,7 +21,8 @@ class SyncService {
       await pushLocalChanges(user.id);
       await pullRemoteChanges(user.id);
     } catch (e) {
-      print('❌ Sync Error: $e');
+      // ignore: avoid_print
+      // print('❌ Sync Error: $e');
       rethrow;
     }
   }

@@ -862,4 +862,28 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get worstCase => 'Pire Cas';
+
+  @override
+  String get layoutAndSorting => 'Mise en page et Tri';
+
+  @override
+  String get layout1 => '1 élément';
+
+  @override
+  String get layout2 => '2 éléments';
+
+  @override
+  String get layout3 => '3 éléments';
+
+  @override
+  String get layout4 => '4 éléments';
+
+  @override
+  String get moveForward => 'Avancer';
+
+  @override
+  String get moveBackward => 'Reculer';
+
+  @override
+  String get selectCurrency => 'Choisir la devise';
 }

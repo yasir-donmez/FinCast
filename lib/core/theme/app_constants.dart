@@ -10,14 +10,14 @@ class AppColors {
   static const Color darkTextPrimary = Color(0xFFE0E0E0);
   static const Color darkTextSecondary = Color(0xFF8A8F99);
 
-  // --- Light Colors (Daha "İnci & Saten" bir his için güncellendi) ---
-  static const Color lightBackground = Color(0xFFF5F7FA); // Daha parlak ve temiz "İnci" beyazı
+  // --- Light Colors (Maksimum Kontrast ve Netlik - Neumorphic tabanlı) ---
+  static const Color lightBackground = Color(0xFFD1D9E6); // Klasik Gümüş-Mavi zemin (DDE1E7 -> D1D9E6)
   static const Color lightSurface = Color(0xFFFFFFFF);
   static const Color lightLightShadow = Color(0xFFFFFFFF);
-  static const Color lightDarkShadow = Color(0xFFD1D9E6); // Daha yumuşak, maviye çalan lüks gölge
-  static const Color lightInnerSurface = Color(0xFFE9EEF5);
-  static const Color lightTextPrimary = Color(0xFF1A1C1E); 
-  static const Color lightTextSecondary = Color(0xFF6C727A); 
+  static const Color lightDarkShadow = Color(0xFFA3B1C6); // Keskin ve derin gölge (B8C2D0 -> A3B1C6)
+  static const Color lightInnerSurface = Color(0xFFEBEEF2);
+  static const Color lightTextPrimary = Color(0xFF1E2124); 
+  static const Color lightTextSecondary = Color(0xFF707780); 
 
 
   // --- Dynamic Color Helpers ---
@@ -32,8 +32,8 @@ class AppColors {
   // Aydınlık modda okunabilirliği artıran derin renkler
   static Color getAccentDeep(BuildContext context, Color baseColor) {
     if (Theme.of(context).brightness == Brightness.dark) return baseColor;
-    // Aydınlık modda rengi daha koyu ve doygun yapıyoruz
-    return Color.lerp(baseColor, Colors.black, 0.25) ?? baseColor;
+    // Aydınlık modda rengi daha koyu ve doygun yapıyoruz (Daha iyi kontrast için 0.35 -> 0.45)
+    return Color.lerp(baseColor, Colors.black, 0.45) ?? baseColor;
   }
 
   static Color getPrimary(BuildContext context) => getAccentDeep(context, primary); 
@@ -78,4 +78,14 @@ class AppSizes {
   static const double paddingMedium = 16.0;
   static const double paddingLarge = 24.0;
   static const double paddingXLarge = 32.0;
+}
+class AppCurrency {
+  static const List<String> supportedSymbols = ['₺', '\$', '€', '£'];
+  static const Map<String, String> symbolToCode = {
+    '₺': 'TL',
+    '\$': 'USD',
+    '€': 'EUR',
+    '£': 'GBP',
+  };
+  static String getCode(String symbol) => symbolToCode[symbol] ?? '';
 }

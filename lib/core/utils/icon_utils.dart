@@ -10,7 +10,10 @@ class IconUtils {
 
     final lowerCode = code.toLowerCase();
     
-    // categoryId tabanlı eşleşme (ID'ler prefix içerir örn: exp_, inc_)
+    // ==========================================
+    // 1. STANDARDIZED CATEGORY IDs (PREFFERED)
+    // ==========================================
+    // Unified matching for all 8 languages using persistent IDs.
     switch (lowerCode) {
       // --- GİDER (EXPENSE) ---
       case 'exp_grocery':
@@ -179,193 +182,10 @@ class IconUtils {
         return Icons.card_giftcard_rounded;
     }
 
-    // Ana Kategoriler ve Alt Modeller Karışık Eşleşme (Geriye Dönük Uyumluluk için String-Based)
-    switch (lowerCode) {
-      // Market
-      case 'market':
-        return Icons.shopping_basket_rounded;
-      case 'gıda':
-        return Icons.egg_rounded;
-      case 'temizlik':
-        return Icons.cleaning_services_rounded;
-      case 'kişisel bakım':
-        return Icons.face_rounded;
-
-      // Yemek
-      case 'yemek':
-        return Icons.restaurant_rounded;
-      case 'restoran':
-        return Icons.restaurant_menu_rounded;
-      case 'fast food':
-        return Icons.fastfood_rounded;
-      case 'kafe':
-        return Icons.coffee_rounded;
-      case 'paket servis':
-        return Icons.delivery_dining_rounded;
-
-      // Kira
-      case 'kira':
-        return Icons.home_rounded;
-      case 'ev kirası':
-        return Icons.apartment_rounded;
-      case 'iş yeri':
-        return Icons.business_rounded;
-      case 'depo':
-        return Icons.warehouse_rounded;
-
-      // Fatura
-      case 'fatura':
-        return Icons.receipt_long_rounded;
-      case 'elektrik':
-        return Icons.bolt_rounded;
-      case 'su':
-        return Icons.water_drop_rounded;
-      case 'doğalgaz':
-        return Icons.local_fire_department_rounded;
-      case 'internet':
-        return Icons.wifi_rounded;
-      case 'telefon':
-        return Icons.phone_android_rounded;
-
-      // Ulaşım
-      case 'ulaşım':
-        return Icons.directions_car_rounded;
-      case 'taksi':
-        return Icons.local_taxi_rounded;
-      case 'otobüs':
-        return Icons.directions_bus_rounded;
-      case 'tren':
-        return Icons.train_rounded;
-      case 'uçak':
-        return Icons.flight_rounded;
-      case 'yakıt':
-        return Icons.local_gas_station_rounded;
-
-      // Eğlence
-      case 'eğlence':
-        return Icons.movie_creation_rounded;
-      case 'sinema':
-        return Icons.local_movies_rounded;
-      case 'konser':
-        return Icons.music_note_rounded;
-      case 'oyun':
-        return Icons.sports_esports_rounded;
-      case 'etkinlik':
-        return Icons.event_rounded;
-
-      // Abonelik
-      case 'abonelik':
-        return Icons.subscriptions_rounded;
-      case 'dizi/film':
-        return Icons.smart_display_rounded;
-      case 'müzik':
-        return Icons.headphones_rounded;
-      case 'yazılım':
-        return Icons.code_rounded;
-      case 'spor salonu':
-        return Icons.fitness_center_rounded;
-
-      // Sağlık
-      case 'sağlık':
-        return Icons.medical_services_rounded;
-      case 'doktor':
-        return Icons.local_hospital_rounded;
-      case 'ilaç':
-        return Icons.medication_rounded;
-      case 'ameliyat':
-        return Icons.vaccines_rounded;
-      case 'diş':
-        return Icons.sentiment_satisfied_alt_rounded;
-
-      // Giyim
-      case 'giyim':
-        return Icons.checkroom_rounded;
-      case 'günlük':
-        return Icons.dry_cleaning_rounded;
-      case 'ayakkabı':
-        return Icons.ice_skating_rounded;
-      case 'aksesuar':
-        return Icons.watch_rounded;
-
-      // Eğitim
-      case 'eğitim':
-        return Icons.school_rounded;
-      case 'kurs':
-        return Icons.menu_book_rounded;
-      case 'kitap':
-        return Icons.auto_stories_rounded;
-      case 'okul':
-        return Icons.account_balance_rounded;
-
-      // Borç
-      case 'borç ödeme':
-        return Icons.credit_card_rounded;
-      case 'kredi kartı':
-        return Icons.credit_score_rounded;
-      case 'bireysel kredi':
-        return Icons.account_balance_rounded;
-      case 'kişisel borç':
-        return Icons.handshake_rounded;
-
-      // --- GELİR ---
-      case 'maaş':
-        return Icons.account_balance_wallet_rounded;
-      case 'ana maaş':
-        return Icons.payments_rounded;
-      case 'prim':
-        return Icons.card_giftcard_rounded;
-      case 'ikramiye':
-        return Icons.celebration_rounded;
-
-      case 'ek gelir':
-        return Icons.monetization_on_rounded;
-      case 'freelance':
-        return Icons.laptop_mac_rounded;
-      case 'part-time':
-        return Icons.work_outline_rounded;
-      case 'komisyon':
-        return Icons.handshake_rounded;
-
-      case 'yatırım getirisi':
-        return Icons.trending_up_rounded;
-      case 'hisse':
-        return Icons.show_chart_rounded;
-      case 'kripto':
-        return Icons.currency_bitcoin_rounded;
-      case 'faiz':
-        return Icons.savings_rounded;
-
-      case 'burs / kredi':
-      case 'burs':
-        return Icons.emoji_events_rounded;
-
-      case 'satış':
-        return Icons.store_rounded;
-      case 'online satış':
-        return Icons.shopping_cart_rounded;
-      case 'fiziksel satış':
-        return Icons.storefront_rounded;
-
-      case 'kira geliri':
-        return Icons.house_rounded;
-      case 'ev':
-        return Icons.apartment_rounded;
-
-      case 'hediye':
-        return Icons.card_giftcard_rounded;
-
-      // Özel Kasa İkonları
-      case 'account_balance_wallet_rounded':
-        return Icons.account_balance_wallet_rounded;
-      case 'attach_money_rounded':
-        return Icons.attach_money_rounded;
-      case 'diamond_rounded':
-        return Icons.diamond_rounded;
-
-      case 'diğer':
-      default:
-        return Icons.receipt_rounded;
-    }
+    // ==========================================
+    // 2. DEFAULT FALLBACK
+    // ==========================================
+    return Icons.receipt_rounded;
   }
 
   /// Kategori ismi veya ikon koduna göre Renk döndürür.
@@ -374,7 +194,9 @@ class IconUtils {
 
     final lowerCode = code.toLowerCase();
 
-    // categoryId tabanlı renk eşleşmesi
+    // ==========================================
+    // 1. STANDARDIZED CATEGORY IDs (PREFFERED)
+    // ==========================================
     if (lowerCode.startsWith('exp_grocery')) return Colors.orange;
     if (lowerCode.startsWith('exp_dining')) return Colors.deepOrangeAccent;
     if (lowerCode.startsWith('exp_rent')) return Colors.blue;
@@ -395,111 +217,9 @@ class IconUtils {
     if (lowerCode.startsWith('inc_rent')) return AppColors.secondary;
     if (lowerCode.startsWith('inc_gift')) return Colors.pinkAccent;
 
-    // Market
-    if (['market', 'gıda', 'temizlik', 'kişisel bakım'].contains(lowerCode)) {
-      return Colors.orange;
-    }
-    // Yemek
-    if ([
-      'yemek',
-      'restoran',
-      'fast food',
-      'kafe',
-      'paket servis',
-    ].contains(lowerCode)) {
-      return Colors.deepOrangeAccent;
-    }
-    // Kira / Fatura
-    if ([
-      'kira',
-      'ev kirası',
-      'iş yeri',
-      'depo',
-      'fatura',
-      'elektrik',
-      'su',
-      'doğalgaz',
-      'internet',
-      'telefon',
-    ].contains(lowerCode)) {
-      return Colors.blue;
-    }
-    // Ulaşım
-    if ([
-      'ulaşım',
-      'taksi',
-      'otobüs',
-      'tren',
-      'uçak',
-      'yakıt',
-    ].contains(lowerCode)) {
-      return Colors.teal;
-    }
-    // Eğlence
-    if ([
-      'eğlence',
-      'sinema',
-      'konser',
-      'oyun',
-      'etkinlik',
-    ].contains(lowerCode)) {
-      return AppColors.secondary;
-    }
-    // Abonelik / Borç
-    if ([
-      'abonelik',
-      'dizi/film',
-      'müzik',
-      'yazılım',
-      'spor salonu',
-      'borç ödeme',
-      'kredi kartı',
-      'bireysel kredi',
-      'kişisel borç',
-    ].contains(lowerCode)) {
-      return AppColors.error;
-    }
-    // Sağlık
-    if (['sağlık', 'doktor', 'ilaç', 'ameliyat', 'diş'].contains(lowerCode)) {
-      return Colors.greenAccent;
-    }
-    // Giyim
-    if (['giyim', 'günlük', 'ayakkabı', 'aksesuar'].contains(lowerCode)) {
-      return Colors.pinkAccent;
-    }
-    // Eğitim
-    if (['eğitim', 'kurs', 'kitap', 'okul'].contains(lowerCode)) {
-      return Colors.amber;
-    }
-    // Maaş
-    if (['maaş', 'ana maaş', 'prim', 'ikramiye'].contains(lowerCode)) {
-      return AppColors.primary;
-    }
-    // Ek Gelir / Satış
-    if ([
-      'ek gelir',
-      'freelance',
-      'part-time',
-      'komisyon',
-      'satış',
-      'online satış',
-      'fiziksel satış',
-    ].contains(lowerCode)) {
-      return Colors.green;
-    }
-    // Yatırım
-    if (['yatırım getirisi', 'hisse', 'kripto', 'faiz'].contains(lowerCode)) {
-      return Colors.blueAccent;
-    }
-
-    // Filtrelemede kullanılan özel durumlar (Dolar/Altın)
-    if (lowerCode.contains('dolar')) {
-      return Colors.greenAccent;
-    }
-    if (lowerCode.contains('yastık') || lowerCode.contains('altın')) {
-      return Colors.amberAccent;
-    }
-
+    // ==========================================
+    // 2. DEFAULT FALLBACK
+    // ==========================================
     return AppColors.darkTextSecondary;
   }
 

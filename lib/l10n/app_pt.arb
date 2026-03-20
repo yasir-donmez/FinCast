@@ -134,5 +134,13 @@
   "limitedTotal": "Total",
   "netBalance": "Saldo Líquido",
   "bestCase": "Melhor Caso",
-  "worstCase": "Pior Caso"
+  "worstCase": "Pior Caso",
+  "layoutAndSorting": "Layout e Ordenação",
+  "layout1": "1 item",
+  "layout2": "2 itens",
+  "layout3": "3 itens",
+  "layout4": "4 itens",
+  "moveForward": "Mover para frente",
+  "moveBackward": "Mover para trás",
+  "selectCurrency": "Selecionar moeda"
 }

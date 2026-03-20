@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -58,8 +57,11 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> with SingleTick
 
     setState(() {
       var delta = angle - _lastAngle;
-      if (delta > pi) delta -= 2 * pi;
-      else if (delta < -pi) delta += 2 * pi;
+      if (delta > pi) {
+        delta -= 2 * pi;
+      } else if (delta < -pi) {
+        delta += 2 * pi;
+      }
 
       _lastAngle = angle;
       _currentAngle += delta;
@@ -203,91 +205,121 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> with SingleTick
                   alignment: Alignment.center,
                   children: [
                     // Çukur Çentikler (Anlamlı 84 Adet)
-                    CustomPaint(
-                      size: Size(size, size),
-                      painter: _DialTicksPainter(
-                        currentAngle: _currentAngle,
-                        tickCount: 84,
-                        activeColor: activeColor,
+                    RepaintBoundary(
+                      child: CustomPaint(
+                        size: Size(size, size),
+                        painter: _DialTicksPainter(
+                          currentAngle: _currentAngle,
+                          tickCount: 84,
+                          activeColor: activeColor,
+                        ),
                       ),
                     ),
 
-                    // FİZİKSEL BUTON (Extruded Knob)
-                    Transform.rotate(
-                      angle: _currentAngle - pi / 2,
-                      child: Container(
-                        width: knobSize,
-                        height: knobSize,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.getSurface(context),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.5),
-                              offset: const Offset(10, 10),
-                              blurRadius: 20,
-                              spreadRadius: 1,
-                            ),
-                            BoxShadow(
-                              color: Colors.white.withValues(alpha: 0.05),
-                              offset: const Offset(-5, -5),
-                              blurRadius: 15,
-                            ),
-                          ],
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              AppColors.getSurface(context),
-                              AppColors.getSurface(context).withValues(alpha: 0.8),
-                            ],
+                    // 1. STATİK GÖLGE VE DERİNLİK KATMANI (Fixed Shadow)
+                    Container(
+                      width: knobSize,
+                      height: knobSize,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.6),
+                            offset: const Offset(6, 6), // Daha sıkı ve gerçekçi gölge
+                            blurRadius: 15,
+                            spreadRadius: 1,
                           ),
-                        ),
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            // Metalik Yansıma (Conical Simulation)
-                            Container(
-                              width: knobSize * 0.9,
-                              height: knobSize * 0.9,
+                          BoxShadow(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            offset: const Offset(-3, -3),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // 2. DÖNEN FİZİKSEL BUTON GÖVDESİ (Rotating Body)
+                          Transform.rotate(
+                            angle: _currentAngle - pi / 2,
+                            child: Container(
+                              width: knobSize,
+                              height: knobSize,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
+                                color: AppColors.getSurface(context),
                                 gradient: SweepGradient(
                                   colors: [
-                                    Colors.transparent,
-                                    Colors.white.withValues(alpha: 0.05),
-                                    Colors.transparent,
-                                    Colors.black.withValues(alpha: 0.1),
+                                    AppColors.getSurface(context),
+                                    AppColors.getSurface(context).withValues(alpha: 0.7),
+                                    AppColors.getSurface(context),
+                                  ],
+                                  stops: const [0.0, 0.5, 1.0],
+                                ),
+                              ),
+                              child: Stack(
+                                children: [
+                                  // Gösterge Oyuğu (Butona bağlı döner)
+                                  Align(
+                                    alignment: const Alignment(0.72, 0.0),
+                                    child: Container(
+                                      width: 12,
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.black.withValues(alpha: 0.4),
+                                        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                                      ),
+                                      child: Center(
+                                        child: Container(
+                                          width: 4,
+                                          height: 4,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: activeColor.withValues(alpha: 0.6),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // 3. STATİK ÜST IŞIKLANDIRMA (Static Environment Highlight)
+                          IgnorePointer(
+                            child: Container(
+                              width: knobSize,
+                              height: knobSize,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  center: const Alignment(-0.5, -0.5),
+                                  radius: 1.0,
+                                  colors: [
+                                    Colors.white.withValues(alpha: 0.08),
                                     Colors.transparent,
                                   ],
                                 ),
                               ),
-                            ),
-                            // Gösterge Oyuğu
-                            Align(
-                              alignment: const Alignment(0.72, 0.0),
                               child: Container(
-                                width: 12,
-                                height: 12,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.black.withValues(alpha: 0.4),
-                                  border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-                                ),
-                                child: Center(
-                                  child: Container(
-                                    width: 4,
-                                    height: 4,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: activeColor.withValues(alpha: 0.6),
-                                    ),
+                                  gradient: SweepGradient(
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.white.withValues(alpha: 0.03),
+                                      Colors.transparent,
+                                      Colors.black.withValues(alpha: 0.05),
+                                      Colors.transparent,
+                                    ],
                                   ),
                                 ),
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ],

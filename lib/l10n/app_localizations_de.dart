@@ -859,4 +859,28 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get worstCase => 'Worst-Case';
+
+  @override
+  String get layoutAndSorting => 'Layout & Sortierung';
+
+  @override
+  String get layout1 => '1er-Layout';
+
+  @override
+  String get layout2 => '2er-Layout';
+
+  @override
+  String get layout3 => '3er-Layout';
+
+  @override
+  String get layout4 => '4er-Layout';
+
+  @override
+  String get moveForward => 'Nach vorne';
+
+  @override
+  String get moveBackward => 'Nach hinten';
+
+  @override
+  String get selectCurrency => 'Währung wählen';
 }

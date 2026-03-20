@@ -225,7 +225,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                 final group = groups[index - 1];
                 final isSelected = selectedVaultId == group.id;
                 return Padding(
-                  key: ValueKey(group.id),
+                  key: ValueKey('vault_tile_${group.id}'),
                   padding: const EdgeInsets.only(right: 12),
                   child: GestureDetector(
                     onTap: isEditMode

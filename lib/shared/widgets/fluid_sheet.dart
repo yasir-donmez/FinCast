@@ -29,11 +29,14 @@ class FluidSheet extends StatelessWidget {
     double? height,
     bool showHandle = true,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.5), // Arka plan daha şeffaf
+      barrierColor: isDark 
+          ? Colors.black.withValues(alpha: 0.5) 
+          : Colors.black.withValues(alpha: 0.1), // Daha da şeffaf karartma
       transitionAnimationController: AnimationController(
         vsync: Navigator.of(context),
         duration: const Duration(milliseconds: 400),
@@ -77,14 +80,14 @@ class FluidSheet extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.4),
+                  isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.05), // Işıltıyı daha da azalttık
                   Colors.transparent,
                 ],
               ),
-              color: surfaceColor.withValues(alpha: isDark ? 0.7 : 0.8),
+              color: surfaceColor.withValues(alpha: isDark ? 0.7 : 1.0), // Aydınlıkta tam opak beyaz (0.96 -> 1.0)
               borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusLarge * 2.5)),
               border: Border.all(
-                color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.5),
+                color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.3), // Border yumuşatıldı (0.5 -> 0.3)
                 width: 1.0,
               ),
               boxShadow: [

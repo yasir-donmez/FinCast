@@ -76,7 +76,7 @@ class _FluidButtonState extends State<FluidButton> with SingleTickerProviderStat
     // Buton rengi belirleme
     Color buttonColor;
     if (widget.isSecondary) {
-      buttonColor = isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05);
+      buttonColor = isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.45); // Daha temiz beyaz cam bazı
     } else {
       buttonColor = widget.color ?? AppColors.getPrimary(context);
     }
