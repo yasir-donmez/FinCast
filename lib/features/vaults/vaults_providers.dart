@@ -7,7 +7,7 @@ import '../../core/database/models/vault.dart';
 import '../../core/utils/icon_utils.dart';
 
 /// Tek bir işlem kaydı (UI Model)
-class MockTransaction {
+class TransactionUI {
   final String id;
   final String name;
   final IconData icon;
@@ -26,7 +26,7 @@ class MockTransaction {
   final int dashboardLayoutType;
   String? groupId; // null ise grupsuz
 
-  MockTransaction({
+  TransactionUI({
     required this.id,
     required this.name,
     required this.icon,
@@ -91,9 +91,9 @@ class MockTransaction {
     return monthlyEquivalent;
   }
 
-  /// TransactionRecord'dan MockTransaction'a dönüştür
-  factory MockTransaction.fromDB(TransactionRecord record) {
-    return MockTransaction(
+  /// TransactionRecord'dan TransactionUI'a dönüştür
+  factory TransactionUI.fromDB(TransactionRecord record) {
+    return TransactionUI(
       id: 'db_${record.id}',
       name: record.title,
       icon: IconUtils.getIcon(record.iconCode ?? record.title),
@@ -152,12 +152,12 @@ final transactionFilterProvider = StateProvider<TransactionFilter>(
 /// Edit modu açık mı?
 final editModeProvider = StateProvider<bool>((ref) => false);
 
-/// DB'den gelen işlemleri MockTransaction'a çeviren provider
-final mockTransactionsProvider = Provider<List<MockTransaction>>((ref) {
+/// DB'den gelen işlemleri UI modeline çeviren provider
+final vaultTransactionsProvider = Provider<List<TransactionUI>>((ref) {
   final dbRecords = ref.watch(allTransactionsProvider);
 
   return dbRecords.map((r) {
-    final tx = MockTransaction.fromDB(r);
+    final tx = TransactionUI.fromDB(r);
     // Gruplama durumunu DB vaultId'den al
     if (r.vaultId != null) {
       tx.groupId = 'v_${r.vaultId}';
@@ -195,7 +195,7 @@ class TransactionGroupingHelper {
 /// Gruplar — Database tabanlı provider
 final transactionGroupsProvider = Provider<List<TransactionGroup>>((ref) {
   final vaults = ref.watch(allVaultsProvider);
-  final allTx = ref.watch(mockTransactionsProvider);
+  final allTx = ref.watch(vaultTransactionsProvider);
 
   return vaults.map((v) {
     final relatedTxIds = allTx.where((t) => t.groupId == 'v_${v.id}').toList()

@@ -17,6 +17,7 @@ class FluidContainer extends StatelessWidget {
   final Color? color;
   final List<BoxShadow>? extraShadows;
   final double blur;
+  final double? borderWidth; // Yeni parametre
 
   const FluidContainer({
     super.key,
@@ -30,7 +31,8 @@ class FluidContainer extends StatelessWidget {
     this.isConvex = true,
     this.color,
     this.extraShadows,
-    this.blur = 15.0, // Daha yüksek bulanıklık
+    this.blur = 15.0,
+    this.borderWidth, // Parametre listesine eklendi
   });
 
   @override
@@ -38,14 +40,12 @@ class FluidContainer extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     // Aydınlık modda 'Gri' görünümü engellemek için Renk Aşılaması (Tinting)
-    // %2 oranında minimal bir ton (Sadece kirli griliği almak için)
     final Color baseSurface = color ?? AppColors.getSurface(context);
     final Color tintedSurface = isDark 
         ? baseSurface 
-        : Color.lerp(baseSurface, color ?? AppColors.primary, 0.02)!; // Mikro-aşılama (%2)
+        : Color.lerp(baseSurface, color ?? AppColors.primary, 0.02)!; 
 
-    // Su damlası (Convex) - Aydınlıkta 'Saten' dokusu (Luxury Satin Finish)
-    // Lustre Effect: Aydınlıkta daha canlı bir beyaz ışıltı ekliyoruz
+    // Su damlası (Convex)
     final gradient = isConvex 
       ? RadialGradient(
           center: const Alignment(-0.35, -0.45), 
@@ -53,11 +53,11 @@ class FluidContainer extends StatelessWidget {
           colors: [
             isDark 
               ? Colors.white.withValues(alpha: 0.16) 
-              : Colors.white.withValues(alpha: 0.18), // Daha sönük Lustre (0.35 -> 0.18)
+              : Colors.white.withValues(alpha: 0.18), 
             Colors.transparent,
             isDark 
               ? Colors.black.withValues(alpha: 0.28) 
-              : AppColors.lightDarkShadow.withValues(alpha: 0.1), // Daha dengeli derinlik
+              : AppColors.lightDarkShadow.withValues(alpha: 0.1), 
           ],
           stops: const [0.0, 0.55, 1.0],
         )
@@ -81,7 +81,7 @@ class FluidContainer extends StatelessWidget {
       ] else ...[
         // Aydınlık Mod: Lüks Katmanlı Gölgeler
         BoxShadow(
-          color: (color ?? AppColors.lightDarkShadow).withValues(alpha: 0.25), // Gölge de hafif renkli
+          color: (color ?? AppColors.lightDarkShadow).withValues(alpha: 0.25), 
           blurRadius: 40,
           offset: const Offset(0, 15),
           spreadRadius: -10,
@@ -107,8 +107,8 @@ class FluidContainer extends StatelessWidget {
         gradient: gradient,
         boxShadow: shadows,
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.8), // En net beyaz sınır (0.6 -> 0.8)
-          width: 0.8,
+          color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.8),
+          width: borderWidth ?? 0.8, // Dinamik genişlik
         ),
       ),
       child: ClipRRect(

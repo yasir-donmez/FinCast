@@ -169,7 +169,7 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> with SingleTick
             ),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 5), // Mesafe ~2/3 oranında azaltıldı (8 -> 5)
         LayoutBuilder(
           builder: (context, constraints) {
             const size = 220.0;

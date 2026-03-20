@@ -6,7 +6,7 @@ import '../vaults_providers.dart';
 
 class GroupCard extends StatefulWidget {
   final TransactionGroup group;
-  final List<MockTransaction> transactions;
+  final List<TransactionUI> transactions;
   final bool isEditMode;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;

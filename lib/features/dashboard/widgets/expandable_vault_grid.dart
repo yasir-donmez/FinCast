@@ -91,15 +91,17 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min, // Consistent min size
+        mainAxisAlignment: MainAxisAlignment.start, // Üste yasla
         children: [
+          const SizedBox(height: 10), // Üstten hafif pay
           _buildVaultCardWrapper(
             item: items[0],
             index: startIndex,
             pageStartIndex: startIndex,
             layoutType: 1,
             width: (width - (AppSizes.paddingMedium * 2)).clamp(0.0, double.infinity),
-            height: 236,
+            height: 224,
             isExpanded: true,
             isShrunk: false,
           ),
@@ -121,15 +123,16 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start, // Üste yasla
         children: [
+          const SizedBox(height: 10),
           _buildVaultCardWrapper(
             item: items[0],
             index: startIndex,
             pageStartIndex: startIndex,
             layoutType: 2,
             width: cardWidth,
-            height: 114,
+            height: 108,
             isExpanded: true,
             isShrunk: false,
           ),
@@ -141,7 +144,7 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
               pageStartIndex: startIndex,
               layoutType: 2,
               width: cardWidth,
-              height: 114,
+              height: 108,
               isExpanded: true,
               isShrunk: false,
             ),
@@ -167,59 +170,66 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
     final rightH1 = totalInPage > 1
         ? (_isExpanded(startIndex + 1, 3, startIndex)
               ? 160.0
-              : (_isShrunk(startIndex + 1, 3, startIndex) ? 60.0 : 114.0))
-        : 114.0;
+              : (_isShrunk(startIndex + 1, 3, startIndex) ? 60.0 : 108.0))
+        : 108.0;
     final rightH2 = totalInPage > 2
         ? (_isExpanded(startIndex + 2, 3, startIndex)
               ? 160.0
-              : (_isShrunk(startIndex + 2, 3, startIndex) ? 60.0 : 114.0))
-        : 114.0;
+              : (_isShrunk(startIndex + 2, 3, startIndex) ? 60.0 : 108.0))
+        : 108.0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          _buildVaultCardWrapper(
-            item: items[0],
-            index: startIndex,
-            pageStartIndex: startIndex,
-            layoutType: 3,
-            width: leftWidth,
-            height: 236,
-            isExpanded: true,
-            isShrunk: false,
-          ),
-          if (totalInPage > 1)
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildVaultCardWrapper(
-                  item: items[1],
-                  index: startIndex + 1,
-                  pageStartIndex: startIndex,
-                  layoutType: 3,
-                  width: rightWidth,
-                  height: rightH1,
-                  isExpanded: _isExpanded(startIndex + 1, 3, startIndex),
-                  isShrunk: _isShrunk(startIndex + 1, 3, startIndex),
+          const SizedBox(height: 10), // Consistent top padding
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildVaultCardWrapper(
+                item: items[0],
+                index: startIndex,
+                pageStartIndex: startIndex,
+                layoutType: 3,
+                width: leftWidth,
+                height: 224,
+                isExpanded: true,
+                isShrunk: false,
+              ),
+              if (totalInPage > 1)
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildVaultCardWrapper(
+                      item: items[1],
+                      index: startIndex + 1,
+                      pageStartIndex: startIndex,
+                      layoutType: 3,
+                      width: rightWidth,
+                      height: rightH1,
+                      isExpanded: _isExpanded(startIndex + 1, 3, startIndex),
+                      isShrunk: _isShrunk(startIndex + 1, 3, startIndex),
+                    ),
+                    if (totalInPage > 2) ...[
+                      const SizedBox(height: 8),
+                      _buildVaultCardWrapper(
+                        item: items[2],
+                        index: startIndex + 2,
+                        pageStartIndex: startIndex,
+                        layoutType: 3,
+                        width: rightWidth,
+                        height: rightH2,
+                        isExpanded: _isExpanded(startIndex + 2, 3, startIndex),
+                        isShrunk: _isShrunk(startIndex + 2, 3, startIndex),
+                      ),
+                    ],
+                  ],
                 ),
-                if (totalInPage > 2) ...[
-                  const SizedBox(height: 8),
-                  _buildVaultCardWrapper(
-                    item: items[2],
-                    index: startIndex + 2,
-                    pageStartIndex: startIndex,
-                    layoutType: 3,
-                    width: rightWidth,
-                    height: rightH2,
-                    isExpanded: _isExpanded(startIndex + 2, 3, startIndex),
-                    isShrunk: _isShrunk(startIndex + 2, 3, startIndex),
-                  ),
-                ],
-              ],
-            ),
+            ],
+          ),
         ],
       ),
     );
@@ -245,8 +255,9 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start, // Üste yasla
         children: [
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -256,7 +267,7 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
                 pageStartIndex: startIndex,
                 layoutType: 4,
                 width: getW(startIndex),
-                height: 114,
+                height: 108,
                 isExpanded: _isExpanded(startIndex, 4, startIndex),
                 isShrunk: _isShrunk(startIndex, 4, startIndex),
               ),
@@ -267,7 +278,7 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
                   pageStartIndex: startIndex,
                   layoutType: 4,
                   width: getW(startIndex + 1),
-                  height: 114,
+                  height: 108,
                   isExpanded: _isExpanded(startIndex + 1, 4, startIndex),
                   isShrunk: _isShrunk(startIndex + 1, 4, startIndex),
                 ),
@@ -284,7 +295,7 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
                   pageStartIndex: startIndex,
                   layoutType: 4,
                   width: getW(startIndex + 2),
-                  height: 114,
+                  height: 108,
                   isExpanded: _isExpanded(startIndex + 2, 4, startIndex),
                   isShrunk: _isShrunk(startIndex + 2, 4, startIndex),
                 ),
@@ -295,7 +306,7 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
                   pageStartIndex: startIndex,
                   layoutType: 4,
                   width: getW(startIndex + 3),
-                  height: 114,
+                  height: 108,
                   isExpanded: _isExpanded(startIndex + 3, 4, startIndex),
                   isShrunk: _isShrunk(startIndex + 3, 4, startIndex),
                 ),
@@ -345,7 +356,7 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [Colors.black, Colors.black, Colors.transparent],
-                stops: const [0.0, 0.85, 1.0],
+                stops: const [0.0, 0.95, 1.0],
               ).createShader(rect);
             },
             blendMode: BlendMode.dstIn,
@@ -363,6 +374,16 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
                 return AnimatedSwitcher(
                   key: ValueKey('page_$pageIdx'),
                   duration: const Duration(milliseconds: 500),
+                  layoutBuilder:
+                      (Widget? currentChild, List<Widget> previousChildren) {
+                    return Stack(
+                      alignment: Alignment.topCenter,
+                      children: <Widget>[
+                        ...previousChildren,
+                        if (currentChild != null) currentChild,
+                      ],
+                    );
+                  },
                   child: switch (layoutType) {
                     1 => _buildLayoutFor1(pageItems, width, startIndex),
                     2 => _buildLayoutFor2(pageItems, width, startIndex),
@@ -374,7 +395,7 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 4), // Boşluğu azalttık
         // Dots - Maskelenmez, pırıl pırıl cam gibi durur
         if (pageCount > 1)
           Row(

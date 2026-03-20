@@ -12,6 +12,8 @@ import 'core/services/auth_service.dart';
 import 'core/providers/settings_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'core/services/subscription_service.dart';
 
 void main() async {
   try {
@@ -42,14 +44,24 @@ void main() async {
     await DataRetentionService.archiveExpiredTransactions();
     debugPrint('✅ [FinCast] Arşivleme tamamlandı.');
 
-    // Varsayılan dil ayarı
+    // Yerelleştirme (intl)
     debugPrint('🌍 [FinCast] Yerelleştirme başlatılıyor...');
     await initializeDateFormatting('tr_TR', null);
     debugPrint('✅ [FinCast] Yerelleştirme hazır.');
 
+    // SharedPreferences (Abonelik durumu için)
+    debugPrint('💾 [FinCast] SharedPreferences başlatılıyor...');
+    final prefs = await SharedPreferences.getInstance();
+    debugPrint('✅ [FinCast] SharedPreferences hazır.');
+
     debugPrint('🏁 [FinCast] runApp() çağrılıyor...');
     runApp(
-      const ProviderScope(child: FinCastApp()),
+      ProviderScope(
+        overrides: [
+          subscriptionServiceProvider.overrideWith((ref) => SubscriptionService(prefs)),
+        ],
+        child: const FinCastApp(),
+      ),
     );
   } catch (e, stack) {
     debugPrint('❌ [FinCast FATAL] Başlangıç hatası: $e');

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/services/subscription_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_constants.dart';
 import '../../shared/widgets/neu_container.dart';
@@ -166,6 +167,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildProfileCard(AppLocalizations l10n) {
+    final subscription = ref.watch(subscriptionServiceProvider);
+    
     return NeuContainer(
       borderRadius: AppSizes.radiusLarge,
       child: Row(
@@ -202,13 +205,49 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  l10n.memberPremium,
-                  style: TextStyle(
-                    color: AppColors.getPrimary(context),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.0,
+                GestureDetector(
+                  onLongPress: () async {
+                    if (subscription.isPro) {
+                      // Geliştirici Kısa Yolu: Uzun basınca aboneliği sıfırla
+                      await ref.read(subscriptionServiceProvider).setProStatus(false);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Abonelik sıfırlandı (Ücretsiz Sürüm)')),
+                        );
+                      }
+                    }
+                  },
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: subscription.isPro 
+                              ? AppColors.getPrimary(context).withValues(alpha: 0.2)
+                              : Colors.grey.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          subscription.isPro ? "PRO" : "FREE",
+                          style: TextStyle(
+                            color: subscription.isPro ? AppColors.getPrimary(context) : Colors.grey,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        subscription.isPro ? l10n.memberPremium : "Standart Kullanıcı",
+                        style: TextStyle(
+                          color: subscription.isPro 
+                              ? AppColors.getPrimary(context) 
+                              : AppColors.getTextSecondary(context),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

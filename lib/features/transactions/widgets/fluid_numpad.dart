@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_constants.dart';
-import '../../../shared/widgets/neu_button.dart';
+import '../../../shared/widgets/fluid_button.dart';
 
-/// FinCast işlemleri (Esnek Bütçeleme) için hazırlanan özel Neumorphic Tuş Takımı
-class NeumorphicNumpad extends StatelessWidget {
+/// FinCast işlemleri için hazırlanan yeni nesil Fluid (Akışkan) Tuş Takımı.
+/// Neumorphic yapının yerini alan, daha modern ve cam dokulu tasarım.
+class FluidNumpad extends StatelessWidget {
   final Function(String) onNumberTapped;
   final VoidCallback onBackspaceTapped;
   final VoidCallback onDoneTapped;
   final Color? activeColor;
 
-  const NeumorphicNumpad({
+  const FluidNumpad({
     super.key,
     required this.onNumberTapped,
     required this.onBackspaceTapped,
@@ -24,11 +25,11 @@ class NeumorphicNumpad extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _buildRow(context, ['1', '2', '3']),
-        const SizedBox(height: AppSizes.paddingMedium),
+        const SizedBox(height: 12),
         _buildRow(context, ['4', '5', '6']),
-        const SizedBox(height: AppSizes.paddingMedium),
+        const SizedBox(height: 12),
         _buildRow(context, ['7', '8', '9']),
-        const SizedBox(height: AppSizes.paddingMedium),
+        const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -60,12 +61,13 @@ class NeumorphicNumpad extends StatelessWidget {
   }
 
   Widget _buildNumberKey(BuildContext context, String number) {
-    return NeuButton(
+    return FluidButton(
       width: 72,
       height: 72,
-      borderRadius: 36, // Tam yuvarlak tuşlar
+      borderRadius: 36, // Tam yuvarlak
+      isSecondary: true, // Cam dokusu için
       onTap: () {
-        HapticFeedback.lightImpact(); // Tuş hissiyatı
+        HapticFeedback.lightImpact();
         onNumberTapped(number);
       },
       child: Text(
@@ -86,16 +88,21 @@ class NeumorphicNumpad extends StatelessWidget {
     required VoidCallback onTap,
     bool isPrimary = false,
   }) {
-    return NeuButton(
+    return FluidButton(
       width: 72,
       height: 72,
       borderRadius: 36,
-      isPrimary: isPrimary,
+      isSecondary: !isPrimary,
+      color: isPrimary ? color : null,
       onTap: () {
         HapticFeedback.mediumImpact();
         onTap();
       },
-      child: Icon(icon, color: color, size: 28),
+      child: Icon(
+        icon, 
+        color: isPrimary ? Colors.white : color, 
+        size: 28
+      ),
     );
   }
 }

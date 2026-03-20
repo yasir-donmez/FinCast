@@ -42,12 +42,12 @@ class DashboardItem {
 /// Dashboard'da gösterilecek tüm öğeleri (Kasa/Grup + Tekil İşlem) birleştiren Provider
 final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
   final vaults = ref.watch(allVaultsProvider);
-  final transactions = ref.watch(mockTransactionsProvider);
+  final transactions = ref.watch(vaultTransactionsProvider);
 
   final List<DashboardItem> items = [];
 
   // Pre-group transactions by groupId for O(N+M) performance
-  final Map<String?, List<MockTransaction>> groupedTransactions = {};
+  final Map<String?, List<TransactionUI>> groupedTransactions = {};
   for (final t in transactions) {
     groupedTransactions.putIfAbsent(t.groupId, () => []).add(t);
   }
@@ -80,8 +80,8 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
       } else {
         groupBalance -= t.amount;
         if (t.minAmount != null || t.maxAmount != null) hasFlexibleTx = true;
-        groupMin -= t.maxAmount ?? t.amount;
-        groupMax -= t.minAmount ?? t.amount;
+        groupMin -= (t.maxAmount ?? t.amount);
+        groupMax -= (t.minAmount ?? t.amount);
       }
     }
 
@@ -89,14 +89,14 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
       groupBalance = (groupMin + groupMax) / 2;
     }
 
-    // En çok tekrar eden ikon kodunu bul (Artık İsim yerine ID kullanıyoruz)
+    // En çok tekrar eden ikon kodunu bul
     final dominantIconCode =
-        IconUtils.getDominantIconCode(groupTx.map((t) => t.iconCode ?? t.categoryId).toList()) ??
+        IconUtils.getDominantIconCode(groupTx.map((t) => t.iconCode ?? t.categoryId ?? '').toList()) ??
         v.iconCode;
 
     // Dominant categoryId'yi bul
     final dominantCategoryId = IconUtils.getDominantIconCode(
-      groupTx.map((t) => t.categoryId).toList(),
+      groupTx.map((t) => t.categoryId ?? '').toList(),
     );
 
     items.add(
@@ -132,7 +132,7 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
     if (t.showOnDashboard) {
       items.add(
         DashboardItem(
-          id: t.id, // MockTransaction ID'sini doğrudan kullan (örn: 'db_1')
+          id: t.id, 
           name: t.name,
           categoryId: t.categoryId,
           balance: t.isIncome ? t.amount : -t.amount,

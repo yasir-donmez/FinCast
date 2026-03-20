@@ -11,15 +11,22 @@ import 'dashboard_providers.dart';
 import 'widgets/rotary_time_dial.dart';
 import 'widgets/expandable_vault_grid.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
+// unused imports removed
 
-class DashboardScreen extends ConsumerWidget {
+
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  @override
+  Widget build(BuildContext context) {
     final dashboardItems = ref.watch(dashboardItemsProvider);
     final totalBalance = ref.watch(displayBalanceProvider);
-
     final bonus = ref.watch(simulationBonusProvider);
     final minBalance = ref.watch(netMinBalanceProvider) + bonus;
     final maxBalance = ref.watch(netMaxBalanceProvider) + bonus;
@@ -28,66 +35,84 @@ class DashboardScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeColor = ref.watch(rotaryColorProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.getBackground(context),
-      body: Stack(
-        children: [
-          // YENİ: Dinamik Organik Arka Plan (Sıvı Kütleler)
-          if (isDark) ...[
-            Positioned(
-              top: -100,
-              right: -50,
-              child: _LiquidBlob(
-                color: activeColor.withValues(alpha: 0.15),
-                size: 300,
-              ),
-            ),
-            Positioned(
-              bottom: 200,
-              left: -100,
-              child: _LiquidBlob(
-                color: AppColors.getSecondary(context).withValues(alpha: 0.1),
-                size: 400,
-              ),
-            ),
-          ],
-          
-          Positioned.fill(
-            child: SafeArea(
-              bottom: false,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: AppSizes.paddingSmall),
-                  // Kasalar Alanı - ShaderMask sadece liste içeriğine uygulanır
-                  SizedBox(
-                    height: 310, // 290 -> 310: Daha ferah (Airy) bir görünüm için artırıldı
-                    child: ExpandableVaultGrid(items: dashboardItems),
-                  ),
-                  const SizedBox(height: 4),
-                  // Bakiye Alanı
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
-                    child: AnimatedCurrencySelector(
-                      fontSize: 28,
-                      totalBalance: totalBalance,
-                      minBalance: hasFlexibleRange ? minBalance : null,
-                      maxBalance: hasFlexibleRange ? maxBalance : null,
-                    ),
-                  ),
-                  const Spacer(flex: 1), 
-                  const Center(child: RotaryTimeDial()),
-                  const SizedBox(height: 60), // Alt boşluk 40'tan 60'a çıkarıldı
-                  const Spacer(flex: 2), // Alt flex dengesi yukarı itecek şekilde artırıldı
-                ],
-              ),
+    return Stack(
+      children: [
+        // Dinamik Organik Arka Plan
+        if (isDark) ...[
+          Positioned(
+            top: -100,
+            right: -50,
+            child: _LiquidBlob(
+              color: activeColor.withValues(alpha: 0.15),
+              size: 300,
             ),
           ),
-
+          Positioned(
+            bottom: 200,
+            left: -100,
+            child: _LiquidBlob(
+              color: AppColors.getSecondary(context).withValues(alpha: 0.1),
+              size: 400,
+            ),
+          ),
         ],
-      ),
+        
+        Positioned.fill(
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Bileşenleri ekran geneline yay
+              children: [
+                const SizedBox(height: AppSizes.paddingSmall),
+                
+                // 1. Kasalar Alanı: Expanded flex ile alan yönetilir
+                Expanded(
+                  flex: 40, 
+                  child: ExpandableVaultGrid(items: dashboardItems),
+                ),
+                
+                const Spacer(flex: 2), // Nefes payı geri alındı (Flex: 2)
+
+                // 2. Bakiye Alanı
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
+                  child: AnimatedCurrencySelector(
+                    fontSize: 28, // Font boyutu geri alındı
+                    totalBalance: totalBalance,
+                    minBalance: hasFlexibleRange ? minBalance : null,
+                    maxBalance: hasFlexibleRange ? maxBalance : null,
+                  ),
+                ),
+                
+                const Spacer(flex: 2), // Nefes payı geri alındı (Flex: 2)
+
+                // 3. Zaman Kadranı: FittedBox ile ferah bir yerleşim
+                Expanded(
+                  flex: 48,
+                  child: Align(
+                    alignment: Alignment.topCenter, // Ortalamak yerine en üste yasla
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: const RotaryTimeDial(),
+                      ),
+                    ),
+                  ),
+                ),
+                
+                // 4. Alt Boşluk: Navigasyon barı için dinamik ama ferah pay
+                const Spacer(flex: 8), 
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
+
+  // Reklam alanı kaldırıldı.
 }
 
 /// Arka planda süzülen sıvımsı renk kütlesi
@@ -240,7 +265,7 @@ class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelec
     return GestureDetector(
       onLongPress: () => _showCurrencyPicker(context),
       child: Container(
-        height: 120, // Sabit yükseklik
+        height: 106, // Sabit yükseklik taşmayı önlemek için 100'den 106'ya çıkarıldı
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center, // Dikeyde merkezleyerek en dengeli görünümü sağla
@@ -272,7 +297,7 @@ class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelec
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center, // Min/Max tutarın tam altında merkezlenir
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.end, // Dial'a yaklaştırmak için alta yaslandık
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   FittedBox(

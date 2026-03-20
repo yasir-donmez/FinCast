@@ -10,6 +10,8 @@ import '../../core/database/models/vault.dart';
 import 'optimization_providers.dart';
 import 'ai_service.dart';
 import '../../l10n/app_localizations.dart';
+import '../../core/services/subscription_service.dart';
+import '../subscription/widgets/pro_upgrade_sheet.dart';
 
 /// Hedef Odaklı Tasarruf Planlayıcı & AI Finansal Koç
 class OptimizationScreen extends ConsumerStatefulWidget {
@@ -106,11 +108,33 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
     List<Vault> vaults,
     List<FinancialGoal> previousGoals,
   ) async {
+    final subscription = ref.read(subscriptionServiceProvider);
+    
+    // AI Gating: Pro kontrolü
+    if (!subscription.isPro) {
+      if (mounted) ProUpgradeSheet.show(context);
+      return;
+    }
+
+    // AI Gating: Günlük limit kontrolü
+    if (subscription.usedAiCount >= subscription.dailyAiLimit) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Günlük AI analiz limitine ulaştınız (3/3).')),
+        );
+      }
+      return;
+    }
+
     setState(() {
       _isAnalyzing = true;
       _result = null;
       _userApproval = null;
     });
+    
+    // AI kullanımı başarılı olursa sayacı artır
+    await subscription.incrementAiUsage();
+    
     await _loadPersona(txs, vaults, previousGoals);
 
     final vetoList = previousGoals
