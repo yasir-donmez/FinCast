@@ -3,16 +3,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'l10n/app_localizations.dart';
 import 'features/dashboard/main_scaffold.dart';
+import 'features/auth/screens/auth_screen.dart';
 import 'core/database/database_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/app_constants.dart';
 import 'core/services/data_retention_service.dart';
+import 'core/services/auth_service.dart';
 import 'core/providers/settings_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   try {
     debugPrint('🚀 [FinCast] Uygulama başlatılıyor...');
     WidgetsFlutterBinding.ensureInitialized();
     debugPrint('✅ [FinCast] Flutter Binding hazır.');
+
+    // Çevresel değişkenleri yükle (.env)
+    debugPrint('🔑 [FinCast] .env ayarları yükleniyor...');
+    await dotenv.load(fileName: ".env");
+    debugPrint('✅ [FinCast] .env yüklendi.');
+
+    // Supabase başlat
+    debugPrint('☁️ [FinCast] Supabase başlatılıyor...');
+    await Supabase.initialize(
+      url: dotenv.get('SUPABASE_URL', fallback: ''),
+      anonKey: dotenv.get('SUPABASE_ANON_KEY', fallback: ''),
+    );
+    debugPrint('✅ [FinCast] Supabase hazır.');
 
     // Isar veritabanını başlat
     debugPrint('📦 [FinCast] Veritabanı başlatılıyor...');
@@ -91,7 +109,28 @@ class FinCastApp extends ConsumerWidget {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
 
-      home: const MainScaffold(),
+      home: Consumer(
+        builder: (context, ref, child) {
+          final authState = ref.watch(authStateProvider);
+          
+          return authState.when(
+            data: (state) {
+              if (state.session != null) {
+                return const MainScaffold();
+              }
+              return const AuthScreen();
+            },
+            loading: () => Scaffold(
+              backgroundColor: AppColors.getBackground(context),
+              body: const Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, st) => Scaffold(
+              backgroundColor: AppColors.getBackground(context),
+              body: Center(child: Text('Hata: $e')),
+            ),
+          );
+        },
+      ),
     );
   }
 

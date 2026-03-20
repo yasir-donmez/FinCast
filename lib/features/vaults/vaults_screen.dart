@@ -11,6 +11,7 @@ import 'widgets/transaction_card.dart';
 import 'widgets/group_card.dart';
 import 'widgets/group_detail_sheet.dart';
 import '../transactions/add_transaction_sheet.dart'; 
+import 'widgets/vault_management_sheet.dart';
 
 class VaultsScreen extends ConsumerStatefulWidget {
   const VaultsScreen({super.key});
@@ -477,7 +478,12 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
   }
 
   void _showVaultManagementSheet(BuildContext context) {
-    // Coming soon or actual implementation
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const VaultManagementSheet(),
+    );
   }
 }
 

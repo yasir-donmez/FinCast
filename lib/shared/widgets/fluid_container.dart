@@ -1,0 +1,139 @@
+import 'package:flutter/material.dart';
+import 'dart:ui';
+import '../../core/theme/app_constants.dart';
+
+/// FinCast Yeni Nesil "Sıvı & Organik" Kapsayıcı (Fluid Container).
+/// Geleneksel Neumorphism'den uzaklaşıp, Squircle kavisler, 
+/// Soft-Depth (Yumuşak Derinlik) ve Glassmorphism dokusunu birleştirir.
+class FluidContainer extends StatelessWidget {
+  final Widget child;
+  final double? width;
+  final double? height;
+  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
+  final double borderRadius;
+  final bool isGlass;
+  final bool isConvex;
+  final Color? color;
+  final List<BoxShadow>? extraShadows;
+  final double blur;
+
+  const FluidContainer({
+    super.key,
+    required this.child,
+    this.width,
+    this.height,
+    this.padding,
+    this.margin,
+    this.borderRadius = AppSizes.radiusDefault * 1.5,
+    this.isGlass = true,
+    this.isConvex = true,
+    this.color,
+    this.extraShadows,
+    this.blur = 15.0, // Daha yüksek bulanıklık
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    // Aydınlık modda 'Gri' görünümü engellemek için Renk Aşılaması (Tinting)
+    // %2 oranında minimal bir ton (Sadece kirli griliği almak için)
+    final Color baseSurface = color ?? AppColors.getSurface(context);
+    final Color tintedSurface = isDark 
+        ? baseSurface 
+        : Color.lerp(baseSurface, color ?? AppColors.primary, 0.02)!; // Mikro-aşılama (%2)
+
+    // Su damlası (Convex) - Aydınlıkta 'Saten' dokusu (Luxury Satin Finish)
+    // Lustre Effect: Aydınlıkta daha canlı bir beyaz ışıltı ekliyoruz
+    final gradient = isConvex 
+      ? RadialGradient(
+          center: const Alignment(-0.35, -0.45), 
+          radius: 1.5,
+          colors: [
+            isDark 
+              ? Colors.white.withValues(alpha: 0.16) 
+              : Colors.white.withValues(alpha: 0.65), // Daha parlak Lustre
+            Colors.transparent,
+            isDark 
+              ? Colors.black.withValues(alpha: 0.28) 
+              : AppColors.lightDarkShadow.withValues(alpha: 0.12), // Daha belirgin derinlik
+          ],
+          stops: const [0.0, 0.55, 1.0],
+        )
+      : null;
+
+    // Çok katmanlı gölge yapısı (Multi-layered Depth)
+    final List<BoxShadow> shadows = extraShadows ?? [
+      if (isDark) ...[
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.55),
+          blurRadius: isConvex ? 40 : 24,
+          offset: Offset(0, isConvex ? 16 : 8),
+          spreadRadius: isConvex ? -8 : -4,
+        ),
+        BoxShadow(
+          color: AppColors.primary.withValues(alpha: 0.1),
+          blurRadius: 20,
+          offset: const Offset(0, -6),
+          spreadRadius: -4,
+        ),
+      ] else ...[
+        // Aydınlık Mod: Lüks Katmanlı Gölgeler
+        BoxShadow(
+          color: (color ?? AppColors.lightDarkShadow).withValues(alpha: 0.25), // Gölge de hafif renkli
+          blurRadius: 40,
+          offset: const Offset(0, 15),
+          spreadRadius: -10,
+        ),
+        BoxShadow(
+          color: (color ?? AppColors.lightDarkShadow).withValues(alpha: 0.3),
+          blurRadius: 10,
+          offset: const Offset(0, 2),
+          spreadRadius: -4,
+        ),
+      ]
+    ];
+
+    return Container(
+      width: width,
+      height: height,
+      margin: margin,
+      decoration: BoxDecoration(
+        color: isGlass 
+          ? tintedSurface.withValues(alpha: isDark ? 0.6 : 0.92) 
+          : tintedSurface,
+        borderRadius: BorderRadius.circular(borderRadius),
+        gradient: gradient,
+        boxShadow: shadows,
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.8),
+          width: 1.0,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: isGlass ? blur : 0, sigmaY: isGlass ? blur : 0),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: isConvex ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.2),
+                  Colors.transparent,
+                  isDark ? Colors.black.withValues(alpha: 0.05) : (color ?? AppColors.lightDarkShadow).withValues(alpha: 0.03),
+                ],
+              ) : null,
+            ),
+            child: Padding(
+              padding: padding ?? const EdgeInsets.all(AppSizes.paddingMedium),
+              child: child,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

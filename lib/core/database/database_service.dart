@@ -56,6 +56,8 @@ class DatabaseService {
 
   /// Yeni işlem ekle
   static Future<int> addTransaction(TransactionRecord tx) async {
+    tx.updatedAt = DateTime.now();
+    tx.syncStatus = 1; // Pending
     return await isar.writeTxn(() async {
       return await isar.transactionRecords.put(tx);
     });
@@ -63,6 +65,8 @@ class DatabaseService {
 
   /// İşlemi güncelle
   static Future<void> updateTransaction(TransactionRecord tx) async {
+    tx.updatedAt = DateTime.now();
+    tx.syncStatus = 1; // Pending
     await isar.writeTxn(() async {
       await isar.transactionRecords.put(tx);
     });
@@ -124,6 +128,8 @@ class DatabaseService {
 
   /// Kasa ekle
   static Future<int> addVault(Vault vault) async {
+    vault.updatedAt = DateTime.now();
+    vault.syncStatus = 1; // Pending
     return await isar.writeTxn(() async {
       return await isar.vaults.put(vault);
     });
@@ -131,6 +137,8 @@ class DatabaseService {
 
   /// Kasa güncelle
   static Future<void> updateVault(Vault vault) async {
+    vault.updatedAt = DateTime.now();
+    vault.syncStatus = 1; // Pending
     await isar.writeTxn(() async {
       await isar.vaults.put(vault);
     });
@@ -161,6 +169,8 @@ class DatabaseService {
 
   /// Yeni analiz hedefi kaydet
   static Future<int> addGoal(FinancialGoal goal) async {
+    goal.updatedAt = DateTime.now();
+    goal.syncStatus = 1; // Pending
     return await isar.writeTxn(() async {
       return await isar.financialGoals.put(goal);
     });
@@ -168,6 +178,8 @@ class DatabaseService {
 
   /// Hedefi güncelle (onay durumu vb.)
   static Future<void> updateGoal(FinancialGoal goal) async {
+    goal.updatedAt = DateTime.now();
+    goal.syncStatus = 1; // Pending
     await isar.writeTxn(() async {
       await isar.financialGoals.put(goal);
     });
@@ -226,6 +238,8 @@ class DatabaseService {
 
   /// Ayarları kaydet
   static Future<void> saveSettings(AppSettings settings) async {
+    settings.updatedAt = DateTime.now();
+    settings.syncStatus = 1; // Pending
     await isar.writeTxn(() async {
       await isar.appSettings.put(settings);
     });

@@ -57,6 +57,19 @@ class TransactionRecord {
   /// true → aktif listede görünmez, analiz motoru geçmiş hesabında kullanır.
   bool isArchived = false;
 
+  /// --- Senkronizasyon Alanları ---
+  /// Sunucu anahtarı (UUID)
+  @Index()
+  String? remoteId;
+
+  /// Son güncelleme tarihi (Eşitleme için)
+  @Index()
+  DateTime updatedAt = DateTime.now();
+
+  /// Senkronizasyon Durumu (0: Senkronize, 1: Beklemede, 2: Silindi)
+  @Index()
+  int syncStatus = 0;
+
   /// İşlemin aylık karşılığını hesaplar.
   /// Dashboard ve Analiz motoru arasındaki tutarsızlığı önlemek için bu metod kullanılmalıdır.
   @ignore

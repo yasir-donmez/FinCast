@@ -21,6 +21,8 @@ class MockTransaction {
   final int? remainingInstallments; // Taksit sayısı (varsa)
   final int? dbId; // Isar DB ID (null = henüz kaydedilmemiş)
   final String? categoryId; // Multi-language desteği için benzersiz anahtar
+  final bool showOnDashboard;
+  final int dashboardLayoutType;
   String? groupId; // null ise grupsuz
 
   MockTransaction({
@@ -37,6 +39,8 @@ class MockTransaction {
     this.remainingInstallments,
     this.dbId,
     this.categoryId,
+    required this.showOnDashboard,
+    this.dashboardLayoutType = 4,
     this.groupId,
   });
 
@@ -101,6 +105,8 @@ class MockTransaction {
       remainingInstallments: record.remainingInstallments,
       dbId: record.id,
       categoryId: record.categoryId,
+      showOnDashboard: record.showOnDashboard,
+      dashboardLayoutType: record.dashboardLayoutType,
     );
   }
 }

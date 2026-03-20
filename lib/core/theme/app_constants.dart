@@ -10,14 +10,15 @@ class AppColors {
   static const Color darkTextPrimary = Color(0xFFE0E0E0);
   static const Color darkTextSecondary = Color(0xFF8A8F99);
 
-  // --- Light Colors (Premium Glassmorphism) ---
-  static const Color lightBackground = Color(0xFFF5F7FA); // Crisp, modern bg
+  // --- Light Colors (Daha "İnci & Saten" bir his için güncellendi) ---
+  static const Color lightBackground = Color(0xFFF5F7FA); // Daha parlak ve temiz "İnci" beyazı
   static const Color lightSurface = Color(0xFFFFFFFF);
   static const Color lightLightShadow = Color(0xFFFFFFFF);
-  static const Color lightDarkShadow = Color(0xFFD1D9E6);
-  static const Color lightInnerSurface = Color(0xFFEDF1F7);
-  static const Color lightTextPrimary = Color(0xFF1A1D21); // Darker for better contrast
-  static const Color lightTextSecondary = Color(0xFF636E72);
+  static const Color lightDarkShadow = Color(0xFFD1D9E6); // Daha yumuşak, maviye çalan lüks gölge
+  static const Color lightInnerSurface = Color(0xFFE9EEF5);
+  static const Color lightTextPrimary = Color(0xFF1A1C1E); 
+  static const Color lightTextSecondary = Color(0xFF6C727A); 
+
 
   // --- Dynamic Color Helpers ---
   static Color getBackground(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? darkBackground : lightBackground;
@@ -27,14 +28,22 @@ class AppColors {
   static Color getInnerSurface(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? darkInnerSurface : lightInnerSurface;
   static Color getTextPrimary(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? darkTextPrimary : lightTextPrimary;
   static Color getTextSecondary(BuildContext context) => Theme.of(context).brightness == Brightness.dark ? darkTextSecondary : lightTextSecondary;
-  static Color getPrimary(BuildContext context) => primary; 
-  static Color getSecondary(BuildContext context) => secondary;
-  static Color getError(BuildContext context) => error;
-  static Color getSuccess(BuildContext context) => success;
-  static Color getWarning(BuildContext context) => warning;
-  static Color getInfo(BuildContext context) => info;
-  static Color getIncome(BuildContext context) => income;
-  static Color getExpense(BuildContext context) => expense;
+  
+  // Aydınlık modda okunabilirliği artıran derin renkler
+  static Color getAccentDeep(BuildContext context, Color baseColor) {
+    if (Theme.of(context).brightness == Brightness.dark) return baseColor;
+    // Aydınlık modda rengi daha koyu ve doygun yapıyoruz
+    return Color.lerp(baseColor, Colors.black, 0.25) ?? baseColor;
+  }
+
+  static Color getPrimary(BuildContext context) => getAccentDeep(context, primary); 
+  static Color getSecondary(BuildContext context) => getAccentDeep(context, secondary);
+  static Color getError(BuildContext context) => getAccentDeep(context, error);
+  static Color getSuccess(BuildContext context) => getAccentDeep(context, success);
+  static Color getWarning(BuildContext context) => getAccentDeep(context, warning);
+  static Color getInfo(BuildContext context) => getAccentDeep(context, info);
+  static Color getIncome(BuildContext context) => getAccentDeep(context, income);
+  static Color getExpense(BuildContext context) => getAccentDeep(context, expense);
 
   // --- Legacy Proxies (Deprecated: Use dynamic getters with context) ---
   // Renamed to prompt refactoring where context is available.

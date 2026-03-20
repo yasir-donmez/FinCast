@@ -23,4 +23,17 @@ class AppSettings {
 
   /// AI asistan bildirimleri açık mı?
   bool isAiNotificationsEnabled = true;
+
+  /// Bulut senkronizasyonu aktif mi?
+  bool isSyncEnabled = false;
+
+  /// --- Senkronizasyon Alanları ---
+  @Index()
+  String? remoteId;
+
+  @Index()
+  DateTime updatedAt = DateTime.now();
+
+  @Index()
+  int syncStatus = 0;
 }

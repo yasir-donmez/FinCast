@@ -113,7 +113,7 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
 
   // 2. Görünür Tekil İşlemleri ekle
   for (final t in transactions) {
-    if (t.groupId == null) {
+    if (t.groupId == null && t.showOnDashboard) {
       // mockTransaction follows the UI model
       items.add(
         DashboardItem(
@@ -126,7 +126,7 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
           minLimit: t.minAmount,
           maxLimit: t.maxAmount,
           dashboardOrder: 0, // Default for standalone
-          dashboardLayoutType: 4,
+          dashboardLayoutType: t.dashboardLayoutType,
         ),
       );
     }

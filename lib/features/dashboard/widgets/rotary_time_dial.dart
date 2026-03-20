@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,12 +15,30 @@ class RotaryTimeDial extends ConsumerStatefulWidget {
   ConsumerState<RotaryTimeDial> createState() => _RotaryTimeDialState();
 }
 
-class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> {
+class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> with SingleTickerProviderStateMixin {
+  late AnimationController _resetController;
+  Animation<double>? _resetAnimation;
   double _currentAngle = 0.0;
   double _lastAngle = 0.0;
   int _lastHapticLevel = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    _resetController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+  }
+
+  @override
+  void dispose() {
+    _resetController.dispose();
+    super.dispose();
+  }
+
   void _onPanStart(DragStartDetails details, Size widgetSize) {
+    if (_resetController.isAnimating) _resetController.stop();
     HapticFeedback.lightImpact();
     final center = Offset(widgetSize.width / 2, widgetSize.height / 2);
     _lastAngle = atan2(
@@ -39,107 +58,81 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> {
 
     setState(() {
       var delta = angle - _lastAngle;
-      // Handle wrap-around
-      if (delta > pi) {
-        delta -= 2 * pi;
-      } else if (delta < -pi) {
-        delta += 2 * pi;
-      }
+      if (delta > pi) delta -= 2 * pi;
+      else if (delta < -pi) delta += 2 * pi;
 
       _lastAngle = angle;
       _currentAngle += delta;
+      if (_currentAngle < 0) _currentAngle = 0;
 
-      // Geleceğe yatırım yapıyoruz, eksik zamana düşmesine (negatif) izin verme
-      if (_currentAngle < 0) {
-        _currentAngle = 0;
-      }
-
-      // Dinamik Rengi Hesapla ve Global Olarak Bildir
       double turns = _currentAngle / (2 * pi);
       final activeColor = _getSmoothColor(turns);
       
-      // SADECE renk değiştiğinde güncelle (Gereksiz rebuild'leri önle)
       if (ref.read(rotaryColorProvider) != activeColor) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           ref.read(rotaryColorProvider.notifier).state = activeColor;
         });
       }
 
-      // Haptic feedback every tick (40 ticks per turn)
-      int currentTick = (_currentAngle / (2 * pi / 40)).floor();
+      // Haptics synchronized with 84 visual ticks
+      int currentTick = (_currentAngle / (2 * pi / 84)).floor();
       if (currentTick != _lastHapticLevel) {
         _lastHapticLevel = currentTick;
-        HapticFeedback.selectionClick();
+        
+        // Periyot Geçişine (Major) göre Titreşim Etkisi
+        double turns = _currentAngle / (2 * pi);
+        double w12 = (turns <= 0.9) ? 1.0 : (turns >= 1.1 ? 0.0 : (1.1 - turns) / 0.2);
+        double w21 = (turns > 0.9 && turns < 1.1) ? (turns - 0.9) / 0.2 : (turns >= 1.1 && turns <= 1.9 ? 1.0 : (turns > 1.9 && turns < 2.1 ? (2.1 - turns) / 0.2 : 0.0));
+        double w3 = (turns <= 1.9) ? 0.0 : (turns >= 2.1 ? 1.0 : (turns - 1.9) / 0.2);
+        
+        int tickInTurn = currentTick % 84;
+        double majorWeight = 0.0;
+        if (tickInTurn % 12 == 0) majorWeight += w12;
+        if (tickInTurn % 21 == 0) majorWeight += w21;
+        if (tickInTurn % 7 == 0) majorWeight += w3;
 
-        // SİMÜLASYON Olarak Bakiyeyi artır: Her tikte belirli bir ivme ile para kazanılmış gibi
-        // Gerçek bakiyeyi bozmadan, üzerine eklenecek "Sanal Gelecek Bakiyesi" güncelleniyor.
-        final extraMultiplier = (pow(_currentAngle, 1.5) * 800)
-            .toDouble(); // Geleceğe gittikçe ivme artar
+        if (majorWeight > 0.5) {
+          HapticFeedback.mediumImpact();
+        } else {
+          HapticFeedback.selectionClick();
+        }
+
+        final extraMultiplier = (pow(_currentAngle, 1.5) * 800).toDouble();
         ref.read(simulationBonusProvider.notifier).state = extraMultiplier;
       }
     });
   }
 
   Color _getSmoothColor(double turns) {
-    // 0 -> 1 Tur (Mavi'den Yeşile) yumuşak geçiş
     if (turns <= 1.0) {
-      return Color.lerp(
-            AppColors.primary,
-            const Color(0xFF34C759),
-            turns, // 0'dan 1'e kadar yavaşça
-          ) ??
-          AppColors.primary;
+      return Color.lerp(AppColors.primary, const Color(0xFF34C759), turns) ?? AppColors.primary;
     }
-
-    // 1 Turu (360 dereceyi) geçtikten sonra TÜM renkler döngüye girer.
-    // Her turda tüm RGB spektrumu baştan sona hızlıca ve sürekli dönmeye başlar.
     final List<Color> rainbow = [
-      const Color(0xFF34C759), // iOS Yeşil
-      const Color(0xFFFFCC00), // iOS Sarı
-      const Color(0xFFFF9500), // iOS Turuncu
-      const Color(0xFFFF2D55), // iOS Pembe/Kırmızı
-      const Color(0xFFAF52DE), // iOS Mor
-      AppColors.primary, // Mavi/Cyan
-      const Color(0xFF34C759), // Tekrar Yeşile dön (Kusursuz Gökkuşağı Döngüsü)
+      const Color(0xFF34C759), const Color(0xFFFFCC00), const Color(0xFFFF9500),
+      const Color(0xFFFF2D55), const Color(0xFFAF52DE), AppColors.primary, const Color(0xFF34C759),
     ];
-
-    // İlk turdan sonraki kısmı al, böylece her tam tur (1.0, 2.0...) 0'a denk gelir, gökkuşağı kendini tekrar eder
     double progress = (turns - 1.0) % 1.0;
     progress = progress * (rainbow.length - 1);
-
     int lower = progress.floor().clamp(0, rainbow.length - 2);
     int upper = lower + 1;
     double fraction = progress - lower;
-
-    return Color.lerp(rainbow[lower], rainbow[upper], fraction) ??
-        rainbow.first;
+    return Color.lerp(rainbow[lower], rainbow[upper], fraction) ?? rainbow.first;
   }
 
   String _getTimeLabel(double currentAngle) {
     if (currentAngle <= 0.01) return "Bugün";
     double turns = currentAngle / (2 * pi);
-
     if (turns <= 1.0) {
-      // 1. Tur: 0 - 7 Gün
       int days = (turns * 7).round();
-      if (days == 0) return "Bugün";
-      return "$days Gün";
+      return days == 0 ? "Bugün" : "$days Gün";
     } else if (turns <= 2.0) {
-      // 2. Tur: 1 - 4 Hafta
-      double fraction = turns - 1.0;
-      int weeks = 1 + (fraction * 3).round();
-      if (weeks >= 4) return "1 Ay";
-      return "$weeks Hafta";
+      int weeks = 1 + ((turns - 1.0) * 3).round();
+      return weeks >= 4 ? "1 Ay" : "$weeks Hafta";
     } else if (turns <= 3.0) {
-      // 3. Tur: 1 - 12 Ay (720 -> 1080 derece)
-      double fraction = turns - 2.0;
-      int months = 1 + (fraction * 11).round();
-      if (months >= 12) return "1 Yıl";
-      return "$months Ay";
+      int months = 1 + ((turns - 2.0) * 11).round();
+      return months >= 12 ? "1 Yıl" : "$months Ay";
     } else {
-      // 4. Tur ve sonrası: Yıllar (1080+ derece)
-      double fraction = turns - 3.0;
-      int years = 1 + (fraction * 9).round();
+      int years = 1 + ((turns - 3.0) * 9).round();
       return "$years Yıl";
     }
   }
@@ -152,61 +145,56 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ZAMAN ETİKETİ (Dial'ın Hemen Üstünde)
-        Column(
-          children: [
-            const SizedBox(height: 8),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
-              transitionBuilder: (child, animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(0.0, -0.2),
-                      end: Offset.zero,
-                    ).animate(animation),
-                    child: child,
-                  ),
-                );
-              },
-              child: Text(
-                timeLabel,
-                key: ValueKey(timeLabel),
-                style: TextStyle(
-                  color: activeColor, // Işıltılı ve Değişen Renk
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.0,
-                  shadows: [
-                    Shadow(color: activeColor.withValues(alpha: 0.8), blurRadius: 10),
-                  ],
-                ),
-              ),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+            return Stack(
+              alignment: Alignment.center,
+              children: <Widget>[
+                ...previousChildren.where((child) => child.key != currentChild?.key),
+                if (currentChild != null) currentChild,
+              ],
+            );
+          },
+          child: Text(
+            timeLabel,
+            key: ValueKey(timeLabel),
+            style: TextStyle(
+              color: activeColor.withValues(alpha: 0.9),
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5,
             ),
-          ],
+          ),
         ),
-
-        const SizedBox(height: AppSizes.paddingXLarge * 1.5),
-
-        // DIAL KISMI (Maksimum Boyut Kısıtlaması Eklenerek Taşma Önlendi)
+        const SizedBox(height: 20),
         LayoutBuilder(
           builder: (context, constraints) {
-            // Alanın yüksekliği veya genişliğine göre en güvenli kısıtlamayı al
-            final safeSize = min(constraints.maxWidth, constraints.maxHeight);
-            final size = min(safeSize, 240.0); // 260'ı 240'a indirdik
-            final knobSize = size * 0.65;
+            const size = 220.0;
+            final knobSize = size * 0.68;
 
             return GestureDetector(
               onPanUpdate: (details) => _onPanUpdate(details, Size(size, size)),
               onPanStart: (details) => _onPanStart(details, Size(size, size)),
               onDoubleTap: () {
                 HapticFeedback.heavyImpact();
-                setState(() {
-                  _currentAngle = 0.0;
-                  _lastAngle = 0.0;
-                  ref.read(simulationBonusProvider.notifier).state = 0.0;
-                });
+                _resetAnimation = Tween<double>(
+                  begin: _currentAngle,
+                  end: 0.0,
+                ).animate(CurvedAnimation(
+                  parent: _resetController,
+                  curve: Curves.elasticOut,
+                ))
+                  ..addListener(() {
+                    setState(() {
+                      _currentAngle = _resetAnimation!.value;
+                      _lastAngle = 0.0;
+                      final extraMultiplier = (pow(_currentAngle, 1.5) * 800).toDouble();
+                      ref.read(simulationBonusProvider.notifier).state = extraMultiplier;
+                    });
+                  });
+                
+                _resetController.forward(from: 0.0);
               },
               child: SizedBox(
                 width: size,
@@ -214,26 +202,19 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Çentikler (Animasyonlu ve Katmanlı)
-                    SizedBox(
-                      width: size,
-                      height: size,
-                      child: CustomPaint(
-                        painter: _DialTicksPainter(
-                          currentAngle: _currentAngle,
-                          tickCount: 40,
-                          activeColor:
-                              activeColor, // Renk paletini paint'e taşıyoruz
-                        ),
+                    // Çukur Çentikler (Anlamlı 84 Adet)
+                    CustomPaint(
+                      size: Size(size, size),
+                      painter: _DialTicksPainter(
+                        currentAngle: _currentAngle,
+                        tickCount: 84,
+                        activeColor: activeColor,
                       ),
                     ),
 
-                    // Fiziksel Çevirme Topuzu (Knob)
+                    // FİZİKSEL BUTON (Extruded Knob)
                     Transform.rotate(
-                      angle:
-                          _currentAngle -
-                          pi /
-                              2, // Sıfır noktasını en tepeye (-90 derece) hizala
+                      angle: _currentAngle - pi / 2,
                       child: Container(
                         width: knobSize,
                         height: knobSize,
@@ -242,48 +223,65 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> {
                           color: AppColors.getSurface(context),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.getDarkShadow(context).withValues(alpha: 0.4),
-                              offset: const Offset(15, 15),
-                              blurRadius: 30,
-                              spreadRadius: 2,
-                            ),
-                            BoxShadow(
-                              color: AppColors.getLightShadow(context).withValues(alpha: 0.8),
-                              offset: const Offset(-8, -8),
+                              color: Colors.black.withValues(alpha: 0.5),
+                              offset: const Offset(10, 10),
                               blurRadius: 20,
-                              spreadRadius: 0,
+                              spreadRadius: 1,
                             ),
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              offset: const Offset(4, 4),
-                              blurRadius: 10,
-                              spreadRadius: -5,
+                              color: Colors.white.withValues(alpha: 0.05),
+                              offset: const Offset(-5, -5),
+                              blurRadius: 15,
                             ),
                           ],
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.getSurface(context),
+                              AppColors.getSurface(context).withValues(alpha: 0.8),
+                            ],
+                          ),
                         ),
                         child: Stack(
+                          alignment: Alignment.center,
                           children: [
-                            // Çukur Leke Göstergesi
+                            // Metalik Yansıma (Conical Simulation)
+                            Container(
+                              width: knobSize * 0.9,
+                              height: knobSize * 0.9,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: SweepGradient(
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.white.withValues(alpha: 0.05),
+                                    Colors.transparent,
+                                    Colors.black.withValues(alpha: 0.1),
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                            ),
+                            // Gösterge Oyuğu
                             Align(
-                              alignment: const Alignment(0.7, 0.0),
+                              alignment: const Alignment(0.72, 0.0),
                               child: Container(
-                                width: 16,
-                                height: 16,
+                                width: 12,
+                                height: 12,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: AppColors.getDarkShadow(context).withValues(alpha: 0.3),
-                                      width: 1.0,
+                                  color: Colors.black.withValues(alpha: 0.4),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                                ),
+                                child: Center(
+                                  child: Container(
+                                    width: 4,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: activeColor.withValues(alpha: 0.6),
                                     ),
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      AppColors.getDarkShadow(context).withValues(alpha: 0.5),
-                                      AppColors.getInnerSurface(context),
-                                      AppColors.getLightShadow(context).withValues(alpha: 0.05),
-                                    ],
-                                    stops: const [0.0, 0.4, 1.0],
                                   ),
                                 ),
                               ),
@@ -308,83 +306,69 @@ class _DialTicksPainter extends CustomPainter {
   final int tickCount;
   final Color activeColor;
 
-  _DialTicksPainter({
-    required this.currentAngle,
-    required this.tickCount,
-    required this.activeColor,
-  });
-
-  // Pre-allocated Paint objects to prevent OOM
-  final Paint _tickPaint = Paint()..strokeCap = StrokeCap.round;
-  final Paint _shadowPaint = Paint()
-    ..strokeCap = StrokeCap.round
-    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
+  _DialTicksPainter({required this.currentAngle, required this.tickCount, required this.activeColor});
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
-    final isDark = activeColor.computeLuminance() < 0.5;
+    final Paint paint = Paint()..strokeCap = StrokeCap.round;
 
     double turns = currentAngle / (2 * pi);
-    int level = turns.floor();
-    if (level < 0) level = 0;
+    double pointerAngle = currentAngle % (2 * pi);
 
-    double progressInLevel = turns - level;
-    int activeTicks = (progressInLevel * tickCount).round();
+    // Zaman ölçeğine göre hafif büyüme çarpanı
+    double timeScale = 1.0 + (turns * 0.3).clamp(0.0, 1.5); 
 
-    double pointerDialAngle = (currentAngle % (2 * pi));
+    // ORGANİK GEÇİŞ: Periyotlar arası (Gün, Hafta, Ay) ana çubuk geçişlerini yumuşat
+    double weight12 = (turns <= 0.9) ? 1.0 : (turns >= 1.1 ? 0.0 : (1.1 - turns) / 0.2);
+    double weight21 = (turns > 0.9 && turns < 1.1) ? (turns - 0.9) / 0.2 : (turns >= 1.1 && turns <= 1.9 ? 1.0 : (turns > 1.9 && turns < 2.1 ? (2.1 - turns) / 0.2 : 0.0));
+    double weight7 = (turns <= 1.9) ? 0.0 : (turns >= 2.1 ? 1.0 : (turns - 1.9) / 0.2);
 
     for (int i = 0; i < tickCount; i++) {
       double angle = (i * 2 * pi) / tickCount - pi / 2;
       double tickPos = (i * 2 * pi) / tickCount;
 
-      double dist = (pointerDialAngle - tickPos).abs();
+      double dist = (pointerAngle - tickPos).abs();
       if (dist > pi) dist = 2 * pi - dist;
+      
+      // GERİ GETİRİLEN DALGA HİSSİ: sigma 0.35 (Sevilen önceki keskinlik)
+      double bulge = exp(-(dist * dist) / (0.35 * 0.35));
 
-      double sigma = 0.35;
-      double bulgeFactor = exp(-(dist * dist) / (sigma * sigma));
+      // Her çubuğun "ana çubuk olma" ağırlığını hesapla
+      double majorWeight = 0.0;
+      if (i % 12 == 0) majorWeight += weight12;
+      if (i % 21 == 0) majorWeight += weight21;
+      if (i % 7 == 0) majorWeight += weight7;
+      majorWeight = majorWeight.clamp(0.0, 1.0);
 
-      double tickMinHeight = radius * 0.05;
-      double baseMaxGrowth = radius * 0.05;
-      double dynamicGrowth = (level * 0.03 * radius);
-      if (dynamicGrowth > radius * 0.15) dynamicGrowth = radius * 0.15;
+      bool isPassed = tickPos <= pointerAngle + 0.001 || turns >= 0.99;
 
-      double currentHeight =
-          tickMinHeight + ((baseMaxGrowth + dynamicGrowth) * bulgeFactor);
+      // Sabit Base Uzunluğu (Önceki versiyondaki gibi taban hep aynı kalır)
+      double baseLen = 6.0 + (majorWeight * 8.0); // 6.0'dan 14.0'a (6.0+8.0) yumuşak geçiş
+      // Dinamik Büyüme: Sadece Dalga (Bulge) Alanı ve Zaman Katmanına (timeScale) Göre Uzama
+      double tickLength = baseLen + (8.0 * bulge * timeScale); 
+      double tickWidth = 1.0 + (majorWeight * 1.2) + (1.2 * bulge); 
 
-      bool isPassed = i <= activeTicks;
+      final p1 = Offset(center.dx + (radius - tickLength) * cos(angle), center.dy + (radius - tickLength) * sin(angle));
+      final p2 = Offset(center.dx + radius * cos(angle), center.dy + radius * sin(angle));
 
-      _tickPaint.color = isPassed
-          ? activeColor
-          : (isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.08));
-      _tickPaint.strokeWidth = 2.5 + (1.5 * bulgeFactor);
+      // Oyuk (Inset) Shading
+      paint.color = isPassed 
+          ? activeColor.withValues(alpha: 0.6 + (0.4 * bulge)) 
+          : Colors.black.withValues(alpha: 0.2 + (0.2 * majorWeight));
+      paint.strokeWidth = tickWidth;
+      canvas.drawLine(p1, p2, paint);
 
-      final innerRadius = radius - currentHeight;
-
-      final startPoint = Offset(
-        center.dx + innerRadius * cos(angle),
-        center.dy + innerRadius * sin(angle),
-      );
-      final endPoint = Offset(
-        center.dx + radius * cos(angle),
-        center.dy + radius * sin(angle),
-      );
-
-      if (isPassed && bulgeFactor > 0.1) {
-        _shadowPaint.color = activeColor.withValues(alpha: 0.6 * bulgeFactor);
-        _shadowPaint.strokeWidth = 6.0 * bulgeFactor;
-        canvas.drawLine(startPoint, endPoint, _shadowPaint);
+      // Kenar Işığı (Fiziksel Derinlik)
+      if (!isPassed || bulge > 0.1) {
+        paint.color = Colors.white.withValues(alpha: (0.02 + (0.04 * majorWeight)) + (0.04 * bulge));
+        paint.strokeWidth = tickWidth * 0.4;
+        canvas.drawLine(Offset(p1.dx + 0.7, p1.dy + 0.7), Offset(p2.dx + 0.7, p2.dy + 0.7), paint);
       }
-
-      canvas.drawLine(startPoint, endPoint, _tickPaint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _DialTicksPainter oldDelegate) {
-    return oldDelegate.currentAngle != currentAngle ||
-        oldDelegate.activeColor != activeColor ||
-        oldDelegate.tickCount != tickCount;
-  }
+  bool shouldRepaint(covariant _DialTicksPainter old) => old.currentAngle != currentAngle || old.activeColor != activeColor;
 }

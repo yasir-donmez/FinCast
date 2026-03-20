@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_constants.dart';
 import '../dashboard_providers.dart';
-import '../../../shared/widgets/neu_container.dart';
+import '../../../shared/widgets/fluid_container.dart';
+import '../../../shared/widgets/fluid_sheet.dart';
+import '../../../shared/widgets/fluid_button.dart';
 import '../../../core/utils/icon_utils.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../core/database/database_service.dart';
@@ -87,15 +89,20 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
-      child: _buildVaultCardWrapper(
-        item: items[0],
-        index: startIndex,
-        pageStartIndex: startIndex,
-        layoutType: 1,
-        width: width - (AppSizes.paddingMedium * 2),
-        height: 236,
-        isExpanded: true,
-        isShrunk: false,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildVaultCardWrapper(
+            item: items[0],
+            index: startIndex,
+            pageStartIndex: startIndex,
+            layoutType: 1,
+            width: (width - (AppSizes.paddingMedium * 2)).clamp(0.0, double.infinity),
+            height: 236,
+            isExpanded: true,
+            isShrunk: false,
+          ),
+        ],
       ),
     );
   }
@@ -107,7 +114,7 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
     int startIndex,
   ) {
     if (items.isEmpty) return const SizedBox.shrink();
-    final double cardWidth = width - (AppSizes.paddingMedium * 2);
+    final double cardWidth = (width - (AppSizes.paddingMedium * 2)).clamp(0.0, double.infinity);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
@@ -152,11 +159,9 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
     if (items.isEmpty) return const SizedBox.shrink();
 
     final int totalInPage = items.length;
-    // Calculate total layout width accurately, subtracting padding
-    final availableWidth = width - (AppSizes.paddingMedium * 3);
-    final leftWidth =
-        availableWidth * 0.55; // Biraz daha büyük sol taraf (ya da %50)
-    final rightWidth = availableWidth * 0.45; // Sağ tarafa kalan
+    final double availableWidth = (width - (AppSizes.paddingMedium * 3)).clamp(0.0, double.infinity);
+    final leftWidth = availableWidth * 0.55;
+    final rightWidth = availableWidth * 0.45;
 
     final rightH1 = totalInPage > 1
         ? (_isExpanded(startIndex + 1, 3, startIndex)
@@ -227,7 +232,7 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
   ) {
     if (items.isEmpty) return const SizedBox.shrink();
 
-    final availableWidth = width - (AppSizes.paddingMedium * 3);
+    final double availableWidth = (width - (AppSizes.paddingMedium * 3)).clamp(0.0, double.infinity);
 
     double getW(int idx) {
       if (_isExpanded(idx, 4, startIndex)) return availableWidth * 0.75;
@@ -302,7 +307,6 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
 
   // CASE 5+: Sayfalı Düzen (Dinamik Gruplar)
   Widget _buildPaginatedLayout(double width) {
-    // Dinamik bakiye ve yerleşim durumuna göre sayfaları hesapla
     List<List<DashboardItem>> pages = [];
     List<int> pageStartIndices = [];
     int i = 0;
@@ -332,47 +336,68 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
 
     return Column(
       children: [
+        // SADECE Sayfa içeriği sönümlenir (ShaderMask)
         Expanded(
-          child: PageView.builder(
-            controller: _pageController,
-            onPageChanged: (idx) => setState(() => _currentPage = idx),
-            itemCount: pageCount,
-            itemBuilder: (context, pageIdx) {
-              if (pageIdx >= pages.length) return const SizedBox.shrink();
-
-              final pageItems = pages[pageIdx];
-              final startIndex = pageStartIndices[pageIdx];
-              final int layoutType = pageItems.length;
-
-              switch (layoutType) {
-                case 1:
-                  return _buildLayoutFor1(pageItems, width, startIndex);
-                case 2:
-                  return _buildLayoutFor2(pageItems, width, startIndex);
-                case 3:
-                  return _buildLayoutFor3(pageItems, width, startIndex);
-                default:
-                  return _buildLayoutFor4(pageItems, width, startIndex);
-              }
+          child: ShaderMask(
+            shaderCallback: (rect) {
+              return LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black, Colors.black, Colors.transparent],
+                stops: const [0.0, 0.85, 1.0],
+              ).createShader(rect);
             },
+            blendMode: BlendMode.dstIn,
+            child: PageView.builder(
+              controller: _pageController,
+              onPageChanged: (idx) => setState(() => _currentPage = idx),
+              itemCount: pageCount,
+              itemBuilder: (context, pageIdx) {
+                if (pageIdx >= pages.length) return const SizedBox.shrink();
+
+                final pageItems = pages[pageIdx];
+                final startIndex = pageStartIndices[pageIdx];
+                final int layoutType = pageItems.length;
+
+                switch (layoutType) {
+                  case 1:
+                    return _buildLayoutFor1(pageItems, width, startIndex);
+                  case 2:
+                    return _buildLayoutFor2(pageItems, width, startIndex);
+                  case 3:
+                    return _buildLayoutFor3(pageItems, width, startIndex);
+                  default:
+                    return _buildLayoutFor4(pageItems, width, startIndex);
+                }
+              },
+            ),
           ),
         ),
-        const SizedBox(height: 8),
-        // Dots
+        const SizedBox(height: 12),
+        // Dots - Maskelenmez, pırıl pırıl cam gibi durur
         if (pageCount > 1)
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(pageCount, (idx) {
+              final activeColor = ref.watch(rotaryColorProvider);
               return AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOutCubic,
                 margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: _currentPage == idx ? 12 : 6,
-                height: 6,
+                width: _currentPage == idx ? 24 : 8,
+                height: 8,
                 decoration: BoxDecoration(
                   color: _currentPage == idx
-                      ? AppColors.primary
-                      : AppColors.getTextSecondary(context).withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(3),
+                      ? activeColor
+                      : activeColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                  boxShadow: _currentPage == idx ? [
+                    BoxShadow(
+                      color: activeColor.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      spreadRadius: 0,
+                    )
+                  ] : null,
                 ),
               );
             }),
@@ -418,17 +443,20 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
       },
       onLongPress: () => _showLayoutSettings(item),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutQuart,
+        clipBehavior: Clip.antiAlias, // Sıvı ve kusursuz geçişler için kritik
         width: width,
         height: height,
-        child: NeuContainer(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppSizes.radiusLarge * 1.2),
+        ),
+        child: FluidContainer(
           padding: EdgeInsets.zero,
-          isInnerShadow: isExpanded, // Seçiliyse basılı efekt
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppSizes.radiusDefault),
-            child: _buildVaultCard(item, isExpanded, isShrunk, width, height),
-          ),
+          borderRadius: AppSizes.radiusLarge * 1.2,
+          isGlass: true,
+          blur: 15,
+          child: _buildVaultCard(item, isExpanded, isShrunk, width, height),
         ),
       ),
     );
@@ -454,7 +482,6 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
   ) {
     final color = _getColorForItem(item);
     final icon = _getIconData(item.iconCode ?? '');
-    // Filigran için her zaman orijinal ikon rengini kullan (bakiyeden bağımsız)
     final originalColor = IconUtils.getColor(item.iconCode ?? item.name);
 
     return ClipRRect(
@@ -482,7 +509,7 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
                   return Stack(
                     alignment: Alignment.center,
                     children: <Widget>[
-                      ...previousChildren,
+                      ...previousChildren.where((child) => child.key != currentChild?.key),
                       if (currentChild != null) currentChild,
                     ],
                   );
@@ -494,7 +521,8 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
               key: ValueKey('${item.id}_${isExpanded}_$isShrunk'),
               width: width,
               height: height,
-              child: Container(
+              child: ClipRect(
+              child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10.0,
                   vertical: 10.0,
@@ -505,6 +533,7 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
                     ? _buildShrunkContent(item, icon, color, width, height)
                     : _buildNormalContent(item, icon, color, width, height),
               ),
+            ),
             ),
           ),
 
@@ -555,73 +584,63 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
   ) {
     String displayBalance = CurrencyUtils.formatAmount(item.balance.abs());
 
-    return SingleChildScrollView(
-      physics: const NeverScrollableScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [Icon(icon, color: color, size: 26)],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.topLeft,
+      child: SizedBox(
+        width: (width - 20.0).clamp(0.0, double.infinity),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+          Icon(icon, color: color, size: 26),
+          const SizedBox(height: 12),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Icon(
-                              item.balance < 0
-                                  ? Icons.trending_down_rounded
-                                  : Icons.trending_up_rounded,
-                              color: item.balance < 0
-                                  ? AppColors.getExpense(context)
-                                  : AppColors.getIncome(context),
-                              size: 18,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              displayBalance,
-                              style: TextStyle(
-                                color: item.balance < 0
-                                    ? AppColors.getExpense(context)
-                                    : AppColors.getTextPrimary(context),
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                    Icon(
+                      item.balance < 0
+                          ? Icons.trending_down_rounded
+                          : Icons.trending_up_rounded,
+                      color: item.balance < 0
+                          ? AppColors.getExpense(context)
+                          : AppColors.getIncome(context),
+                      size: 18,
                     ),
+                    const SizedBox(width: 4),
                     Text(
-                      item.currency,
+                      displayBalance,
                       style: TextStyle(
-                        color: color.withValues(alpha: 0.8),
-                        fontSize: 9,
+                        color: item.balance < 0
+                            ? AppColors.getExpense(context)
+                            : AppColors.getTextPrimary(context),
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                Text(
+                  item.currency,
+                  style: TextStyle(
+                    color: color.withValues(alpha: 0.8),
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -645,12 +664,10 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
   ) {
     String displayBalance = CurrencyUtils.formatAmount(item.balance.abs());
 
-    // Determine Layout Mode
     final bool isFull = width > 300 && height > 200;
     final bool isWide = width > 300 && height < 150;
     final bool isTall = width < 200;
 
-    // Common Components
     Widget buildHeader() {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -784,231 +801,128 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            if (isFull && (item.minLimit != null || item.maxLimit != null)) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (item.minLimit != null)
-                      Text(
-                        CurrencyUtils.formatAmount(item.minLimit!),
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.getIncome(context),
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    if (item.minLimit != null && item.maxLimit != null)
-                      Text(
-                        ' - ',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: color.withValues(alpha: 0.5),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    if (item.maxLimit != null)
-                      Text(
-                        CurrencyUtils.formatAmount(item.maxLimit!),
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.getExpense(context),
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
           ],
         ),
       );
     }
 
     if (isWide) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(flex: 3, child: buildHeader()),
-          Expanded(flex: 4, child: Center(child: buildBalanceInfo())),
-          Expanded(flex: 3, child: buildTransactionsGrid(4)),
-        ],
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.center,
+        child: SizedBox(
+          width: (width - 20.0).clamp(0.0, double.infinity),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(flex: 3, child: buildHeader()),
+              Expanded(flex: 4, child: Center(child: buildBalanceInfo())),
+              Expanded(flex: 3, child: buildTransactionsGrid(4)),
+            ],
+          ),
+        ),
       );
     }
 
     if (isTall) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          buildHeader(),
-          const SizedBox(height: 12),
-          Expanded(
-            child: SingleChildScrollView(child: buildTransactionsGrid(12)),
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.topLeft,
+        child: SizedBox(
+          width: (width - 20.0).clamp(0.0, double.infinity),
+          height: (height - 20.0).clamp(0.0, double.infinity),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              buildHeader(),
+              const SizedBox(height: 12),
+              Expanded(child: SingleChildScrollView(child: buildTransactionsGrid(12))),
+              const SizedBox(height: 8),
+              buildBalanceInfo(),
+            ],
           ),
-          const SizedBox(height: 8),
-          buildBalanceInfo(),
-        ],
+        ),
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.topLeft,
+      child: SizedBox(
+        width: (width - 20.0).clamp(0.0, double.infinity),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(flex: isFull ? 2 : 3, child: buildHeader()),
-            Expanded(
-              flex: isFull ? 3 : 2,
-              child: buildTransactionsGrid(isFull ? 12 : 6),
-            ),
-          ],
-        ),
-        const Spacer(),
-        buildBalanceInfo(),
-        if (!isFull && (item.minLimit != null || item.maxLimit != null))
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (item.minLimit != null) ...[
-                    Icon(
-                      Icons.arrow_downward_rounded,
-                      size: 10,
-                      color: AppColors.getExpense(context),
-                    ),
-                    Text(
-                      CurrencyUtils.formatAmount(item.minLimit!),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.getExpense(context),
-                      ),
-                    ),
-                  ],
-                  if (item.minLimit != null && item.maxLimit != null)
-                    Text(
-                      ' ~ ',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: color.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  if (item.maxLimit != null) ...[
-                    Icon(
-                      Icons.arrow_upward_rounded,
-                      size: 10,
-                      color: AppColors.getIncome(context),
-                    ),
-                    Text(
-                      CurrencyUtils.formatAmount(item.maxLimit!),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.getIncome(context),
-                      ),
-                    ),
-                  ],
-                ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: isFull ? 2 : 3, child: buildHeader()),
+              Expanded(
+                flex: isFull ? 3 : 2,
+                child: buildTransactionsGrid(isFull ? 12 : 6),
               ),
-            ),
+            ],
           ),
-      ],
+          const SizedBox(height: 12),
+          buildBalanceInfo(),
+        ],
+      ),
+      ),
     );
   }
 
   void _showLayoutSettings(DashboardItem item) {
     HapticFeedback.heavyImpact();
-    showModalBottomSheet(
+    FluidSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => SafeArea(
-        child: Container(
-          padding: const EdgeInsets.all(AppSizes.paddingLarge),
-          decoration: BoxDecoration(
-            color: AppColors.getSurface(context),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      title: 'Görünüm ve Sıralama',
+      child: Column(
+        mainAxisSize: MainAxisSize.min, // Sadece içerik kadar yer kaplamasını sağlar
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildLayoutOption(item, 1, Icons.crop_square_rounded, '1\'li'),
+              _buildLayoutOption(item, 2, Icons.view_headline_rounded, '2\'li'),
+              _buildLayoutOption(item, 3, Icons.view_quilt_rounded, '3\'lü'),
+              _buildLayoutOption(item, 4, Icons.view_module_rounded, '4\'lü'),
+            ],
           ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Görünüm ve Sıralama',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.getTextSecondary(context),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildLayoutOption(
-                      item,
-                      1,
-                      Icons.crop_square_rounded,
-                      '1\'li',
-                    ),
-                    _buildLayoutOption(
-                      item,
-                      2,
-                      Icons.view_headline_rounded,
-                      '2\'li',
-                    ),
-                    _buildLayoutOption(
-                      item,
-                      3,
-                      Icons.view_quilt_rounded,
-                      '3\'lü',
-                    ),
-                    _buildLayoutOption(
-                      item,
-                      4,
-                      Icons.view_module_rounded,
-                      '4\'lü',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                const Divider(),
-                ListTile(
-                  leading: const Icon(Icons.arrow_upward_rounded),
-                  title: const Text('Öne Taşı'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _moveVault(item, -1);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.arrow_downward_rounded),
-                  title: const Text('Arkaya Taşı'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _moveVault(item, 1);
-                  },
-                ),
-                const SizedBox(height: 16),
+          const SizedBox(height: 32),
+          FluidButton(
+            isSecondary: true,
+            onTap: () {
+              Navigator.pop(context);
+              _moveVault(item, -1);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.arrow_upward_rounded, size: 18),
+                SizedBox(width: 8),
+                Text('Öne Taşı'),
               ],
             ),
           ),
-        ),
+          const SizedBox(height: 12),
+          FluidButton(
+            isSecondary: true,
+            onTap: () {
+              Navigator.pop(context);
+              _moveVault(item, 1);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.arrow_downward_rounded, size: 18),
+                SizedBox(width: 8),
+                Text('Arkaya Taşı'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }
@@ -1059,14 +973,12 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
   }
 
   Future<void> _updateVaultLayout(DashboardItem item, int layoutType) async {
-    // Bütün kasalara aynı dizilimi uygula
     final vaults = ref.read(allVaultsProvider);
     for (var v in vaults) {
       v.dashboardLayoutType = layoutType;
     }
     await DatabaseService.updateAllVaults(vaults);
 
-    // Bütün tekil işlemlere aynı dizilimi uygula
     final txs = ref.read(allTransactionsProvider);
     for (var t in txs) {
       t.dashboardLayoutType = layoutType;
@@ -1077,14 +989,7 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
   }
 
   Future<void> _moveVault(DashboardItem item, int direction) async {
-    final isVault = item.id.startsWith('v_');
-    final realId = int.tryParse(
-      item.id.replaceFirst(isVault ? 'v_' : 't_', ''),
-    );
-    if (realId == null) return;
-
     final allItems = ref.read(dashboardItemsProvider);
-    // Sort logic just to be safe, though provider should return sorted
     final visibleItems = List<DashboardItem>.from(allItems)
       ..sort((a, b) {
         int cmp = a.dashboardOrder.compareTo(b.dashboardOrder);
@@ -1098,14 +1003,6 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
     int newIndex = index + direction;
     if (newIndex < 0 || newIndex >= visibleItems.length) return;
 
-    // Sadece orderları yer değiştirme yerine araya sıkıştırma da yapabiliriz
-    // Ama kolaylık açısından herkesi baştan indeksleyelim ve hedefi yer değiştirelim.
-    for (int i = 0; i < visibleItems.length; i++) {
-      // Şimdilik sadece geçici bir alanda güncelliyoruz
-      // Doğrudan DB nesneleri olmadığı için DB nesnelerine yansıtacağız
-    }
-
-    // Basit takas (sadece order sayılarını takas eder, eger cakısan varsa tam cozmez ama 10'ar 10'ar artışta çözer)
     final item1 = visibleItems[index];
     final item2 = visibleItems[newIndex];
     int tempOrder = item1.dashboardOrder;
@@ -1113,37 +1010,26 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
     int order2 = tempOrder;
 
     if (order1 == order2) {
-      // Edge case fallback
       order1 = index * 10;
       order2 = newIndex * 10;
     }
 
-    // Update first item in DB
     if (item1.id.startsWith('v_')) {
-      final vault = ref
-          .read(allVaultsProvider)
-          .firstWhere((v) => 'v_${v.id}' == item1.id);
+      final vault = ref.read(allVaultsProvider).firstWhere((v) => 'v_${v.id}' == item1.id);
       vault.dashboardOrder = order1;
       await DatabaseService.updateVault(vault);
     } else {
-      final tx = ref
-          .read(allTransactionsProvider)
-          .firstWhere((t) => 't_${t.id}' == item1.id);
+      final tx = ref.read(allTransactionsProvider).firstWhere((t) => 't_${t.id}' == item1.id);
       tx.dashboardOrder = order1;
       await DatabaseService.updateTransaction(tx);
     }
 
-    // Update second item in DB
     if (item2.id.startsWith('v_')) {
-      final vault = ref
-          .read(allVaultsProvider)
-          .firstWhere((v) => 'v_${v.id}' == item2.id);
+      final vault = ref.read(allVaultsProvider).firstWhere((v) => 'v_${v.id}' == item2.id);
       vault.dashboardOrder = order2;
       await DatabaseService.updateVault(vault);
     } else {
-      final tx = ref
-          .read(allTransactionsProvider)
-          .firstWhere((t) => 't_${t.id}' == item2.id);
+      final tx = ref.read(allTransactionsProvider).firstWhere((t) => 't_${t.id}' == item2.id);
       tx.dashboardOrder = order2;
       await DatabaseService.updateTransaction(tx);
     }

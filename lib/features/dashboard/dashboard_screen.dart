@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_constants.dart';
 import '../../core/utils/currency_utils.dart';
 import '../../core/providers/db_providers.dart';
+import '../../shared/widgets/fluid_container.dart';
+import '../../shared/widgets/fluid_sheet.dart';
 import 'dashboard_providers.dart';
 import 'widgets/rotary_time_dial.dart';
 import 'widgets/expandable_vault_grid.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/gestures.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -23,34 +25,92 @@ class DashboardScreen extends ConsumerWidget {
     final maxBalance = ref.watch(netMaxBalanceProvider) + bonus;
 
     final bool hasFlexibleRange = minBalance != totalBalance || maxBalance != totalBalance;
+    final activeColor = ref.watch(rotaryColorProvider);
 
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Scaffold(
+      backgroundColor: AppColors.getBackground(context),
+      body: Stack(
         children: [
-          const SizedBox(height: AppSizes.paddingLarge),
-          SizedBox(
-            height: 250,
-            child: ExpandableVaultGrid(items: dashboardItems),
-          ),
-          const SizedBox(height: AppSizes.paddingLarge),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
-            child: Column(
-              children: [
-                AnimatedCurrencySelector(
-                  fontSize: 28,
-                  totalBalance: totalBalance,
-                  minBalance: hasFlexibleRange ? minBalance : null,
-                  maxBalance: hasFlexibleRange ? maxBalance : null,
-                ),
-              ],
+          // YENİ: Dinamik Organik Arka Plan (Sıvı Kütleler)
+          Positioned(
+            top: -100,
+            right: -50,
+            child: _LiquidBlob(
+              color: activeColor.withValues(alpha: 0.15),
+              size: 300,
             ),
           ),
-          const Spacer(flex: 1),
-          const Center(child: RotaryTimeDial()),
-          const Spacer(flex: 2),
+          Positioned(
+            bottom: 200,
+            left: -100,
+            child: _LiquidBlob(
+              color: AppColors.getSecondary(context).withValues(alpha: 0.1),
+              size: 400,
+            ),
+          ),
+          
+          Positioned.fill(
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: AppSizes.paddingSmall),
+                  // Kasalar Alanı - ShaderMask sadece liste içeriğine uygulanır
+                  SizedBox(
+                    height: 290, // Noktaların yerleşimi için alan artırıldı
+                    child: ExpandableVaultGrid(items: dashboardItems),
+                  ),
+                  const SizedBox(height: 4),
+                  // Bakiye Alanı
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
+                    child: AnimatedCurrencySelector(
+                      fontSize: 28,
+                      totalBalance: totalBalance,
+                      minBalance: hasFlexibleRange ? minBalance : null,
+                      maxBalance: hasFlexibleRange ? maxBalance : null,
+                    ),
+                  ),
+                  const Spacer(flex: 1), 
+                  const Center(child: RotaryTimeDial()),
+                  const SizedBox(height: 60), // Alt boşluk 40'tan 60'a çıkarıldı
+                  const Spacer(flex: 2), // Alt flex dengesi yukarı itecek şekilde artırıldı
+                ],
+              ),
+            ),
+          ),
+
         ],
+      ),
+    );
+  }
+}
+
+/// Arka planda süzülen sıvımsı renk kütlesi
+class _LiquidBlob extends StatelessWidget {
+  final Color color;
+  final double size;
+
+  const _LiquidBlob({required this.color, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            color,
+            color.withValues(alpha: 0),
+          ],
+        ),
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+        child: Container(color: Colors.transparent),
       ),
     );
   }
@@ -77,142 +137,88 @@ class AnimatedCurrencySelector extends ConsumerStatefulWidget {
 class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelector> {
   final List<String> _currencies = ['₺', '\$', '€', '£'];
   int _currentIndex = 0;
-  final GlobalKey _selectorKey = GlobalKey();
 
   void _showCurrencyPicker(BuildContext context) {
     HapticFeedback.lightImpact();
-    final RenderBox? renderBox = _selectorKey.currentContext?.findRenderObject() as RenderBox?;
-    final offset = renderBox?.localToGlobal(Offset.zero) ?? Offset.zero;
-    final size = renderBox?.size ?? Size.zero;
-
+    
     final scrollController = FixedExtentScrollController(
       initialItem: 500 * _currencies.length + _currentIndex,
     );
 
-    showGeneralDialog(
+    FluidSheet.show(
       context: context,
-      barrierDismissible: true,
-      barrierLabel: AppLocalizations.of(context)!.close,
-      barrierColor: Colors.black.withValues(alpha: 0.85),
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return BackdropFilter(
-          filter: ColorFilter.mode(
-            Colors.black.withValues(alpha: 0.3),
-            BlendMode.darken,
-          ),
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.9, end: 1.0).animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
-            ),
-            child: FadeTransition(
-              opacity: animation,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: RawGestureDetector(
-                      behavior: HitTestBehavior.translucent,
-                      gestures: {
-                        TapGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
-                          () => TapGestureRecognizer(),
-                          (instance) => instance.onTap = () => Navigator.of(context).pop(),
-                        ),
-                        VerticalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<VerticalDragGestureRecognizer>(
-                          () => VerticalDragGestureRecognizer(),
-                          (instance) => instance.onDown = (details) {
-                            if (scrollController.hasClients) {
-                              scrollController.position.drag(DragStartDetails(globalPosition: details.globalPosition, localPosition: details.localPosition), () {});
-                            }
-                          },
-                        ),
-                      },
-                      child: Container(color: Colors.transparent),
-                    ),
-                  ),
-                  Positioned(
-                    top: offset.dy - (250 - size.height / 2),
-                    left: offset.dx - (100 - size.width) / 2,
-                    child: Material(
-                      type: MaterialType.transparency,
-                      child: GestureDetector(
-                        onTap: () {},
-                        child: Container(
-                          width: 100,
-                          height: 500,
-                          color: Colors.transparent,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Container(
-                                height: 42,
-                                width: 70,
-                                decoration: BoxDecoration(
-                                  color: ref.read(rotaryColorProvider).withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              ListWheelScrollView.useDelegate(
-                                controller: scrollController,
-                                itemExtent: 48.0,
-                                diameterRatio: 1.2,
-                                physics: const FixedExtentScrollPhysics(),
-                                onSelectedItemChanged: (int index) {
-                                  HapticFeedback.selectionClick();
-                                  setState(() {
-                                    _currentIndex = index % _currencies.length;
-                                  });
-                                },
-                                childDelegate: ListWheelChildBuilderDelegate(
-                                  builder: (context, index) {
-                                    final currency = _currencies[index % _currencies.length];
-                                    return AnimatedBuilder(
-                                      animation: scrollController,
-                                      builder: (context, child) {
-                                        double distance = 0.0;
-                                        if (scrollController.hasClients) {
-                                          final currentPosition = scrollController.offset / 48.0;
-                                          distance = (currentPosition - index).abs();
-                                        } else {
-                                          final initialPosition = (500 * _currencies.length + _currentIndex).toDouble();
-                                          distance = (initialPosition - index).abs();
-                                        }
-                                        final double clampedDistance = distance.clamp(0.0, 1.0);
-                                        final double dynamicOpacity = (1.0 - (clampedDistance * 0.6)).clamp(0.3, 1.0);
-                                        final double dynamicFontSize = 34.0 - (clampedDistance * 6.0);
-                                        final bool isCenter = distance < 0.15;
-
-                                        return Container(
-                                          alignment: Alignment.center,
-                                          child: Opacity(
-                                            opacity: dynamicOpacity,
-                                            child: Text(
-                                              currency,
-                                              style: TextStyle(
-                                                color: isCenter ? ref.read(rotaryColorProvider) : ref.read(rotaryColorProvider).withValues(alpha: 0.6),
-                                                fontSize: dynamicFontSize,
-                                                fontWeight: FontWeight.w600,
-                                                shadows: isCenter ? [Shadow(color: ref.read(rotaryColorProvider).withValues(alpha: 0.8), blurRadius: 10)] : null,
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+      title: AppLocalizations.of(context)!.close, // Veya uygun bir başlık
+      height: 400,
+      child: Center(
+        child: SizedBox(
+          height: 250,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Seçim Belirteci (Highlight)
+              FluidContainer(
+                width: 80,
+                height: 50,
+                padding: EdgeInsets.zero,
+                borderRadius: 15,
+                isGlass: true,
+                color: ref.read(rotaryColorProvider).withValues(alpha: 0.1),
+                child: const SizedBox.shrink(),
               ),
-            ),
+              ListWheelScrollView.useDelegate(
+                controller: scrollController,
+                itemExtent: 60.0,
+                diameterRatio: 1.5,
+                physics: const FixedExtentScrollPhysics(),
+                onSelectedItemChanged: (int index) {
+                  HapticFeedback.selectionClick();
+                  setState(() {
+                    _currentIndex = index % _currencies.length;
+                  });
+                },
+                childDelegate: ListWheelChildBuilderDelegate(
+                  builder: (context, index) {
+                    final currency = _currencies[index % _currencies.length];
+                    return AnimatedBuilder(
+                      animation: scrollController,
+                      builder: (context, child) {
+                        double distance = 0.0;
+                        if (scrollController.hasClients) {
+                          final currentPosition = scrollController.offset / 60.0;
+                          distance = (currentPosition - index).abs();
+                        }
+                        final double clampedDistance = distance.clamp(0.0, 1.0);
+                        final double dynamicOpacity = (1.0 - (clampedDistance * 0.7)).clamp(0.2, 1.0);
+                        final double dynamicFontSize = 38.0 - (clampedDistance * 10.0);
+                        final bool isCenter = distance < 0.2;
+
+                        return Center(
+                          child: Opacity(
+                            opacity: dynamicOpacity,
+                            child: Text(
+                              currency,
+                              style: TextStyle(
+                                color: isCenter 
+                                  ? ref.read(rotaryColorProvider) 
+                                  : ref.read(rotaryColorProvider).withValues(alpha: 0.4),
+                                fontSize: dynamicFontSize,
+                                fontWeight: FontWeight.w800,
+                                shadows: isCenter ? [
+                                  Shadow(color: ref.read(rotaryColorProvider).withValues(alpha: 0.5), blurRadius: 15)
+                                ] : null,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -228,52 +234,51 @@ class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelec
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = ref.watch(rotaryColorProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final rotaryColor = ref.watch(rotaryColorProvider);
+    final activeColor = isDark ? rotaryColor : AppColors.getAccentDeep(context, rotaryColor);
 
     return GestureDetector(
       onLongPress: () => _showCurrencyPicker(context),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            key: _selectorKey,
-            width: 52,
-            height: 52,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.getSurface(context),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.getDarkShadow(context).withValues(alpha: isDark ? 1.0 : 0.4),
-                  offset: const Offset(5, 5),
-                  blurRadius: 10,
-                  spreadRadius: 1,
+      child: Container(
+        height: 120, // Sabit yükseklik
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            const Spacer(),
+            // Sol: Sabit Alan (Sembol) - Tam Yuvarlak ve Kart Tasarımı ile Uyumlu
+            Baseline(
+              baseline: 46, // 48px rakamın tabanına oturtmak için (64px yüksekliğe göre)
+              baselineType: TextBaseline.alphabetic,
+              child: FluidContainer(
+                width: 64,
+                height: 64,
+                padding: EdgeInsets.zero,
+                borderRadius: 32, // TAM YUVARLAK (Geri döndürüldü)
+                isGlass: true,
+                blur: 15, // KARTLARLA AYNI TASARIM (Match ExpandableVaultGrid)
+                child: Center(
+                  child: Text(
+                    _currencies[_currentIndex],
+                    style: TextStyle(
+                      color: activeColor,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      shadows: isDark ? [
+                        Shadow(color: activeColor.withValues(alpha: 0.6), blurRadius: 10),
+                      ] : null,
+                    ),
+                  ),
                 ),
-                BoxShadow(
-                  color: AppColors.getLightShadow(context).withValues(alpha: isDark ? 0.1 : 1.0),
-                  offset: const Offset(-5, -5),
-                  blurRadius: 10,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-            child: Text(
-              _currencies[_currentIndex],
-              style: TextStyle(
-                color: activeColor,
-                fontSize: widget.fontSize,
-                fontWeight: FontWeight.bold,
-                shadows: [Shadow(color: activeColor, blurRadius: 10)],
               ),
             ),
-          ),
-          const SizedBox(width: AppSizes.paddingMedium),
-          Expanded(
-            child: Container(
-              constraints: const BoxConstraints(minHeight: 95),
+            const SizedBox(width: 24), // Daha belirgin "hafif solda" duruş
+            // Sağ: Tutar ve Birim
+            Flexible(
+              flex: 4,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -291,55 +296,86 @@ class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelec
                           style: TextStyle(
                             color: activeColor,
                             fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -1.5,
-                            shadows: [Shadow(color: activeColor, blurRadius: 15)],
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -2.0,
+                            shadows: isDark ? [
+                              Shadow(color: activeColor.withValues(alpha: 0.6), blurRadius: 20),
+                            ] : null,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Text(
                           _getCurrencyCode(_currencies[_currentIndex]),
                           style: TextStyle(
-                            color: activeColor.withValues(alpha: 0.8),
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            shadows: [Shadow(color: activeColor.withValues(alpha: 0.5), blurRadius: 10)],
+                            color: activeColor.withValues(alpha: isDark ? 0.35 : 0.55),
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
                   if (widget.minBalance != null && widget.maxBalance != null)
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Row(
-                        children: [
-                          Icon(Icons.arrow_downward_rounded, size: 14, color: AppColors.getExpense(context)),
-                          Text(
-                            CurrencyUtils.formatAmount(widget.minBalance!),
-                            style: TextStyle(color: AppColors.getExpense(context), fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(width: 8),
-                          Text('~', style: TextStyle(color: AppColors.getTextSecondary(context).withValues(alpha: 0.5), fontSize: 12)),
-                          const SizedBox(width: 8),
-                          Icon(Icons.arrow_upward_rounded, size: 14, color: activeColor),
-                          const SizedBox(width: 4),
-                          Text(
-                            CurrencyUtils.formatAmount(widget.maxBalance!),
-                            style: TextStyle(color: activeColor, fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2, left: 4),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          children: [
+                            _buildRangeIndicator(
+                              context: context,
+                              icon: Icons.south_east_rounded,
+                              amount: widget.minBalance!,
+                              color: AppColors.getExpense(context),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              width: 4,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: activeColor.withValues(alpha: 0.4),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            _buildRangeIndicator(
+                              context: context,
+                              icon: Icons.north_east_rounded,
+                              amount: widget.maxBalance!,
+                              color: AppColors.getIncome(context),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                 ],
               ),
             ),
-          ),
-        ],
+            const Spacer(),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildRangeIndicator({required BuildContext context, required IconData icon, required double amount, required Color color}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: color.withValues(alpha: 0.8)),
+        const SizedBox(width: 4),
+        Text(
+          CurrencyUtils.formatAmount(amount),
+          style: TextStyle(
+            color: color.withValues(alpha: isDark ? 0.9 : 1.0), // Aydınlıkta tam opak
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_constants.dart';
 import '../transactions/add_transaction_sheet.dart';
 import '../vaults/vaults_providers.dart';
 import 'dashboard_screen.dart';
+import 'dashboard_providers.dart';
 import '../vaults/vaults_screen.dart';
 import '../optimization/optimization_screen.dart';
 import '../profile/profile_screen.dart';
+import '../../shared/widgets/fluid_container.dart';
+import '../../shared/widgets/fluid_sheet.dart';
 
 class MainScaffold extends ConsumerStatefulWidget {
   const MainScaffold({super.key});
@@ -35,51 +39,45 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
       }
     }
 
-    showModalBottomSheet(
+    // YENİ: Standart FluidSheet kullanımı
+    FluidSheet.show(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => AddTransactionSheet(initialVaultId: preselectedVaultId),
+      title: AppLocalizations.of(context)!.addTransaction,
+      child: AddTransactionSheet(initialVaultId: preselectedVaultId),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final backgroundColor = AppColors.getBackground(context);
-    final surfaceColor = AppColors.getSurface(context);
-    final darkShadowColor = AppColors.getDarkShadow(context);
 
     return Scaffold(
-      extendBody: true,
+      extendBody: true, // İçeriğin Nav Bar arkasına sızmasını sağlar
       backgroundColor: backgroundColor,
-      body: SafeArea(bottom: false, child: _pages[_currentIndex]),
-      bottomNavigationBar: Container(
-        height: 88,
-        decoration: BoxDecoration(
-          color: surfaceColor,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: darkShadowColor,
-              offset: const Offset(0, -4),
-              blurRadius: 10,
-              spreadRadius: 1,
-            ),
-          ],
-        ),
+      body: _pages[_currentIndex],
+      bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Row(
-            children: [
-              Expanded(child: _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, AppLocalizations.of(context)!.home)),
-              Expanded(child: _buildNavItem(1, Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, AppLocalizations.of(context)!.vaults)),
-              _buildCenterFab(),
-              Expanded(child: _buildNavItem(2, Icons.bar_chart_rounded, Icons.bar_chart_outlined, AppLocalizations.of(context)!.analysis)),
-              Expanded(child: _buildNavItem(3, Icons.person_rounded, Icons.person_outline_rounded, AppLocalizations.of(context)!.profile)),
-            ],
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: FluidContainer(
+            height: 76,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            borderRadius: 38,
+            isGlass: true,
+            // Aydınlık modda navbar'ı daha mat ve belirgin yapıyoruz
+            blur: Theme.of(context).brightness == Brightness.dark ? 20 : 15,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, AppLocalizations.of(context)!.home),
+                _buildNavItem(1, Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, AppLocalizations.of(context)!.vaults),
+                
+                // Merkez İşlem Butonu
+                _buildCenterFab(),
+                
+                _buildNavItem(2, Icons.bar_chart_rounded, Icons.bar_chart_outlined, AppLocalizations.of(context)!.analysis),
+                _buildNavItem(3, Icons.person_rounded, Icons.person_outline_rounded, AppLocalizations.of(context)!.profile),
+              ],
+            ),
           ),
         ),
       ),
@@ -87,96 +85,97 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
   }
 
   Widget _buildCenterFab() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final rotaryColor = ref.watch(rotaryColorProvider);
+    final activeColor = isDark ? rotaryColor : AppColors.getAccentDeep(context, rotaryColor);
+    
     return GestureDetector(
-      onTap: _openTransactionSheet,
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        _openTransactionSheet();
+      },
       child: Container(
-        width: 64,
-        height: 44,
+        width: 60,
+        height: 52,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFB388FF),
-              Color(0xFF7C4DFF),
-            ],
-          ),
+          color: activeColor,
           borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF7C4DFF).withValues(alpha: 0.4),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-              spreadRadius: 0,
-            ),
-            BoxShadow(
-              color: const Color(0xFFB388FF).withValues(alpha: 0.2),
-              blurRadius: 24,
-              offset: const Offset(0, 0),
-              spreadRadius: 4,
+              color: activeColor.withValues(alpha: isDark ? 0.4 : 0.25),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+              spreadRadius: -4,
             ),
           ],
         ),
-        child: const Center(
-          child: Icon(Icons.swap_horiz_rounded, color: Colors.white, size: 26),
+        child: Center(
+          child: Icon(
+            Icons.add_rounded, 
+            color: isDark ? Colors.black87 : Colors.white, 
+            size: 32
+          ),
         ),
       ),
     );
   }
 
   Widget _buildNavItem(int index, IconData activeIcon, IconData inactiveIcon, String label) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isSelected = _currentIndex == index;
-    final primaryTextColor = AppColors.getTextPrimary(context);
+    
+    final rotaryColor = ref.watch(rotaryColorProvider);
+    final activeColor = isDark ? rotaryColor : AppColors.getAccentDeep(context, rotaryColor);
+    
     final secondaryTextColor = AppColors.getTextSecondary(context);
     
-    final color = isSelected ? primaryTextColor : secondaryTextColor.withValues(alpha: 0.6);
+    final color = isSelected ? activeColor : secondaryTextColor.withValues(alpha: 0.5);
     final icon = isSelected ? activeIcon : inactiveIcon;
 
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _currentIndex = index);
+      },
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        color: Colors.transparent,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: SizedBox(
+        width: 65,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: ScaleTransition(
-                    scale: Tween<double>(begin: 0.9, end: 1.0).animate(
-                      CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutBack,
-                      ),
-                    ),
-                    child: child,
-                  ),
-                );
-              },
+            // İkon Geçişi
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 450),
+              curve: Curves.easeInOutCubic,
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isSelected ? activeColor.withValues(alpha: 0.12) : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Icon(
                 icon,
-                key: ValueKey<IconData>(icon),
                 color: color,
-                size: 26,
+                size: isSelected ? 24 : 22,
               ),
             ),
-            const SizedBox(height: 6),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
+            const SizedBox(height: 4),
+            // İsim Altta ve Organik Geçişli
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 450),
+              opacity: isSelected ? 1.0 : 0.0,
+              curve: Curves.easeInOutCubic,
+              child: AnimatedSlide(
+                duration: const Duration(milliseconds: 450),
+                offset: isSelected ? Offset.zero : const Offset(0, 0.4),
+                curve: Curves.easeInOutCubic,
                 child: Text(
                   label,
                   style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: color,
-                    letterSpacing: 0.2,
+                    color: activeColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.2,
                   ),
                 ),
               ),

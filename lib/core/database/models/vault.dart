@@ -33,4 +33,14 @@ class Vault {
 
   /// Dashboard'da bu vault'un dahil olduğu sayfanın yerleşim tipi (1, 2, 3, 4)
   int dashboardLayoutType = 4;
+
+  /// --- Senkronizasyon Alanları ---
+  @Index()
+  String? remoteId;
+
+  @Index()
+  DateTime updatedAt = DateTime.now();
+
+  @Index()
+  int syncStatus = 0;
 }

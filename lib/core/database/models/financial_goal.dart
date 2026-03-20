@@ -34,4 +34,14 @@ class FinancialGoal {
   /// true = beğendi (persona kaydedildi)
   /// false = beğenmedi (persona kaydedilmedi, kategoriler veto listesine eklendi)
   bool? userApproved;
+
+  /// --- Senkronizasyon Alanları ---
+  @Index()
+  String? remoteId;
+
+  @Index()
+  DateTime updatedAt = DateTime.now();
+
+  @Index()
+  int syncStatus = 0;
 }
