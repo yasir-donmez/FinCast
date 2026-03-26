@@ -203,11 +203,10 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
 
   void _showAddTransactionSheet(BuildContext context) {
     HapticFeedback.heavyImpact();
-    showModalBottomSheet(
-      context: context, 
-      isScrollControlled: true, 
-      backgroundColor: Colors.transparent, 
-      builder: (context) => const AddTransactionSheet()
+    FluidSheet.show(
+      context: context,
+      title: AppLocalizations.of(context)!.addTransaction,
+      child: const AddTransactionSheet(),
     );
   }
 
@@ -257,7 +256,20 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
       name: tx.name,
       isInVault: tx.groupId != null,
       onEdit: () {
-        showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (context) => AddTransactionSheet(initialId: tx.dbId, initialName: tx.name, initialAmount: tx.amount, initialMinAmount: tx.minAmount, initialMaxAmount: tx.maxAmount, initialIsIncome: tx.isIncome, initialVaultId: tx.groupId != null ? int.tryParse(tx.groupId!.replaceFirst('v_', '')) : null, initialCategoryId: tx.categoryId));
+        FluidSheet.show(
+          context: context,
+          title: AppLocalizations.of(context)!.edit,
+          child: AddTransactionSheet(
+            initialId: tx.dbId,
+            initialName: tx.name,
+            initialAmount: tx.amount,
+            initialMinAmount: tx.minAmount,
+            initialMaxAmount: tx.maxAmount,
+            initialIsIncome: tx.isIncome,
+            initialVaultId: tx.groupId != null ? int.tryParse(tx.groupId!.replaceFirst('v_', '')) : null,
+            initialCategoryId: tx.categoryId,
+          ),
+        );
       },
       onDelete: () async {
         final confirm = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(backgroundColor: AppColors.getSurface(context), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), title: Text(AppLocalizations.of(context)!.permanentDelete, style: const TextStyle(fontWeight: FontWeight.w900)), content: Text(AppLocalizations.of(context)!.permanentDeleteDesc), actions: [TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context)!.cancel)), TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.of(context)!.ok, style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.w900)))]));
@@ -301,18 +313,28 @@ class _TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
     final progress = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
     final deckItems = [null, ...groups.map((g) => g.id)];
     final currentIndex = deckItems.indexOf(selectedVaultId);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Arka plan daha hızlı opak olsun — konteyner erirken bar zaten orada
+    final bgAlpha = Curves.easeOutQuad.transform((progress * 1.6).clamp(0.0, 1.0));
 
     return SizedBox.expand(
-      child: Container(
-        color: AppColors.getBackground(context).withValues(alpha: progress),
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: bgAlpha * 20,
+            sigmaY: bgAlpha * 20,
+          ),
+          child: Container(
+            color: AppColors.getBackground(context).withValues(alpha: bgAlpha * 0.15),
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // 3. THE TRANSFORMING DECK - Şimdi en üstte ki barı tam kaplasın
+            // THE TRANSFORMING DECK
             Positioned(
-              top: lerpDouble(topPadding + 80, topPadding, progress)!,
+              top: lerpDouble(topPadding + 80, topPadding + 4, progress)!,
               left: 0, right: 0,
-              height: lerpDouble(300, 64, progress)!, // Yüksekliği eşitledik
+              height: lerpDouble(300, 56, progress)!,
               child: _VaultCardStack(
                 deckItems: deckItems,
                 allTransactions: allTransactions,
@@ -325,7 +347,7 @@ class _TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
               ),
             ),
 
-            // 1. AppBar Başlığı - Sola doğru kayarak kaybolur
+            // AppBar Başlığı — sola kayarak kaybolur
             Positioned(
               left: 20 - (progress * 100),
               top: topPadding + 10,
@@ -335,7 +357,7 @@ class _TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
               ),
             ),
 
-            // 2. Aksiyon Butonları - Sağa doğru kayarak kaybolur
+            // Aksiyon Butonları — sağa kayarak kaybolur
             Positioned(
               right: 20 - (progress * 100),
               top: topPadding + 10,
@@ -350,8 +372,35 @@ class _TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
                 ),
               ),
             ),
+
+            // Organik alt çizgi — compact modda konteyneri değil, ince bir çizgi
+            if (progress > 0.6)
+              Positioned(
+                bottom: 0,
+                left: 20,
+                right: 20,
+                child: Opacity(
+                  opacity: ((progress - 0.6) * 2.5).clamp(0.0, 1.0),
+                  child: Container(
+                    height: 0.5,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+                          (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+                          Colors.transparent,
+                        ],
+                        stops: const [0.0, 0.2, 0.8, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
+      ),
+      ),
       ),
     );
   }
@@ -359,7 +408,7 @@ class _TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
   @override
   double get maxExtent => 420;
   @override
-  double get minExtent => 64 + 40; // 40 top padding offset
+  double get minExtent => 60 + 40; // 40 top padding offset
  // topPadding header içinde hallediliyor
   @override
   bool shouldRebuild(covariant _TrueMorphDeckHeaderDelegate oldDelegate) => true;
@@ -504,99 +553,178 @@ class _IntegratedVaultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     
-    // Emilme efekti için
-    final double widthProgress = Curves.easeInCubic.transform(morphProgress);
-    final double cardWidth = lerpDouble(screenWidth * 0.70, screenWidth, widthProgress)!;
+    // --- Sizes ---
+    final double widthT = Curves.easeOutQuad.transform(morphProgress);
+    final double cardWidth = lerpDouble(screenWidth * 0.70, screenWidth, widthT)!;
+    final double cardHeight = lerpDouble(280, 56, morphProgress)!;
     
-    // Köşelerin "sivrileşmesini" önlemek için geçişi daha yumuşak yapıyoruz
-    final double cardRadius = lerpDouble(32, 0, morphProgress)!;
+    // --- FluidContainer dekorasyon opaklığı — tüm container fade olur ---
+    // Bu FluidContainer'ın kendi iç alpha sorununu tamamen bypass eder
+    final double decorationOpacity = (1 - morphProgress * 3).clamp(0.0, 1.0); // progress 0.33'te tamamen kaybolur
+    final double cardRadius = lerpDouble(32, 0, Curves.easeInQuad.transform((morphProgress * 2.5).clamp(0.0, 1.0)))!;
     
-    return Center(
-      child: Container(
-        width: isCurrent ? cardWidth : screenWidth * 0.70,
-        height: lerpDouble(280, 64, morphProgress)!, 
-        // Margin sadece geniş modda (progress < 0.1) var, sonra sıfırlanıyor
-        margin: EdgeInsets.symmetric(horizontal: lerpDouble(12, 0, morphProgress)!),
-        child: FluidContainer(
-          padding: EdgeInsets.symmetric(horizontal: lerpDouble(24, 20, morphProgress)!),
-          isGlass: morphProgress < 0.8, // Bar modunda glass'ı kapatmak köşeleri temizler
-          isConvex: morphProgress < 0.7,
-          extraShadows: morphProgress > 0.8 ? [] : null,
-          borderWidth: lerpDouble(0.8, 0, morphProgress)!,
-          borderRadius: cardRadius,
-          color: isCurrent 
-              ? (morphProgress > 0.8 ? AppColors.getBackground(context) : null)
-              : AppColors.getSurface(context).withValues(alpha: 0.5),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-               // Expanded Content
-               Opacity(
-                 opacity: (1 - morphProgress * 4).clamp(0.0, 1.0),
-                 child: IgnorePointer(
-                   ignoring: morphProgress > 0.2,
-                   child: SingleChildScrollView(
-                     physics: const NeverScrollableScrollPhysics(),
-                     child: _buildExpandedContent(context, balance, income, expense, txs),
-                   ),
-                 )
-               ),
-               // Compact Content
-               Opacity(
-                 opacity: (morphProgress * 3 - 2).clamp(0.0, 1.0),
-                 child: IgnorePointer(
-                   ignoring: morphProgress < 0.8,
-                   child: _buildCompactContent(context, balance),
-                 )
-               ),
-            ]
-          ),
+    // --- İçerik fazları ---
+    final double secondaryOpacity = (1 - morphProgress * 5).clamp(0.0, 1.0); // 0→0.2 kaybol
+    final double primaryMorph = Curves.easeInOutCubic.transform((morphProgress * 1.4).clamp(0.0, 1.0));
+    
+    final double hPad = lerpDouble(24, 20, morphProgress)!;
+    
+    // Effective width — OverflowBox ile PageView'ın %70 sınırını aşıyoruz
+    final double effectiveWidth = isCurrent ? cardWidth : screenWidth * 0.70;
+    
+    return OverflowBox(
+      maxWidth: effectiveWidth,
+      maxHeight: cardHeight,
+      child: SizedBox(
+        width: effectiveWidth,
+        height: cardHeight,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // === DEKORASYON KATMANI — FluidContainer tüm dekorasyonla birlikte fade olur ===
+            if (decorationOpacity > 0.01)
+              Positioned.fill(
+                child: Opacity(
+                  opacity: decorationOpacity,
+                  child: FluidContainer(
+                    isGlass: morphProgress < 0.15, // Blur'u çok erken kapat — gri arkaplan yaratıyordu
+                    isConvex: morphProgress < 0.15,
+                    borderRadius: cardRadius,
+                    color: isCurrent ? null : AppColors.getSurface(context).withValues(alpha: 0.5),
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+              ),
+            
+            // === İÇERİK KATMANI ===
+            Positioned(
+              left: hPad, right: hPad,
+              top: 0, bottom: 0,
+              child: _buildMorphContent(context, primaryMorph, secondaryOpacity),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildExpandedContent(BuildContext context, double balance, double income, double expense, List<TransactionUI> txs) {
+  Widget _buildMorphContent(BuildContext context, double primaryMorph, double secondaryOpacity) {
     final hasFlexibleTx = txs.any((t) => t.minAmount != null || t.maxAmount != null);
     
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(vaultName.toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 2, color: activeColor.withValues(alpha: 0.7))),
-        const SizedBox(height: 8),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text('₺${CurrencyUtils.formatFullAmount(balance)}', style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900, color: activeColor, letterSpacing: -2)),
-        ),
-        const SizedBox(height: 24),
-        Row(
+    // Font boyutları — smooth lerp
+    final double titleFontSize = lerpDouble(11, 18, primaryMorph)!;
+    final double balanceFontSize = lerpDouble(42, 16, primaryMorph)!;
+    final double titleLetterSpacing = lerpDouble(2, -0.5, primaryMorph)!;
+    
+    // Badge props — smooth lerp  
+    final double badgePadH = lerpDouble(0, 12, primaryMorph)!;
+    final double badgePadV = lerpDouble(0, 6, primaryMorph)!;
+    final double badgeBgAlpha = primaryMorph * 0.12;
+    
+    // Renk geçişi
+    final Color? titleColor = primaryMorph < 0.6
+        ? activeColor.withValues(alpha: lerpDouble(0.7, 1.0, primaryMorph)!)
+        : null;
+    
+    // Pozisyon hesabı — Stack içinde her eleman kendi yerinde
+    // Genişken: Title en üstte, ortada. Balance altında, ortada. Secondary en altta.
+    // Compact: Title sola yapışık, dikey ortada. Balance sağa yapışık, dikey ortada.
+    
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final h = constraints.maxHeight;
+        
+        // Title Y pozisyonu: genişken üst kısımda, compact'ta dikey ortada
+        final double titleExpandedTop = h * 0.15;
+        final double titleCompactTop = (h - titleFontSize) / 2 - 2; // Tam ortada
+        final double titleTop = lerpDouble(titleExpandedTop, titleCompactTop, primaryMorph)!;
+        
+        // Balance Y pozisyonu: genişken title altında, compact'ta dikey ortada
+        final double balanceExpandedTop = titleExpandedTop + titleFontSize + 8;
+        final double balanceCompactTop = (h - balanceFontSize) / 2 - 2;
+        final double balanceTop = lerpDouble(balanceExpandedTop, balanceCompactTop, primaryMorph)!;
+        
+        // Secondary Y pozisyonu: genişken balance altında
+        final double secondaryTop = balanceExpandedTop + balanceFontSize + 24;
+        
+        return Stack(
+          clipBehavior: Clip.hardEdge,
           children: [
-            Expanded(child: _buildMiniStat(l10n.income, income, AppColors.getIncome(context))),
-            Container(width: 1, height: 30, color: activeColor.withValues(alpha: 0.1)),
-            Expanded(child: _buildMiniStat(l10n.expense, expense, AppColors.getExpense(context))),
+            // === TITLE ===
+            Positioned(
+              left: 0, right: 0,
+              top: titleTop,
+              child: Align(
+                alignment: Alignment.lerp(Alignment.center, Alignment.centerLeft, primaryMorph)!,
+                child: Text(
+                  primaryMorph < 0.4 ? vaultName.toUpperCase() : vaultName,
+                  style: TextStyle(
+                    fontSize: titleFontSize,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: titleLetterSpacing,
+                    color: titleColor,
+                  ),
+                ),
+              ),
+            ),
+            
+            // === BALANCE ===
+            Positioned(
+              left: 0, right: 0,
+              top: balanceTop,
+              child: Align(
+                alignment: Alignment.lerp(Alignment.center, Alignment.centerRight, primaryMorph)!,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: badgePadH, vertical: badgePadV),
+                  decoration: BoxDecoration(
+                    color: activeColor.withValues(alpha: badgeBgAlpha),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    primaryMorph > 0.5
+                      ? '₺${CurrencyUtils.formatAmount(balance)}'
+                      : '₺${CurrencyUtils.formatFullAmount(balance)}',
+                    style: TextStyle(
+                      fontSize: balanceFontSize,
+                      fontWeight: FontWeight.w900,
+                      color: activeColor,
+                      letterSpacing: lerpDouble(-2, 0, primaryMorph)!,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            
+            // === SECONDARY STATS ===
+            if (secondaryOpacity > 0.01)
+              Positioned(
+                left: 0, right: 0,
+                top: secondaryTop,
+                child: Opacity(
+                  opacity: secondaryOpacity,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: _buildMiniStat(l10n.income, income, AppColors.getIncome(context))),
+                          Container(width: 1, height: 30, color: activeColor.withValues(alpha: 0.1)),
+                          Expanded(child: _buildMiniStat(l10n.expense, expense, AppColors.getExpense(context))),
+                        ],
+                      ),
+                      if (hasFlexibleTx) ...[
+                        const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(height: 1, thickness: 0.5)),
+                        _buildRangeStats(txs),
+                      ],
+                      const SizedBox(height: 12),
+                      const Icon(Icons.unfold_more_rounded, size: 16, color: Colors.grey),
+                    ],
+                  ),
+                ),
+              ),
           ],
-        ),
-        if (hasFlexibleTx) ...[
-          const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(height: 1, thickness: 0.5)),
-          _buildRangeStats(txs),
-        ],
-        const SizedBox(height: 12),
-        const Icon(Icons.unfold_more_rounded, size: 16, color: Colors.grey),
-      ],
-    );
-  }
-
-  Widget _buildCompactContent(BuildContext context, double balance) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(vaultName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(color: activeColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-          child: Text('₺${CurrencyUtils.formatAmount(balance)}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: activeColor)),
-        ),
-      ],
+        );
+      },
     );
   }
 

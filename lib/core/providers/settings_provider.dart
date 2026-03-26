@@ -22,7 +22,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..themeModeIndex = index
       ..languageCode = state.languageCode
       ..dataRetentionDays = state.dataRetentionDays
-      ..isAiNotificationsEnabled = state.isAiNotificationsEnabled;
+      ..isAiNotificationsEnabled = state.isAiNotificationsEnabled
+      ..isSyncEnabled = state.isSyncEnabled
+      ..remoteId = state.remoteId
+      ..syncStatus = state.syncStatus;
     await _save(newSettings);
   }
 
@@ -34,7 +37,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..themeModeIndex = state.themeModeIndex
       ..languageCode = code
       ..dataRetentionDays = state.dataRetentionDays
-      ..isAiNotificationsEnabled = state.isAiNotificationsEnabled;
+      ..isAiNotificationsEnabled = state.isAiNotificationsEnabled
+      ..isSyncEnabled = state.isSyncEnabled
+      ..remoteId = state.remoteId
+      ..syncStatus = state.syncStatus;
     await _save(newSettings);
     _updateIntl(code);
   }
@@ -56,22 +62,32 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   }
 
   Future<void> setDataRetention(int days) async {
+    if (state.dataRetentionDays == days) return;
+
     final updated = AppSettings()
       ..id = state.id
       ..themeModeIndex = state.themeModeIndex
       ..languageCode = state.languageCode
       ..dataRetentionDays = days
-      ..isAiNotificationsEnabled = state.isAiNotificationsEnabled;
+      ..isAiNotificationsEnabled = state.isAiNotificationsEnabled
+      ..isSyncEnabled = state.isSyncEnabled
+      ..remoteId = state.remoteId
+      ..syncStatus = state.syncStatus;
     await _save(updated);
   }
 
   Future<void> toggleAiNotifications(bool value) async {
+    if (state.isAiNotificationsEnabled == value) return;
+
     final updated = AppSettings()
       ..id = state.id
       ..themeModeIndex = state.themeModeIndex
       ..languageCode = state.languageCode
       ..dataRetentionDays = state.dataRetentionDays
-      ..isAiNotificationsEnabled = value;
+      ..isAiNotificationsEnabled = value
+      ..isSyncEnabled = state.isSyncEnabled
+      ..remoteId = state.remoteId
+      ..syncStatus = state.syncStatus;
     await _save(updated);
   }
 

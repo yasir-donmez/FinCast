@@ -37,67 +37,66 @@ class ProUpgradeSheet extends ConsumerWidget {
               _buildHeader(primaryColor),
               const SizedBox(height: 32),
               
-              // Özellik Listesi
-              _buildFeatureItem(
-                context,
-                Icons.auto_awesome_rounded,
-                'Günde 3 AI Analizi',
-                'Finansal verileriniz için her gün 3 derin analiz ve tahminleme hakkı.',
-                primaryColor,
-              ),
-              _buildFeatureItem(
-                context,
-                Icons.account_balance_wallet_rounded,
-                'Sınırsız Kasa & Tema',
-                'Dilediğiniz kadar kasa oluşturun ve özel renklerle özelleştirin.',
-                secondaryColor,
-              ),
-              _buildFeatureItem(
-                context,
-                Icons.block_rounded,
-                'Reklamsız Deneyim',
-                'Uygulamayı hiçbir reklam kesintisi olmadan, akışkan bir şekilde kullanın.',
-                Colors.amber,
-              ),
-              _buildFeatureItem(
-                context,
-                Icons.verified_user_rounded,
-                'Öncelikli Destek',
-                'Yeni özelliklere herkesten önce erişin ve öncelikli destek alın.',
-                Colors.cyan,
-              ),
-              
-              const SizedBox(height: 48),
-              
-              // Abonelik Seçenekleri (Örnek)
-              _buildSubscriptionOption(
-                context,
-                'Yıllık Plan',
-                '₺199.99 / yıl',
-                '1 Ay Ücretsiz Dene',
-                ref,
-                true,
-              ),
-              const SizedBox(height: 16),
-              _buildSubscriptionOption(
-                context,
-                'Aylık Plan',
-                '₺24.99 / ay',
-                null,
-                ref,
-                false,
+              // Özellik Listesi (Daha toplu)
+              Column(
+                children: [
+                  _buildFeatureItem(context, Icons.auto_awesome_rounded, 'AI Analizleri', 'Günlük 3 derin finansal analiz ve tahmin.', primaryColor),
+                  _buildFeatureItem(context, Icons.account_balance_wallet_rounded, 'Sınırsız Kasa', 'Dilediğiniz kadar kasa ve özel renkler.', secondaryColor),
+                  _buildFeatureItem(context, Icons.block_rounded, 'Sıfır Reklam', 'Kesintisiz ve akışkan deneyim.', Colors.amber),
+                ],
               ),
               
               const SizedBox(height: 32),
+              
+              // 📑 PLAN SEÇİM ALANI (Plan Selection)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'PLANLAR',
+                    style: TextStyle(
+                      fontSize: 12, 
+                      fontWeight: FontWeight.bold, 
+                      letterSpacing: 1.2,
+                      color: AppColors.getTextSecondary(context).withValues(alpha: 0.5),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // MEVCUT PLAN (Current Plan)
+                  _buildCurrentPlanCard(context),
+                  const SizedBox(height: 12),
+                  
+                  // PRO SEÇENEKLERİ (Upgrade Options)
+                  _buildSubscriptionOption(
+                    context: context,
+                    title: 'Yıllık Pro',
+                    price: '₺199.99 / yıl',
+                    subtitle: 'Aylık ₺16.66\'ya gelir',
+                    badge: 'EN AVANTAJLI',
+                    savings: '%33 TASARRUF',
+                    ref: ref,
+                    isPopular: true,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSubscriptionOption(
+                    context: context,
+                    title: 'Aylık Pro',
+                    price: '₺24.99 / ay',
+                    subtitle: 'İstediğin zaman iptal et',
+                    ref: ref,
+                    isPopular: false,
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 24),
               Text(
-                'İstediğiniz zaman iptal edebilirsiniz.',
+                'Tüm planlar 7 gün ücretsiz deneme içerir.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: AppColors.getTextSecondary(context).withValues(alpha: 0.3),
-                  shadows: [
-                    Shadow(color: Colors.black.withValues(alpha: 0.2), offset: const Offset(0.5, 0.5), blurRadius: 0.5),
-                  ],
                 ),
               ),
               const SizedBox(height: AppSizes.paddingLarge),
@@ -169,14 +168,12 @@ class ProUpgradeSheet extends ConsumerWidget {
       ],
     );
   }
-
   Widget _buildFeatureItem(BuildContext context, IconData icon, String title, String desc, Color color) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🛠️ KAZINMIŞ KÜÇÜK İKON (Etched Mini Icon)
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -184,7 +181,7 @@ class ProUpgradeSheet extends ConsumerWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.white.withValues(alpha: 0.03)),
             ),
-            child: Icon(icon, size: 20, color: color.withValues(alpha: 0.5)),
+            child: Icon(icon, size: 20, color: color.withValues(alpha: 0.6)),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -193,26 +190,13 @@ class ProUpgradeSheet extends ConsumerWidget {
               children: [
                 Text(
                   title, 
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold, 
-                    fontSize: 16,
-                    color: Colors.white.withValues(alpha: 0.85),
-                    shadows: [
-                      Shadow(color: Colors.black.withValues(alpha: 0.4), offset: const Offset(0.8, 0.8), blurRadius: 0.5),
-                    ],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                const SizedBox(height: 2),
                 Text(
                   desc,
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.getTextSecondary(context).withValues(alpha: 0.5),
-                    shadows: [
-                      Shadow(color: Colors.black.withValues(alpha: 0.2), offset: const Offset(0.5, 0.5), blurRadius: 0.5),
-                    ],
                   ),
                 ),
               ],
@@ -223,17 +207,65 @@ class ProUpgradeSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildSubscriptionOption(
-    BuildContext context, 
-    String title, 
-    String price, 
+
+  Widget _buildCurrentPlanCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.grey.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.check_circle_outline_rounded, size: 20, color: Colors.grey),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Ücretsiz Plan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                Text(
+                  'Temel özellikler ile sınırlı kullanım.', 
+                  style: TextStyle(fontSize: 12, color: AppColors.getTextSecondary(context).withValues(alpha: 0.5)),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.grey.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text('MEVCUT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionOption({
+    required BuildContext context, 
+    required String title, 
+    required String price, 
+    required String subtitle,
+    required WidgetRef ref,
+    bool isPopular = false,
     String? badge,
-    WidgetRef ref,
-    bool isPopular,
-  ) {
+    String? savings,
+  }) {
+    final primaryColor = AppColors.getPrimary(context);
+    
     return FluidButton(
       onTap: () async {
-        // Satın alım taklidi (Mock Purchase)
         final service = ref.read(subscriptionServiceProvider);
         await service.setProStatus(true);
         if (context.mounted) Navigator.pop(context);
@@ -241,47 +273,95 @@ class ProUpgradeSheet extends ConsumerWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Container(
+            padding: const EdgeInsets.all(4), // İçerideki padding FluidButton tarafından sağlanıyor olabilir, burası ek derinlik için
+            child: Row(
+              children: [
+                // İkon veya Radio-benzeri görsel
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isPopular ? primaryColor : Colors.white.withValues(alpha: 0.1),
+                      width: 2,
+                    ),
+                  ),
+                  child: isPopular ? Center(
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(color: primaryColor, shape: BoxShape.circle),
+                    ),
+                  ) : null,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          if (savings != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                savings, 
+                                style: const TextStyle(color: Colors.green, fontSize: 9, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      Text(
+                        subtitle, 
+                        style: TextStyle(fontSize: 12, color: AppColors.getTextSecondary(context).withValues(alpha: 0.5)),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      title, 
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                      overflow: TextOverflow.ellipsis,
+                      price.split(' ').first, 
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
                     ),
                     Text(
-                      price, 
-                      style: TextStyle(
-                        fontSize: 12, 
-                        color: AppColors.getTextSecondary(context).withValues(alpha: 0.7),
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                      price.split(' ').skip(1).join(' '), 
+                      style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context).withValues(alpha: 0.5)),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-            ],
+              ],
+            ),
           ),
+          
           if (badge != null)
             Positioned(
-              top: -24,
-              right: -8,
+              top: -12,
+              right: 8,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  gradient: LinearGradient(
+                    colors: [primaryColor, primaryColor.withValues(alpha: 0.8)],
+                  ),
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 10)],
+                  boxShadow: [
+                    BoxShadow(color: primaryColor.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2)),
+                  ],
                 ),
                 child: Text(
                   badge,
-                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                 ),
               ),
             ),

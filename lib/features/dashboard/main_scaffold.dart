@@ -320,101 +320,110 @@ class _WaterDropPainter extends CustomPainter {
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14);
     canvas.drawCircle(center.translate(0, 6 * morphFactor), radius * morphFactor, shadowPaint);
 
-    // 2. ANA CAM GÖVDESİ (Premium Glass Base)
-    // 3 renkli geçiş ile daha fazla derinlik
+    // 2. ANA CAM GÖVDESİ (Premium Liquid Glass Base)
     final glassPaint = Paint()
       ..shader = RadialGradient(
         colors: [
-          Color.lerp(color, Colors.white, 0.2)!.withValues(alpha: 0.95),
-          color.withValues(alpha: 1.0),
-          Color.lerp(color, Colors.black, 0.15)!.withValues(alpha: 1.0),
+          Color.lerp(color, Colors.white, 0.1)!.withValues(alpha: 0.6), // Daha sönük merkez
+          color.withValues(alpha: 0.8),
+          Color.lerp(color, Colors.black, 0.2)!.withValues(alpha: 0.9), // Derin kenarlar
         ],
-        stops: const [0.0, 0.6, 1.0],
-        center: const Alignment(-0.25, -0.25),
-        radius: 0.9,
+        stops: const [0.0, 0.7, 1.0],
+        center: const Alignment(-0.3, -0.3),
+        radius: 1.0,
       ).createShader(Rect.fromCircle(center: center, radius: radius * morphFactor));
     canvas.drawCircle(center, radius * morphFactor, glassPaint);
-
-    // 3. İÇ DERİNLİK (Inner Depth Shadow)
+ 
+    // 3. İÇ DERİNLİK (Enhanced Inner Depth Shadow)
     final innerDepthPaint = Paint()
       ..shader = RadialGradient(
         colors: [
           Colors.transparent,
-          Colors.black.withValues(alpha: 0.12 * morphFactor),
+          Colors.black.withValues(alpha: 0.15 * morphFactor),
         ],
-        stops: const [0.75, 1.0],
+        stops: const [0.65, 1.0],
       ).createShader(Rect.fromCircle(center: center, radius: radius * morphFactor));
     canvas.drawCircle(center, radius * morphFactor, innerDepthPaint);
-
-    // 4. PREMİUM KENAR IŞIĞI (Rim/Glass Light)
+ 
+    // 4. PREMİUM KENAR IŞIĞI (Very Subtle Rim Light)
     final rimPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5 * morphFactor
+      ..strokeWidth = 1.0 * morphFactor
       ..shader = LinearGradient(
         colors: [
-          Colors.white.withValues(alpha: 0.5 * morphFactor),
+          Colors.white.withValues(alpha: 0.15 * morphFactor),
           Colors.transparent,
-          Colors.white.withValues(alpha: 0.1 * morphFactor),
+          Colors.white.withValues(alpha: 0.03 * morphFactor),
         ],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ).createShader(Rect.fromCircle(center: center, radius: radius * morphFactor));
-    canvas.drawCircle(center, radius * morphFactor * 0.97, rimPaint);
-
-    // 5. ÜST YANSIMA (Top Reflection Layer)
+    canvas.drawCircle(center, radius * morphFactor * 0.98, rimPaint);
+ 
+    // 5. ÜST YANSIMA (Muted Reflection Layer)
     final reflectionPaint = Paint()
       ..shader = LinearGradient(
         colors: [
-          Colors.white.withValues(alpha: 0.35 * morphFactor),
-          Colors.white.withValues(alpha: 0.05 * morphFactor),
+          Colors.white.withValues(alpha: 0.12 * morphFactor),
+          Colors.white.withValues(alpha: 0.01 * morphFactor),
           Colors.transparent,
         ],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        stops: const [0.0, 0.45, 0.9],
+        stops: const [0.0, 0.5, 0.9],
       ).createShader(Rect.fromCircle(center: center, radius: radius * morphFactor));
     
     final reflectionPath = Path()
-      ..addOval(Rect.fromCircle(center: center.translate(0, -radius * 0.15 * morphFactor), radius: radius * 0.75 * morphFactor));
+      ..addOval(Rect.fromCircle(center: center.translate(0, -radius * 0.2 * morphFactor), radius: radius * 0.7 * morphFactor));
     
     canvas.save();
     canvas.clipPath(Path()..addOval(Rect.fromCircle(center: center, radius: radius * morphFactor)));
     canvas.drawPath(reflectionPath, reflectionPaint);
     canvas.restore();
-
-    // 6. AI YILDIZLARI (Elegant and Subtle)
+ 
+    // 6. AI YILDIZLARI (Subdued Sparkle Effect)
     if (morphFactor > 0.4) {
       _paintAIStars(canvas, center, size, morphFactor);
     }
   }
-
+ 
   void _paintAIStars(Canvas canvas, Offset center, Size size, double morph) {
     final t = wobbleValue * 2 * math.pi;
-    final starColor = Colors.white.withValues(alpha: (morph - 0.4) * 1.5);
     
-    // Daha az yıldız, daha küçük ve daha durgun
-    _drawStar(canvas, center + Offset(0, -1), 12 * morph, t, starColor); // Ana Yıldız
-    _drawStar(canvas, center + Offset(-10 * morph, 8 * morph), 6 * morph, t * 0.5, starColor.withValues(alpha: starColor.alpha * 0.6)); // Yan Yıldız
+    // Daha düşük opaklıklar (More muted opacities)
+    final baseColor = Colors.white.withValues(alpha: (morph - 0.4) * 0.5);
+    final blueColor = const Color(0xFFE3F2FD).withValues(alpha: (morph - 0.4) * 0.3);
+    
+    _drawStar(canvas, center + Offset(0, -2 * morph), 10 * morph, t, baseColor); 
+    _drawStar(canvas, center + Offset(-12 * morph, 10 * morph), 5 * morph, t * -0.7, blueColor);
+    _drawStar(canvas, center + Offset(12 * morph, 6 * morph), 4 * morph, t * 1.3, baseColor.withValues(alpha: baseColor.alpha * 0.4));
   }
-
+ 
   void _drawStar(Canvas canvas, Offset pos, double size, double rotation, Color color) {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
-
-    final pulseScale = 1.0 + 0.1 * math.sin(rotation);
+ 
+    // ✨ ÇOK HAFİF PARLAMA (Muted Glow)
+    final glowPaint = Paint()
+      ..color = color.withValues(alpha: color.alpha * 0.2)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, size * 0.8);
+    canvas.drawCircle(pos, size * 1.2, glowPaint);
+ 
+    final pulseScale = 1.0 + 0.1 * math.sin(rotation * 2); // Daha az nabız (pulse)
     final s = size * pulseScale;
     
     final path = Path();
+    // Daha zarif, içbükey 4 kollu yıldız formu
     path.moveTo(pos.dx, pos.dy - s);
-    path.quadraticBezierTo(pos.dx + s * 0.15, pos.dy - s * 0.15, pos.dx + s, pos.dy);
-    path.quadraticBezierTo(pos.dx + s * 0.15, pos.dy + s * 0.15, pos.dx, pos.dy + s);
-    path.quadraticBezierTo(pos.dx - s * 0.15, pos.dy + s * 0.15, pos.dx - s, pos.dy);
-    path.quadraticBezierTo(pos.dx - s * 0.15, pos.dy - s * 0.15, pos.dx, pos.dy - s);
+    path.quadraticBezierTo(pos.dx + s * 0.1, pos.dy - s * 0.1, pos.dx + s, pos.dy);
+    path.quadraticBezierTo(pos.dx + s * 0.1, pos.dy + s * 0.1, pos.dx, pos.dy + s);
+    path.quadraticBezierTo(pos.dx - s * 0.1, pos.dy + s * 0.1, pos.dx - s, pos.dy);
+    path.quadraticBezierTo(pos.dx - s * 0.1, pos.dy - s * 0.1, pos.dx, pos.dy - s);
     
     canvas.save();
     canvas.translate(pos.dx, pos.dy);
-    canvas.rotate(rotation * 0.1);
+    canvas.rotate(rotation * 0.2); // Yavaş ve estetik dönüş
     canvas.translate(-pos.dx, -pos.dy);
     
     canvas.drawPath(path, paint);

@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'dart:ui';
+import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/services/subscription_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_constants.dart';
-import '../../shared/widgets/neu_container.dart';
+import '../../shared/widgets/fluid_container.dart';
 import '../../core/providers/settings_provider.dart';
+import '../dashboard/dashboard_providers.dart';
 
-/// Kullanıcının ve uygulamanın genel ayarlarını içeren
-/// Premium "Kişisel CFO" Ayarlar Ekranı (Settings / Profile)
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
@@ -22,242 +23,370 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(settingsProvider);
-    final selectedLanguageName = _getLanguageName(settings.languageCode);
+    final activeColor = ref.watch(rotaryColorProvider);
+    final subscription = ref.watch(subscriptionServiceProvider);
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(AppSizes.paddingLarge),
-        child: Column(
-          children: [
-            const SizedBox(height: AppSizes.paddingMedium),
+    return Stack(
+      children: [
+        // 1. ORGANİK ARKA PLAN
+        Positioned(
+          top: -100,
+          right: -50,
+          child: _LiquidBlob(
+            color: activeColor.withValues(alpha: 0.15),
+            size: 400,
+          ),
+        ),
+        Positioned(
+          top: 300,
+          left: -150,
+          child: _LiquidBlob(
+            color: AppColors.getSecondary(context).withValues(alpha: 0.1),
+            size: 500,
+          ),
+        ),
 
-            // 1. ÜST: Profil Kartı
-            _buildProfileCard(l10n),
-
-            const SizedBox(height: AppSizes.paddingXLarge),
-
-            // 2. TERCİHLER & UYGULAMA GRUBU
-            _buildSectionHeader(l10n.preferences),
-            NeuContainer(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              borderRadius: AppSizes.radiusLarge,
-              child: Column(
-                children: [
-                  _buildNavSetting(
-                    icon: Icons.palette_rounded,
-                    title: l10n.themeMode,
-                    trailingText: _getThemeModeName(settings.themeModeIndex, l10n),
-                    onTap: () => _showThemePicker(settings.themeModeIndex, l10n),
-                  ),
-                  _buildDivider(),
-                  _buildNavSetting(
-                    icon: Icons.language_rounded,
-                    title: l10n.language,
-                    trailingText: selectedLanguageName,
-                    onTap: () => _showLanguagePicker(settings.languageCode, l10n),
-                  ),
-                  _buildDivider(),
-                  _buildToggleSetting(
-                    icon: Icons.notifications_active_rounded,
-                    title: l10n.aiNotifications,
-                    value: settings.isAiNotificationsEnabled,
-                    onChanged: (val) => ref.read(settingsProvider.notifier).toggleAiNotifications(val),
-                  ),
-                ],
+        SafeArea(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // 2. PROFILE HEADER
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _ProfileHeaderDelegate(
+                  expandedHeight: 240.0,
+                  collapsedHeight: 60.0,
+                  l10n: l10n,
+                  activeColor: activeColor,
+                  isPro: subscription.isPro,
+                  onTogglePro: () async {
+                    if (subscription.isPro) {
+                      await ref.read(subscriptionServiceProvider).setProStatus(false);
+                    }
+                  },
+                  onEditProfile: () => _showComingSoon(l10n.editProfile, l10n),
+                ),
               ),
-            ),
 
-            const SizedBox(height: AppSizes.paddingXLarge),
+              // 3. AYARLAR
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    const SizedBox(height: 20),
+                    _buildSectionTitle(l10n.preferences, activeColor),
+                    const SizedBox(height: 12),
+                    
+                    _buildFloatingSetting(
+                      icon: Icons.palette_rounded,
+                      title: l10n.themeMode,
+                      trailing: _getThemeModeName(settings.themeModeIndex, l10n),
+                      onTap: () => _showThemePicker(settings.themeModeIndex, l10n),
+                      activeColor: activeColor,
+                    ),
+                    _buildFloatingSetting(
+                      icon: Icons.language_rounded,
+                      title: l10n.language,
+                      trailing: _getLanguageName(settings.languageCode),
+                      onTap: () => _showLanguagePicker(settings.languageCode, l10n),
+                      activeColor: activeColor,
+                    ),
+                    _buildFloatingToggle(
+                      icon: Icons.notifications_active_rounded,
+                      title: l10n.aiNotifications,
+                      value: settings.isAiNotificationsEnabled,
+                      onChanged: (val) => ref.read(settingsProvider.notifier).toggleAiNotifications(val),
+                      activeColor: activeColor,
+                    ),
 
-            // 3.5 VERİ & AI GRUBU
-            _buildSectionHeader(l10n.dataAndAiSettings),
-            NeuContainer(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              borderRadius: AppSizes.radiusLarge,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 40),
+
+                    _buildSectionTitle(l10n.dataAndAiSettings, activeColor),
+                    const SizedBox(height: 16),
+                    _buildDataRetentionCloud(l10n, settings.dataRetentionDays, activeColor),
+
+                    const SizedBox(height: 40),
+
+                    _buildSectionTitle(l10n.dataManagement, activeColor),
+                    const SizedBox(height: 12),
+                    _buildFloatingSetting(
+                      icon: Icons.cloud_upload_rounded,
+                      title: l10n.driveBackup,
+                      onTap: () => _showComingSoon(l10n.driveBackup, l10n),
+                      activeColor: AppColors.getSecondary(context),
+                      isAction: true,
+                    ),
+                    _buildFloatingSetting(
+                      icon: Icons.table_view_rounded,
+                      title: l10n.exportExcel,
+                      onTap: () => _showComingSoon(l10n.exportExcel, l10n),
+                      activeColor: AppColors.getSecondary(context),
+                      isAction: true,
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    _buildSectionTitle(l10n.support, activeColor),
+                    const SizedBox(height: 12),
+                    _buildFloatingSetting(
+                      icon: Icons.support_agent_rounded,
+                      title: l10n.contact,
+                      onTap: _launchEmail,
+                      activeColor: AppColors.getPrimary(context),
+                      isAction: true,
+                    ),
+                    _buildFloatingSetting(
+                      icon: Icons.info_outline_rounded,
+                      title: l10n.about,
+                      trailing: "v1.0.0",
+                      onTap: () => _showAboutDialog(l10n),
+                      activeColor: AppColors.getPrimary(context),
+                    ),
+
+                    const SizedBox(height: 120),
+                  ]),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionTitle(String title, Color activeColor) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 14,
+          decoration: BoxDecoration(
+            color: activeColor,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          title.toUpperCase(),
+          style: TextStyle(
+            color: AppColors.getTextPrimary(context),
+            fontSize: 13,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFloatingSetting({
+    required IconData icon,
+    required String title,
+    String? trailing,
+    required VoidCallback onTap,
+    required Color activeColor,
+    bool isAction = false,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: InkWell(
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.getSurface(context).withValues(alpha: isAction ? 0.08 : 0.03),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.05),
+                ),
+              ),
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Icon(Icons.history_rounded, color: AppColors.getSecondary(context), size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(l10n.dataRetention, style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 14, fontWeight: FontWeight.w500)),
-                            const SizedBox(height: 2),
-                            Text(l10n.dataRetentionDesc, style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11, height: 1.4)),
-                          ],
-                        ),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: activeColor.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: activeColor, size: 22),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        color: AppColors.getTextPrimary(context),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
                       ),
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _retentionChip(l10n.oneMonth, 30, settings.dataRetentionDays),
-                      _retentionChip(l10n.threeMonths, 90, settings.dataRetentionDays),
-                      _retentionChip(l10n.sixMonths, 180, settings.dataRetentionDays),
-                      _retentionChip(l10n.oneYear, 365, settings.dataRetentionDays),
-                      _retentionChip(l10n.infinite, -1, settings.dataRetentionDays),
-                    ],
-                  ),
+                  if (trailing != null)
+                    Text(
+                      trailing,
+                      style: TextStyle(
+                        color: activeColor,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  if (trailing == null && !isAction)
+                    Icon(Icons.chevron_right_rounded, color: AppColors.getTextSecondary(context).withValues(alpha: 0.3)),
+                  if (isAction)
+                    Icon(Icons.arrow_outward_rounded, color: activeColor.withValues(alpha: 0.5), size: 18),
                 ],
               ),
             ),
-
-            const SizedBox(height: AppSizes.paddingXLarge),
-
-            // 4. VERİ YÖNETİMİ
-            _buildSectionHeader(l10n.dataManagement),
-            NeuContainer(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              borderRadius: AppSizes.radiusLarge,
-              child: Column(
-                children: [
-                  _buildActionSetting(
-                    icon: Icons.cloud_upload_rounded,
-                    title: l10n.driveBackup,
-                    onTap: () => _showComingSoon(l10n.driveBackup, l10n),
-                  ),
-                  _buildDivider(),
-                  _buildActionSetting(
-                    icon: Icons.table_view_rounded,
-                    title: l10n.exportExcel,
-                    onTap: () => _showComingSoon(l10n.exportExcel, l10n),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: AppSizes.paddingXLarge),
-
-            // 5. DESTEK & HAKKINDA GRUBU
-            _buildSectionHeader(l10n.support),
-            NeuContainer(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              borderRadius: AppSizes.radiusLarge,
-              child: Column(
-                children: [
-                  _buildActionSetting(
-                    icon: Icons.support_agent_rounded,
-                    title: l10n.contact,
-                    onTap: _launchEmail,
-                  ),
-                  _buildDivider(),
-                  _buildNavSetting(
-                    icon: Icons.info_outline_rounded,
-                    title: l10n.about,
-                    trailingText: "v1.0.0",
-                    onTap: () => _showAboutDialog(l10n),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 100),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildProfileCard(AppLocalizations l10n) {
-    final subscription = ref.watch(subscriptionServiceProvider);
-    
-    return NeuContainer(
-      borderRadius: AppSizes.radiusLarge,
+  Widget _buildFloatingToggle({
+    required IconData icon,
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required Color activeColor,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.getSurface(context).withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.05),
+        ),
+      ),
       child: Row(
         children: [
-          NeuContainer(
-            width: 60,
-            height: 60,
-            borderRadius: 30,
-            isInnerShadow: true,
-            padding: EdgeInsets.zero,
-            child: Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(30),
-                child: Image.network(
-                  'https://i.pravatar.cc/150?img=11',
-                  fit: BoxFit.cover,
-                ),
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: activeColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: activeColor, size: 22),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: AppColors.getTextPrimary(context),
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          const SizedBox(width: AppSizes.paddingLarge),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Yasir Dönmez",
-                  style: TextStyle(
-                    color: AppColors.getTextPrimary(context),
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                GestureDetector(
-                  onLongPress: () async {
-                    if (subscription.isPro) {
-                      // Geliştirici Kısa Yolu: Uzun basınca aboneliği sıfırla
-                      await ref.read(subscriptionServiceProvider).setProStatus(false);
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Abonelik sıfırlandı (Ücretsiz Sürüm)')),
-                        );
-                      }
-                    }
-                  },
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: subscription.isPro 
-                              ? AppColors.getPrimary(context).withValues(alpha: 0.2)
-                              : Colors.grey.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          subscription.isPro ? "PRO" : "FREE",
-                          style: TextStyle(
-                            color: subscription.isPro ? AppColors.getPrimary(context) : Colors.grey,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        subscription.isPro ? l10n.memberPremium : "Standart Kullanıcı",
-                        style: TextStyle(
-                          color: subscription.isPro 
-                              ? AppColors.getPrimary(context) 
-                              : AppColors.getTextSecondary(context),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.edit_rounded, color: AppColors.getTextSecondary(context), size: 20),
-            onPressed: () => _showComingSoon(l10n.editProfile, l10n),
+          CupertinoSwitch(
+            value: value,
+            activeTrackColor: activeColor,
+            onChanged: onChanged,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDataRetentionCloud(AppLocalizations l10n, int currentDays, Color activeColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 16),
+          child: Text(
+            l10n.dataRetentionDesc,
+            style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 13, height: 1.5),
+          ),
+        ),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            _retentionBubble(l10n.oneMonth, 30, currentDays, activeColor),
+            _retentionBubble(l10n.threeMonths, 90, currentDays, activeColor),
+            _retentionBubble(l10n.sixMonths, 180, currentDays, activeColor),
+            _retentionBubble(l10n.oneYear, 365, currentDays, activeColor),
+            _retentionBubble(l10n.infinite, -1, currentDays, activeColor),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _retentionBubble(String label, int days, int currentDays, Color activeColor) {
+    final isActive = currentDays == days;
+    return GestureDetector(
+      onTap: () => ref.read(settingsProvider.notifier).setDataRetention(days),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutQuart,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: isActive ? activeColor : AppColors.getSurface(context).withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: isActive ? [
+            BoxShadow(color: activeColor.withValues(alpha: 0.2), blurRadius: 15, spreadRadius: 2)
+          ] : [],
+          border: Border.all(
+            color: isActive ? activeColor : Colors.white.withValues(alpha: 0.05),
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive ? Colors.black : AppColors.getTextSecondary(context),
+            fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAboutDialog(AppLocalizations l10n) {
+    final activeColor = ref.read(rotaryColorProvider);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => FluidContainer(
+        borderRadius: 40,
+        padding: const EdgeInsets.all(32),
+        isGlass: true,
+        blur: 40,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 20),
+            Icon(Icons.auto_awesome_rounded, color: activeColor, size: 60),
+            const SizedBox(height: 16),
+            Text("FinCast", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: AppColors.getTextPrimary(context))),
+            const SizedBox(height: 24),
+            Text(l10n.aboutFinCast, textAlign: TextAlign.center, style: TextStyle(color: AppColors.getTextPrimary(context), height: 1.6, fontSize: 16)),
+            const SizedBox(height: 40),
+            SizedBox(
+              width: double.infinity,
+              height: 60,
+              child: CupertinoButton(
+                color: activeColor,
+                borderRadius: BorderRadius.circular(25),
+                onPressed: () => Navigator.pop(context),
+                child: Text(l10n.close, style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.black)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -269,65 +398,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         title: Text(feature),
         content: Text("\n${l10n.comingSoon}"),
         actions: [
-          CupertinoDialogAction(
-            child: Text(l10n.ok),
-            onPressed: () => Navigator.pop(context),
-          ),
+          CupertinoDialogAction(child: Text(l10n.ok), onPressed: () => Navigator.pop(context)),
         ],
       ),
     );
   }
 
-  void _showAboutDialog(AppLocalizations l10n) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => NeuContainer(
-        borderRadius: 24,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.auto_awesome_rounded, color: AppColors.getPrimary(context), size: 48),
-            const SizedBox(height: 16),
-            Text(
-              "FinCast",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.getTextPrimary(context)),
-            ),
-            Text("v1.0.0", style: TextStyle(color: AppColors.getTextSecondary(context))),
-            const SizedBox(height: 16),
-            Text(
-              l10n.aboutFinCast,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.getTextPrimary(context), height: 1.5),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: CupertinoButton(
-                color: AppColors.getPrimary(context),
-                child: Text(l10n.close),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _launchEmail() async {
-    final Uri emailLaunchUri = Uri(
-      scheme: 'mailto',
-      path: 'destek@fincast.app',
-      query: 'subject=FinCast Destek Talebi',
-    );
+    final Uri emailLaunchUri = Uri(scheme: 'mailto', path: 'destek@fincast.app');
     if (!await launchUrl(emailLaunchUri)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('E-posta uygulaması bulunamadı.')),
-        );
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('E-posta uygulaması bulunamadı.')));
     }
   }
 
@@ -368,390 +448,316 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  Widget _retentionChip(String label, int days, int currentDays) {
-    final isActive = currentDays == days;
-    return GestureDetector(
-      onTap: () => ref.read(settingsProvider.notifier).setDataRetention(days),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: isActive ? AppColors.getSecondary(context).withValues(alpha: 0.15) : AppColors.getInnerSurface(context),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isActive ? AppColors.getSecondary(context) : AppColors.getDarkShadow(context).withValues(alpha: 0.3),
-            width: isActive ? 1.5 : 1,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-            color: isActive ? AppColors.getSecondary(context) : AppColors.getTextSecondary(context),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          title,
-          style: TextStyle(
-            color: AppColors.getTextSecondary(context),
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.5,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Divider(
-      color: AppColors.getSurface(context).withValues(alpha: 0.5),
-      height: 1,
-      thickness: 1,
-      indent: 56,
-      endIndent: 16,
-    );
-  }
-
-  Widget _buildToggleSetting({
-    required IconData icon,
-    required String title,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.getPrimary(context), size: 22),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              title,
-              style: TextStyle(
-                color: AppColors.getTextPrimary(context),
-                fontSize: 14,
-              ),
-            ),
-          ),
-          CupertinoSwitch(
-            value: value,
-            activeTrackColor: AppColors.getPrimary(context),
-            inactiveTrackColor: AppColors.getDarkShadow(context).withValues(alpha: 0.3),
-            onChanged: onChanged,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavSetting({
-    required IconData icon,
-    required String title,
-    String? trailingText,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.getTextSecondary(context), size: 22),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  color: AppColors.getTextPrimary(context),
-                  fontSize: 14,
-                ),
-              ),
-            ),
-            if (trailingText != null) ...[
-              Text(
-                trailingText,
-                style: TextStyle(
-                  color: AppColors.getTextSecondary(context),
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(width: 8),
-            ],
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.getTextSecondary(context),
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionSetting({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.getSecondary(context), size: 22),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  color: AppColors.getTextPrimary(context),
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _showLanguagePicker(String currentCode, AppLocalizations l10n) {
-    final List<String> languages = [
-      "Türkçe",
-      "English",
-      "Deutsch",
-      "Español",
-      "Français",
-      "Português",
-      "Italiano",
-      "日本語",
-    ];
-    final currentName = _getLanguageName(currentCode);
-    int tempSelectedIndex = languages.indexOf(currentName);
-    if (tempSelectedIndex == -1) tempSelectedIndex = 0;
+    final List<String> languages = ["Türkçe", "English", "Deutsch", "Español", "Français", "Português", "Italiano", "日本語"];
+    int tempIndex = languages.indexOf(_getLanguageName(currentCode));
+    final activeColor = ref.read(rotaryColorProvider);
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          decoration: BoxDecoration(
-            color: AppColors.getSurface(context),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 10,
-                offset: const Offset(0, -2),
+      builder: (context) => FluidContainer(
+        borderRadius: 40,
+        isGlass: true,
+        blur: 30,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.selectLanguage, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.getTextPrimary(context))),
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 200,
+              child: CupertinoPicker(
+                itemExtent: 45,
+                onSelectedItemChanged: (i) => tempIndex = i,
+                scrollController: FixedExtentScrollController(initialItem: tempIndex),
+                children: languages.map((l) => Center(child: Text(l, style: TextStyle(color: AppColors.getTextPrimary(context))))).toList(),
               ),
-            ],
-          ),
-          padding: const EdgeInsets.all(AppSizes.paddingLarge),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                l10n.selectLanguage,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.getTextPrimary(context),
-                ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 60,
+              child: CupertinoButton(
+                color: activeColor,
+                borderRadius: BorderRadius.circular(25),
+                onPressed: () {
+                  ref.read(settingsProvider.notifier).setLanguage(_getLanguageCode(languages[tempIndex]));
+                  Navigator.pop(context);
+                },
+                child: Text(l10n.save, style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.black)),
               ),
-              const SizedBox(height: AppSizes.paddingLarge),
-              SizedBox(
-                height: 200,
-                child: CupertinoPicker(
-                  itemExtent: 40,
-                  magnification: 1.2,
-                  useMagnifier: true,
-                  scrollController: FixedExtentScrollController(
-                    initialItem: tempSelectedIndex,
-                  ),
-                  onSelectedItemChanged: (index) {
-                    tempSelectedIndex = index;
-                  },
-                  children: languages.map((lang) {
-                    return Center(
-                      child: Text(
-                        lang,
-                        style: TextStyle(
-                          color: AppColors.getTextPrimary(context),
-                          fontSize: 18,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              const SizedBox(height: AppSizes.paddingMedium),
-              SizedBox(
-                width: double.infinity,
-                child: CupertinoButton(
-                  color: AppColors.getPrimary(context),
-                  onPressed: () async {
-                    final selectedName = languages[tempSelectedIndex];
-                    final selectedCode = _getLanguageCode(selectedName);
-                    Navigator.pop(context);
-                    await Future.delayed(const Duration(milliseconds: 300));
-                    ref.read(settingsProvider.notifier).setLanguage(selectedCode);
-                  },
-                  child: Text(
-                    l10n.save,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   void _showThemePicker(int currentIndex, AppLocalizations l10n) {
-    final List<String> themeOptions = [
-      l10n.themeSystem,
-      l10n.themeLight,
-      l10n.themeDark,
-    ];
-    final List<IconData> themeIcons = [
-      Icons.brightness_auto_rounded,
-      Icons.light_mode_rounded,
-      Icons.dark_mode_rounded,
-    ];
+    final List<String> options = [l10n.themeSystem, l10n.themeLight, l10n.themeDark];
+    final activeColor = ref.read(rotaryColorProvider);
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        int tempSelectedIndex = currentIndex;
-        return StatefulBuilder(
-          builder: (builderContext, setSheetState) {
-            return Container(
-              decoration: BoxDecoration(
-                color: AppColors.getSurface(builderContext),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(AppSizes.paddingLarge),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.getTextSecondary(builderContext).withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: AppSizes.paddingMedium),
-                  Text(
-                    l10n.themeMode,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.getTextPrimary(builderContext),
-                    ),
-                  ),
-                  const SizedBox(height: AppSizes.paddingLarge),
-                  ...List.generate(themeOptions.length, (index) {
-                    final isSelected = tempSelectedIndex == index;
-                    return GestureDetector(
-                      onTap: () => setSheetState(() => tempSelectedIndex = index),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.getPrimary(builderContext).withValues(alpha: 0.1)
-                              : AppColors.getInnerSurface(builderContext),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.getPrimary(builderContext)
-                                : AppColors.getDarkShadow(builderContext).withValues(alpha: 0.15),
-                            width: isSelected ? 1.5 : 1,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              themeIcons[index],
-                              color: isSelected
-                                  ? AppColors.getPrimary(builderContext)
-                                  : AppColors.getTextSecondary(builderContext),
-                              size: 22,
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Text(
-                                themeOptions[index],
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                  color: isSelected
-                                      ? AppColors.getTextPrimary(builderContext)
-                                      : AppColors.getTextSecondary(builderContext),
-                                ),
-                              ),
-                            ),
-                            AnimatedOpacity(
-                              duration: const Duration(milliseconds: 200),
-                              opacity: isSelected ? 1.0 : 0.0,
-                              child: Icon(
-                                Icons.check_circle_rounded,
-                                color: AppColors.getPrimary(builderContext),
-                                size: 22,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: AppSizes.paddingMedium),
-                  SizedBox(
-                    width: double.infinity,
-                    child: CupertinoButton(
-                      color: AppColors.getPrimary(builderContext),
-                      onPressed: () async {
-                        Navigator.pop(builderContext);
-                        await Future.delayed(const Duration(milliseconds: 300));
-                        ref.read(settingsProvider.notifier).setThemeMode(tempSelectedIndex);
-                      },
-                      child: Text(
-                        l10n.save,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
+      builder: (context) => FluidContainer(
+        borderRadius: 40,
+        isGlass: true,
+        blur: 30,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.themeMode, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.getTextPrimary(context))),
+            const SizedBox(height: 24),
+            ...List.generate(options.length, (i) => ListTile(
+              title: Text(options[i], style: TextStyle(color: AppColors.getTextPrimary(context), fontWeight: currentIndex == i ? FontWeight.w900 : FontWeight.w500)),
+              trailing: currentIndex == i ? Icon(Icons.check_circle_rounded, color: activeColor) : null,
+              onTap: () {
+                ref.read(settingsProvider.notifier).setThemeMode(i);
+                Navigator.pop(context);
+              },
+            )),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// --- ETCHED LIQUID TEXT ANIMATION CLASSES ---
+
+class _EtchedLiquidText extends StatefulWidget {
+  final double progress;
+  final Color activeColor;
+  final String text;
+
+  const _EtchedLiquidText({
+    required this.progress,
+    required this.activeColor,
+    required this.text,
+  });
+
+  @override
+  State<_EtchedLiquidText> createState() => _EtchedLiquidTextState();
+}
+
+class _EtchedLiquidTextState extends State<_EtchedLiquidText> with SingleTickerProviderStateMixin {
+  late AnimationController _waveController;
+
+  @override
+  void initState() {
+    super.initState();
+    _waveController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _waveController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _waveController,
+      builder: (context, child) {
+        return CustomPaint(
+          size: const Size(350, 100),
+          painter: _EtchedLiquidPainter(
+            progress: widget.progress,
+            activeColor: widget.activeColor,
+            text: widget.text,
+            waveValue: _waveController.value,
+            context: context,
+          ),
         );
       },
+    );
+  }
+}
+
+class _EtchedLiquidPainter extends CustomPainter {
+  final double progress;
+  final Color activeColor;
+  final String text;
+  final double waveValue;
+  final BuildContext context;
+
+  _EtchedLiquidPainter({
+    required this.progress,
+    required this.activeColor,
+    required this.text,
+    required this.waveValue,
+    required this.context,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final textStyle = TextStyle(
+      fontSize: 44,
+      fontWeight: FontWeight.w900,
+      letterSpacing: -2.5,
+      color: AppColors.getTextPrimary(context),
+    );
+
+    final textPainter = TextPainter(
+      text: TextSpan(text: text, style: textStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    final textRect = Rect.fromCenter(
+      center: center,
+      width: textPainter.width,
+      height: textPainter.height,
+    );
+
+    // 1. ANA KATMAN (Her şey bu katmanda işlenecek)
+    canvas.saveLayer(textRect.inflate(50), Paint());
+
+    // 2. KAZINMIŞ (ETCHED) METNİ ÇİZ
+    // Gölgeler
+    final shadowPaint = Paint()..color = AppColors.getDarkShadow(context).withValues(alpha: 0.5);
+    final lightShadowPaint = Paint()..color = AppColors.getLightShadow(context).withValues(alpha: 0.3);
+    
+    final lightTP = TextPainter(text: TextSpan(text: text, style: textStyle.copyWith(color: AppColors.getLightShadow(context).withValues(alpha: 0.3))), textDirection: TextDirection.ltr)..layout();
+    lightTP.paint(canvas, textRect.topLeft + const Offset(1.5, 2.0));
+
+    final darkTP = TextPainter(text: TextSpan(text: text, style: textStyle.copyWith(color: AppColors.getDarkShadow(context).withValues(alpha: 0.5))), textDirection: TextDirection.ltr)..layout();
+    darkTP.paint(canvas, textRect.topLeft + const Offset(-1.5, -1.5));
+
+    final baseTP = TextPainter(text: TextSpan(text: text, style: textStyle.copyWith(color: AppColors.getInnerSurface(context).withValues(alpha: 0.9))), textDirection: TextDirection.ltr)..layout();
+    baseTP.paint(canvas, textRect.topLeft);
+
+    // 3. SIVI VE SİLME İŞLEMLERİ
+    if (progress > 0) {
+    // SIVI SEVİYESİ VE DALGA YOLU
+    final double liquidLevel = textRect.bottom + 20 - (textRect.height * progress * 1.5);
+
+    final Path wavePath = Path();
+    wavePath.moveTo(textRect.left - 60, liquidLevel);
+
+    // Üç Katmanlı Organik Dalga Formülü (Kusursuz döngü için 2*PI kullanıldı)
+    for (double x = textRect.left - 60; x <= textRect.right + 60; x++) {
+      // Ana dalga
+      final double wave1 = math.sin((x / 20) + (waveValue * 2 * math.pi)) * 7;
+      // İkincil detay dalgası
+      final double wave2 = math.sin((x / 12) - (waveValue * 2 * math.pi)) * 3;
+      // Üçüncü mikroskobik dalgalanma (Daha sıvımsı his için)
+      final double wave3 = math.sin((x / 40) + (waveValue * 4 * math.pi)) * 2;
+
+      wavePath.lineTo(x, liquidLevel + wave1 + wave2 + wave3);
+    }
+
+    // YÜZEY PARLAMASI (Glow)
+    final Paint surfacePaint = Paint()
+      ..color = activeColor.withValues(alpha: (0.9 * progress).clamp(0, 0.9))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.0
+      ..blendMode = BlendMode.srcATop;
+    canvas.drawPath(wavePath, surfacePaint);
+
+    // SİLME ALANI (Dalganın altını tamamen yok et)
+    final Path submergedPath = Path.from(wavePath);
+    submergedPath.lineTo(textRect.right + 60, textRect.bottom + 100);
+    submergedPath.lineTo(textRect.left - 60, textRect.bottom + 100);
+    submergedPath.close();
+
+    final Paint eraserPaint = Paint()
+      ..blendMode = BlendMode.clear
+      ..color = Colors.black;
+    canvas.drawPath(submergedPath, eraserPaint);
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _EtchedLiquidPainter old) => 
+    old.progress != progress || old.waveValue != waveValue || old.activeColor != activeColor;
+}
+
+class _ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double expandedHeight;
+  final double collapsedHeight;
+  final AppLocalizations l10n;
+  final Color activeColor;
+  final bool isPro;
+  final VoidCallback onTogglePro;
+  final VoidCallback onEditProfile;
+
+  _ProfileHeaderDelegate({
+    required this.expandedHeight,
+    required this.collapsedHeight,
+    required this.l10n,
+    required this.activeColor,
+    required this.isPro,
+    required this.onTogglePro,
+    required this.onEditProfile,
+  });
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final double rawProgress = shrinkOffset / (maxExtent - minExtent);
+    final double progress = rawProgress.clamp(0.0, 1.0);
+    
+    return ClipRect(
+      child: Container(
+        color: Colors.transparent,
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.hardEdge,
+          children: [
+            Positioned(
+              top: 100 - (shrinkOffset * 0.8),
+              child: _EtchedLiquidText(
+                progress: progress,
+                activeColor: activeColor,
+                text: "Yasir Dönmez",
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  double get maxExtent => expandedHeight;
+
+  @override
+  double get minExtent => collapsedHeight;
+
+  @override
+  bool shouldRebuild(covariant _ProfileHeaderDelegate oldDelegate) {
+    return isPro != oldDelegate.isPro || activeColor != oldDelegate.activeColor;
+  }
+}
+
+class _LiquidBlob extends StatelessWidget {
+  final Color color;
+  final double size;
+
+  const _LiquidBlob({required this.color, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [color, color.withValues(alpha: 0)],
+        ),
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+        child: Container(color: Colors.transparent),
+      ),
     );
   }
 }

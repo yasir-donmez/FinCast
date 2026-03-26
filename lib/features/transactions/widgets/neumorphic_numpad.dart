@@ -8,14 +8,12 @@ class NeumorphicNumpad extends StatelessWidget {
   final Function(String) onNumberTapped;
   final VoidCallback onBackspaceTapped;
   final VoidCallback onDoneTapped;
-  final Color? activeColor;
 
   const NeumorphicNumpad({
     super.key,
     required this.onNumberTapped,
     required this.onBackspaceTapped,
     required this.onDoneTapped,
-    this.activeColor,
   });
 
   @override
@@ -33,18 +31,16 @@ class NeumorphicNumpad extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _buildActionKey(
-              context: context,
               icon: Icons.backspace_rounded,
-              color: AppColors.getError(context),
+              color: AppColors.error,
               onTap: onBackspaceTapped,
             ),
             _buildNumberKey(context, '0'),
             _buildActionKey(
-              context: context,
               icon: Icons.check_rounded,
-              color: activeColor ?? AppColors.getPrimary(context),
+              color: AppColors.primary,
               onTap: onDoneTapped,
-              isPrimary: true,
+              isPrimary: true, // "Tamamla" butonu neon parlasın
             ),
           ],
         ),
@@ -61,9 +57,9 @@ class NeumorphicNumpad extends StatelessWidget {
 
   Widget _buildNumberKey(BuildContext context, String number) {
     return NeuButton(
-      width: 72,
-      height: 72,
-      borderRadius: 36, // Tam yuvarlak tuşlar
+      width: 70,
+      height: 70,
+      borderRadius: 35, // Tam yuvarlak tuşlar
       onTap: () {
         HapticFeedback.lightImpact(); // Tuş hissiyatı
         onNumberTapped(number);
@@ -71,8 +67,8 @@ class NeumorphicNumpad extends StatelessWidget {
       child: Text(
         number,
         style: TextStyle(
-          fontSize: 26,
-          fontWeight: FontWeight.w800,
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
           color: AppColors.getTextPrimary(context),
         ),
       ),
@@ -80,16 +76,15 @@ class NeumorphicNumpad extends StatelessWidget {
   }
 
   Widget _buildActionKey({
-    required BuildContext context,
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
     bool isPrimary = false,
   }) {
     return NeuButton(
-      width: 72,
-      height: 72,
-      borderRadius: 36,
+      width: 70,
+      height: 70,
+      borderRadius: 35,
       isPrimary: isPrimary,
       onTap: () {
         HapticFeedback.mediumImpact();
