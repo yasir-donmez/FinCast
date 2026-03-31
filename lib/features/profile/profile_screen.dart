@@ -8,6 +8,8 @@ import '../../core/services/subscription_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_constants.dart';
 import '../../shared/widgets/fluid_container.dart';
+import '../../shared/widgets/fluid_sheet.dart';
+import '../../shared/widgets/fluid_button.dart';
 import '../../core/providers/settings_provider.dart';
 import '../dashboard/dashboard_providers.dart';
 
@@ -19,6 +21,26 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  late ScrollController _scrollController;
+  double _scrollOffset = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController()
+      ..addListener(() {
+        setState(() {
+          _scrollOffset = _scrollController.offset;
+        });
+      });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -28,53 +50,48 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Stack(
       children: [
-        // 1. ORGANİK ARKA PLAN
+        // 1. PARALLAX ARKA PLAN
         Positioned(
-          top: -100,
-          right: -50,
-          child: _LiquidBlob(
-            color: activeColor.withValues(alpha: 0.15),
-            size: 400,
-          ),
+          top: -100 - (_scrollOffset * 0.2),
+          right: -50 + (_scrollOffset * 0.05),
+          child: _LiquidBlob(color: activeColor.withValues(alpha: 0.12), size: 400),
         ),
         Positioned(
-          top: 300,
-          left: -150,
-          child: _LiquidBlob(
-            color: AppColors.getSecondary(context).withValues(alpha: 0.1),
-            size: 500,
-          ),
+          top: 400 - (_scrollOffset * 0.3),
+          left: -150 - (_scrollOffset * 0.1),
+          child: _LiquidBlob(color: AppColors.getSecondary(context).withValues(alpha: 0.08), size: 500),
         ),
 
         SafeArea(
+          bottom: false,
           child: CustomScrollView(
+            controller: _scrollController,
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // 2. PROFILE HEADER
+              // 2. CREATIVE HEADER
               SliverPersistentHeader(
                 pinned: true,
                 delegate: _ProfileHeaderDelegate(
-                  expandedHeight: 240.0,
-                  collapsedHeight: 60.0,
+                  expandedHeight: 280.0,
+                  collapsedHeight: 80.0,
                   l10n: l10n,
                   activeColor: activeColor,
                   isPro: subscription.isPro,
                   onTogglePro: () async {
-                    if (subscription.isPro) {
-                      await ref.read(subscriptionServiceProvider).setProStatus(false);
-                    }
+                    final currentPro = ref.read(subscriptionServiceProvider).isPro;
+                    await ref.read(subscriptionServiceProvider).setProStatus(!currentPro);
                   },
                   onEditProfile: () => _showComingSoon(l10n.editProfile, l10n),
                 ),
               ),
 
-              // 3. AYARLAR
+              // 3. SECTIONS
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     const SizedBox(height: 20),
-                    _buildSectionTitle(l10n.preferences, activeColor),
+                    _buildPremiumSectionTitle(l10n.preferences, activeColor, Icons.tune_rounded),
                     const SizedBox(height: 12),
                     
                     _buildFloatingSetting(
@@ -101,13 +118,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                     const SizedBox(height: 40),
 
-                    _buildSectionTitle(l10n.dataAndAiSettings, activeColor),
+                    _buildPremiumSectionTitle(l10n.dataAndAiSettings, activeColor, Icons.auto_awesome_rounded),
                     const SizedBox(height: 16),
                     _buildDataRetentionCloud(l10n, settings.dataRetentionDays, activeColor),
 
                     const SizedBox(height: 40),
 
-                    _buildSectionTitle(l10n.dataManagement, activeColor),
+                    _buildPremiumSectionTitle(l10n.dataManagement, AppColors.getSecondary(context), Icons.storage_rounded),
                     const SizedBox(height: 12),
                     _buildFloatingSetting(
                       icon: Icons.cloud_upload_rounded,
@@ -126,7 +143,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                     const SizedBox(height: 40),
 
-                    _buildSectionTitle(l10n.support, activeColor),
+                    _buildPremiumSectionTitle(l10n.support, AppColors.getPrimary(context), Icons.support_agent_rounded),
                     const SizedBox(height: 12),
                     _buildFloatingSetting(
                       icon: Icons.support_agent_rounded,
@@ -154,28 +171,61 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title, Color activeColor) {
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 14,
-          decoration: BoxDecoration(
-            color: activeColor,
-            borderRadius: BorderRadius.circular(2),
+  Widget _buildPremiumSectionTitle(String title, Color activeColor, IconData icon) {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            activeColor.withValues(alpha: 0.12),
+            activeColor.withValues(alpha: 0.02),
+            Colors.transparent,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border(
+          left: BorderSide(color: activeColor, width: 3),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Icon(icon, size: 18, color: activeColor.withValues(alpha: 0.8)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Text(
+                        title.toUpperCase(),
+                        style: TextStyle(
+                          color: AppColors.getLightShadow(context).withValues(alpha: 0.2),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      Text(
+                        title.toUpperCase(),
+                        style: TextStyle(
+                          color: AppColors.getTextPrimary(context).withValues(alpha: 0.7),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        const SizedBox(width: 10),
-        Text(
-          title.toUpperCase(),
-          style: TextStyle(
-            color: AppColors.getTextPrimary(context),
-            fontSize: 13,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1.2,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -356,37 +406,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   void _showAboutDialog(AppLocalizations l10n) {
     final activeColor = ref.read(rotaryColorProvider);
-    showModalBottomSheet(
+    FluidSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => FluidContainer(
-        borderRadius: 40,
-        padding: const EdgeInsets.all(32),
-        isGlass: true,
-        blur: 40,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 20),
-            Icon(Icons.auto_awesome_rounded, color: activeColor, size: 60),
-            const SizedBox(height: 16),
-            Text("FinCast", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: AppColors.getTextPrimary(context))),
-            const SizedBox(height: 24),
-            Text(l10n.aboutFinCast, textAlign: TextAlign.center, style: TextStyle(color: AppColors.getTextPrimary(context), height: 1.6, fontSize: 16)),
-            const SizedBox(height: 40),
-            SizedBox(
-              width: double.infinity,
-              height: 60,
-              child: CupertinoButton(
-                color: activeColor,
-                borderRadius: BorderRadius.circular(25),
-                onPressed: () => Navigator.pop(context),
-                child: Text(l10n.close, style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.black)),
-              ),
+      title: 'FinCast',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 12),
+          Icon(Icons.auto_awesome_rounded, color: activeColor, size: 72),
+          const SizedBox(height: 24),
+          Text(
+            l10n.aboutFinCast, 
+            textAlign: TextAlign.center, 
+            style: TextStyle(
+              color: AppColors.getTextPrimary(context), 
+              height: 1.6, 
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            )
+          ),
+          const SizedBox(height: 32),
+          Text(
+            "v1.0.0 • Made with ❤️",
+            style: TextStyle(
+              color: AppColors.getTextSecondary(context).withValues(alpha: 0.5),
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }
@@ -453,43 +502,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     int tempIndex = languages.indexOf(_getLanguageName(currentCode));
     final activeColor = ref.read(rotaryColorProvider);
 
-    showModalBottomSheet(
+    FluidSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => FluidContainer(
-        borderRadius: 40,
-        isGlass: true,
-        blur: 30,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.selectLanguage, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.getTextPrimary(context))),
-            const SizedBox(height: 20),
-            SizedBox(
-              height: 200,
-              child: CupertinoPicker(
-                itemExtent: 45,
-                onSelectedItemChanged: (i) => tempIndex = i,
-                scrollController: FixedExtentScrollController(initialItem: tempIndex),
-                children: languages.map((l) => Center(child: Text(l, style: TextStyle(color: AppColors.getTextPrimary(context))))).toList(),
-              ),
+      title: l10n.selectLanguage,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: 180,
+            child: CupertinoPicker(
+              itemExtent: 45,
+              onSelectedItemChanged: (i) => tempIndex = i,
+              scrollController: FixedExtentScrollController(initialItem: tempIndex),
+              children: languages.map((l) => Center(child: Text(l, style: TextStyle(color: AppColors.getTextPrimary(context), fontWeight: FontWeight.w600)))).toList(),
             ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 60,
-              child: CupertinoButton(
-                color: activeColor,
-                borderRadius: BorderRadius.circular(25),
-                onPressed: () {
-                  ref.read(settingsProvider.notifier).setLanguage(_getLanguageCode(languages[tempIndex]));
-                  Navigator.pop(context);
-                },
-                child: Text(l10n.save, style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.black)),
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 20),
+          FluidButton(
+            onTap: () {
+              ref.read(settingsProvider.notifier).setLanguage(_getLanguageCode(languages[tempIndex]));
+              Navigator.pop(context);
+            },
+            width: double.infinity,
+            color: activeColor,
+            child: Text(l10n.save, style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.black)),
+          ),
+          const SizedBox(height: 8),
+        ],
       ),
     );
   }
@@ -498,44 +537,52 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final List<String> options = [l10n.themeSystem, l10n.themeLight, l10n.themeDark];
     final activeColor = ref.read(rotaryColorProvider);
 
-    showModalBottomSheet(
+    FluidSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => FluidContainer(
-        borderRadius: 40,
-        isGlass: true,
-        blur: 30,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.themeMode, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.getTextPrimary(context))),
-            const SizedBox(height: 24),
-            ...List.generate(options.length, (i) => ListTile(
-              title: Text(options[i], style: TextStyle(color: AppColors.getTextPrimary(context), fontWeight: currentIndex == i ? FontWeight.w900 : FontWeight.w500)),
-              trailing: currentIndex == i ? Icon(Icons.check_circle_rounded, color: activeColor) : null,
-              onTap: () {
-                ref.read(settingsProvider.notifier).setThemeMode(i);
-                Navigator.pop(context);
-              },
-            )),
-          ],
-        ),
+      title: l10n.themeMode,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 4),
+          ...List.generate(options.length, (i) => ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(
+              options[i], 
+              style: TextStyle(
+                color: AppColors.getTextPrimary(context), 
+                fontWeight: currentIndex == i ? FontWeight.w900 : FontWeight.w600,
+                fontSize: 16,
+              )
+            ),
+            trailing: currentIndex == i 
+                ? Icon(Icons.check_circle_rounded, color: activeColor, size: 24) 
+                : Icon(Icons.circle_outlined, color: AppColors.getTextSecondary(context).withValues(alpha: 0.2), size: 24),
+            onTap: () {
+              ref.read(settingsProvider.notifier).setThemeMode(i);
+              Navigator.pop(context);
+            },
+          )),
+          const SizedBox(height: 12),
+        ],
       ),
     );
   }
 }
 
-// --- ETCHED LIQUID TEXT ANIMATION CLASSES ---
+// --- CREATIVE ETCHED LIQUID TEXT ---
 
 class _EtchedLiquidText extends StatefulWidget {
   final double progress;
   final Color activeColor;
   final String text;
+  final double fontSize;
 
   const _EtchedLiquidText({
     required this.progress,
     required this.activeColor,
     required this.text,
+    this.fontSize = 44,
   });
 
   @override
@@ -566,11 +613,12 @@ class _EtchedLiquidTextState extends State<_EtchedLiquidText> with SingleTickerP
       animation: _waveController,
       builder: (context, child) {
         return CustomPaint(
-          size: const Size(350, 100),
+          size: Size(widget.fontSize * 8, widget.fontSize * 2.2),
           painter: _EtchedLiquidPainter(
             progress: widget.progress,
             activeColor: widget.activeColor,
             text: widget.text,
+            fontSize: widget.fontSize,
             waveValue: _waveController.value,
             context: context,
           ),
@@ -584,6 +632,7 @@ class _EtchedLiquidPainter extends CustomPainter {
   final double progress;
   final Color activeColor;
   final String text;
+  final double fontSize;
   final double waveValue;
   final BuildContext context;
 
@@ -591,6 +640,7 @@ class _EtchedLiquidPainter extends CustomPainter {
     required this.progress,
     required this.activeColor,
     required this.text,
+    required this.fontSize,
     required this.waveValue,
     required this.context,
   });
@@ -599,7 +649,7 @@ class _EtchedLiquidPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final textStyle = TextStyle(
-      fontSize: 44,
+      fontSize: fontSize,
       fontWeight: FontWeight.w900,
       letterSpacing: -2.5,
       color: AppColors.getTextPrimary(context),
@@ -616,14 +666,8 @@ class _EtchedLiquidPainter extends CustomPainter {
       height: textPainter.height,
     );
 
-    // 1. ANA KATMAN (Her şey bu katmanda işlenecek)
     canvas.saveLayer(textRect.inflate(50), Paint());
 
-    // 2. KAZINMIŞ (ETCHED) METNİ ÇİZ
-    // Gölgeler
-    final shadowPaint = Paint()..color = AppColors.getDarkShadow(context).withValues(alpha: 0.5);
-    final lightShadowPaint = Paint()..color = AppColors.getLightShadow(context).withValues(alpha: 0.3);
-    
     final lightTP = TextPainter(text: TextSpan(text: text, style: textStyle.copyWith(color: AppColors.getLightShadow(context).withValues(alpha: 0.3))), textDirection: TextDirection.ltr)..layout();
     lightTP.paint(canvas, textRect.topLeft + const Offset(1.5, 2.0));
 
@@ -633,45 +677,34 @@ class _EtchedLiquidPainter extends CustomPainter {
     final baseTP = TextPainter(text: TextSpan(text: text, style: textStyle.copyWith(color: AppColors.getInnerSurface(context).withValues(alpha: 0.9))), textDirection: TextDirection.ltr)..layout();
     baseTP.paint(canvas, textRect.topLeft);
 
-    // 3. SIVI VE SİLME İŞLEMLERİ
     if (progress > 0) {
-    // SIVI SEVİYESİ VE DALGA YOLU
-    final double liquidLevel = textRect.bottom + 20 - (textRect.height * progress * 1.5);
+      final double liquidLevel = textRect.bottom + 20 - (textRect.height * progress * 1.5);
+      final Path wavePath = Path();
+      wavePath.moveTo(textRect.left - 60, liquidLevel);
+      for (double x = textRect.left - 60; x <= textRect.right + 60; x++) {
+        final double wave1 = math.sin((x / 18) + (waveValue * 2 * math.pi)) * (fontSize * 0.15);
+        final double wave2 = math.sin((x / 10) - (waveValue * 2 * math.pi)) * (fontSize * 0.05);
+        wavePath.lineTo(x, liquidLevel + wave1 + wave2);
+      }
 
-    final Path wavePath = Path();
-    wavePath.moveTo(textRect.left - 60, liquidLevel);
+      final Paint surfacePaint = Paint()
+        ..color = activeColor.withValues(alpha: (0.9 * progress).clamp(0, 0.9))
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = fontSize * 0.08
+        ..blendMode = BlendMode.srcATop;
+      canvas.drawPath(wavePath, surfacePaint);
 
-    // Üç Katmanlı Organik Dalga Formülü (Kusursuz döngü için 2*PI kullanıldı)
-    for (double x = textRect.left - 60; x <= textRect.right + 60; x++) {
-      // Ana dalga
-      final double wave1 = math.sin((x / 20) + (waveValue * 2 * math.pi)) * 7;
-      // İkincil detay dalgası
-      final double wave2 = math.sin((x / 12) - (waveValue * 2 * math.pi)) * 3;
-      // Üçüncü mikroskobik dalgalanma (Daha sıvımsı his için)
-      final double wave3 = math.sin((x / 40) + (waveValue * 4 * math.pi)) * 2;
+      final Path submergedPath = Path.from(wavePath);
+      submergedPath.lineTo(textRect.right + 60, textRect.bottom + 100);
+      submergedPath.lineTo(textRect.left - 60, textRect.bottom + 100);
+      submergedPath.close();
 
-      wavePath.lineTo(x, liquidLevel + wave1 + wave2 + wave3);
+      final Paint eraserPaint = Paint()
+        ..blendMode = BlendMode.clear
+        ..color = Colors.black;
+      canvas.drawPath(submergedPath, eraserPaint);
     }
 
-    // YÜZEY PARLAMASI (Glow)
-    final Paint surfacePaint = Paint()
-      ..color = activeColor.withValues(alpha: (0.9 * progress).clamp(0, 0.9))
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.0
-      ..blendMode = BlendMode.srcATop;
-    canvas.drawPath(wavePath, surfacePaint);
-
-    // SİLME ALANI (Dalganın altını tamamen yok et)
-    final Path submergedPath = Path.from(wavePath);
-    submergedPath.lineTo(textRect.right + 60, textRect.bottom + 100);
-    submergedPath.lineTo(textRect.left - 60, textRect.bottom + 100);
-    submergedPath.close();
-
-    final Paint eraserPaint = Paint()
-      ..blendMode = BlendMode.clear
-      ..color = Colors.black;
-    canvas.drawPath(submergedPath, eraserPaint);
-    }
     canvas.restore();
   }
 
@@ -679,6 +712,8 @@ class _EtchedLiquidPainter extends CustomPainter {
   bool shouldRepaint(covariant _EtchedLiquidPainter old) => 
     old.progress != progress || old.waveValue != waveValue || old.activeColor != activeColor;
 }
+
+// --- PREMIUM HEADER DELEGATE ---
 
 class _ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
   final double expandedHeight;
@@ -711,12 +746,34 @@ class _ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
           alignment: Alignment.center,
           clipBehavior: Clip.hardEdge,
           children: [
+            // 1. LIQUID PRO ORB (HAVADA ASILI KÜRE)
+            if (isPro)
+              Positioned(
+                top: 50 - (shrinkOffset * 0.4),
+                child: Opacity(
+                  opacity: (1 - progress * 2.5).clamp(0, 1),
+                  child: GestureDetector(
+                    onTap: onTogglePro, // Küreye basınca normal üye yapar
+                    child: _FloatingOrb(activeColor: activeColor),
+                  ),
+                ),
+              ),
+
+            // 2. CENTERED ETCHED NAME
             Positioned(
-              top: 100 - (shrinkOffset * 0.8),
-              child: _EtchedLiquidText(
-                progress: progress,
-                activeColor: activeColor,
-                text: "Yasir Dönmez",
+              top: (isPro ? 160 : 100) - (shrinkOffset * 0.7),
+              child: GestureDetector(
+                onTap: () async {
+                  // İsim üzerine tıklandığında Pro değilse Pro yapar (Test için kolaylık)
+                  if (!isPro) {
+                    onTogglePro(); 
+                  }
+                },
+                child: _EtchedLiquidText(
+                  progress: progress,
+                  activeColor: activeColor,
+                  text: "Yasir Dönmez",
+                ),
               ),
             ),
           ],
@@ -727,13 +784,85 @@ class _ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   double get maxExtent => expandedHeight;
-
   @override
   double get minExtent => collapsedHeight;
-
   @override
   bool shouldRebuild(covariant _ProfileHeaderDelegate oldDelegate) {
     return isPro != oldDelegate.isPro || activeColor != oldDelegate.activeColor;
+  }
+}
+
+class _FloatingOrb extends StatefulWidget {
+  final Color activeColor;
+  const _FloatingOrb({required this.activeColor});
+
+  @override
+  State<_FloatingOrb> createState() => _FloatingOrbState();
+}
+
+class _FloatingOrbState extends State<_FloatingOrb> with SingleTickerProviderStateMixin {
+  late AnimationController _floatController;
+
+  @override
+  void initState() {
+    super.initState();
+    _floatController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _floatController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _floatController,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, math.sin(_floatController.value * math.pi * 2) * 8),
+          child: Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: widget.activeColor.withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                )
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(35),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
+                  ),
+                  child: Center(
+                    child: _EtchedLiquidText(
+                      progress: 0.6, // Sabit doluluk
+                      activeColor: widget.activeColor,
+                      text: "PRO",
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 

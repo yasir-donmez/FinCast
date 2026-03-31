@@ -149,9 +149,6 @@ final transactionFilterProvider = StateProvider<TransactionFilter>(
   (ref) => TransactionFilter.all,
 );
 
-/// Edit modu açık mı?
-final editModeProvider = StateProvider<bool>((ref) => false);
-
 /// DB'den gelen işlemleri UI modeline çeviren provider
 final vaultTransactionsProvider = Provider<List<TransactionUI>>((ref) {
   final dbRecords = ref.watch(allTransactionsProvider);

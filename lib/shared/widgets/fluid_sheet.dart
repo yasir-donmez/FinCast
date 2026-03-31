@@ -72,7 +72,9 @@ class FluidSheet extends StatelessWidget {
           
           // Bombeli Sıvı Gövde
           Container(
-            height: height,
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.9, // Ekranın %90'ından fazlasını kaplamasın
+            ),
             width: double.infinity,
             decoration: BoxDecoration(
               // Üstten aydınlanan bombeli gradyan
@@ -80,18 +82,17 @@ class FluidSheet extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.05), // Işıltıyı daha da azalttık
+                  isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.05),
                   Colors.transparent,
                 ],
               ),
-              color: surfaceColor.withValues(alpha: isDark ? 0.7 : 1.0), // Aydınlıkta tam opak beyaz (0.96 -> 1.0)
+              color: surfaceColor.withValues(alpha: isDark ? 0.85 : 1.0),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusLarge * 2.5)),
               border: Border.all(
-                color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.3), // Border yumuşatıldı (0.5 -> 0.3)
+                color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.3),
                 width: 1.0,
               ),
               boxShadow: [
-                // Derin Alt Gölge
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 40,
@@ -103,7 +104,7 @@ class FluidSheet extends StatelessWidget {
             child: ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusLarge * 2.5)),
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 25.0, sigmaY: 25.0),
+                filter: ImageFilter.blur(sigmaX: 30.0, sigmaY: 30.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -115,13 +116,6 @@ class FluidSheet extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: AppColors.getTextSecondary(context).withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(2),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              offset: const Offset(0, 1),
-                              blurRadius: 1,
-                            ),
-                          ],
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -133,13 +127,15 @@ class FluidSheet extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              title!,
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w900, // Daha kalın, premium font
-                                color: AppColors.getTextPrimary(context),
-                                letterSpacing: -0.8,
+                            Expanded(
+                              child: Text(
+                                title!,
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.getTextPrimary(context),
+                                  letterSpacing: -0.8,
+                                ),
                               ),
                             ),
                             if (actions != null) Row(children: actions!),
@@ -150,28 +146,35 @@ class FluidSheet extends StatelessWidget {
                     ],
                     
                     Flexible(
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.95, end: 1.0),
-                        duration: const Duration(milliseconds: 500),
-                        curve: Curves.easeOutBack,
-                        builder: (context, value, child) {
-                          return Transform.scale(
-                            scale: value,
-                            child: Opacity(
-                              opacity: ((value - 0.95) / 0.05).clamp(0.0, 1.0),
-                              child: child,
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0.95, end: 1.0),
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeOutBack,
+                          builder: (context, value, child) {
+                            return Transform.scale(
+                              scale: value,
+                              child: Opacity(
+                                opacity: ((value - 0.95) / 0.05).clamp(0.0, 1.0),
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              left: AppSizes.paddingLarge,
+                              right: AppSizes.paddingLarge,
+                              bottom: AppSizes.paddingLarge,
                             ),
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
-                          child: child,
+                            child: child,
+                          ),
                         ),
                       ),
                     ),
                     
-                    // Alt boşluk
-                    SizedBox(height: MediaQuery.of(context).padding.bottom + AppSizes.paddingLarge),
+                    // Alt boşluk (Güvenli alan kontrolü ile)
+                    SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom : AppSizes.paddingLarge),
                   ],
                 ),
               ),

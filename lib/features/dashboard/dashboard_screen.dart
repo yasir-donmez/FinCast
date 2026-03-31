@@ -180,7 +180,6 @@ class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelec
     FluidSheet.show(
       context: context,
       title: AppLocalizations.of(context)!.selectCurrency,
-      height: 400,
       child: Center(
         child: SizedBox(
           height: 250,

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_constants.dart';
 import '../../../shared/widgets/fluid_container.dart';
+import '../../../shared/widgets/fluid_button.dart';
+import '../../../shared/widgets/fluid_sheet.dart';
 import '../vaults_providers.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -42,177 +45,242 @@ class _GroupDetailSheetState extends ConsumerState<GroupDetailSheet> {
         .where((t) => group.transactionIds.contains(t.id))
         .toList();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.getBackground(context),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-      ),
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 16,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 12),
-          Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2))),
-          const SizedBox(height: 16),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _isEditingName
-                      ? TextField(
-                          controller: _nameController,
-                          autofocus: true,
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.getTextPrimary(context)),
-                          decoration: const InputDecoration(border: InputBorder.none),
-                          onSubmitted: (value) async {
-                            if (value.trim().isNotEmpty) {
-                              await ref.read(transactionGroupsNotifierProvider).renameGroup(widget.group.id, value.trim());
-                            }
-                            setState(() => _isEditingName = false);
-                          },
-                        )
-                      : GestureDetector(
-                          onTap: () => setState(() => _isEditingName = true),
-                          child: Row(
-                            children: [
-                              Text(group.name, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: AppColors.getTextPrimary(context))),
-                              const SizedBox(width: 8),
-                              Icon(Icons.edit_rounded, size: 18, color: Colors.grey.withValues(alpha: 0.5)),
-                            ],
-                          ),
-                        ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // İsim Düzenleme Alanı (Kompakt)
+        _isEditingName
+            ? TextField(
+                controller: _nameController,
+                autofocus: true,
+                style: TextStyle(
+                  fontSize: 20, 
+                  fontWeight: FontWeight.w900, 
+                  color: AppColors.getTextPrimary(context),
+                  letterSpacing: -0.5,
                 ),
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: FluidContainer(padding: const EdgeInsets.all(8), borderRadius: 12, isGlass: true, child: const Icon(Icons.close_rounded, size: 20, color: Colors.grey)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          Flexible(
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: groupTransactions.length,
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              itemBuilder: (context, index) {
-                final tx = groupTransactions[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: FluidContainer(
-                    padding: const EdgeInsets.all(12),
-                    borderRadius: 20,
-                    isGlass: true,
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40, height: 40,
-                          decoration: BoxDecoration(color: tx.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                          child: Icon(tx.icon, color: tx.color, size: 20),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(tx.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                              Text('₺${tx.amount.toStringAsFixed(0)}', style: TextStyle(color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context), fontWeight: FontWeight.w900)),
-                            ],
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => ref.read(transactionGroupsNotifierProvider).removeFromGroup(widget.group.id, tx.id),
-                          child: const Icon(Icons.remove_circle_outline_rounded, color: AppColors.error, size: 20),
-                        ),
-                      ],
-                    ),
+                decoration: InputDecoration(
+                  hintText: 'Grup Adı',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.check_rounded, color: Colors.green),
+                    onPressed: () async {
+                      if (_nameController.text.trim().isNotEmpty) {
+                        await ref.read(transactionGroupsNotifierProvider).renameGroup(widget.group.id, _nameController.text.trim());
+                      }
+                      setState(() => _isEditingName = false);
+                    },
                   ),
-                );
-              },
-            ),
-          ),
-          
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: GestureDetector(
-              onTap: () => _showAddTransactionPicker(context, group),
-              child: FluidContainer(
-                padding: const EdgeInsets.all(16),
-                borderRadius: 20,
-                color: AppColors.primary.withValues(alpha: 0.1),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.add_circle_outline_rounded, color: AppColors.primary),
-                    const SizedBox(width: 12),
-                    Text(l10n.addTransaction, style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-                  ],
+                ),
+                onSubmitted: (value) async {
+                  if (value.trim().isNotEmpty) {
+                    await ref.read(transactionGroupsNotifierProvider).renameGroup(widget.group.id, value.trim());
+                  }
+                  setState(() => _isEditingName = false);
+                },
+              )
+            : GestureDetector(
+                onTap: () => setState(() => _isEditingName = true),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.getPrimary(context).withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        group.name, 
+                        style: TextStyle(
+                          fontSize: 16, 
+                          fontWeight: FontWeight.w800, 
+                          color: AppColors.getTextPrimary(context),
+                        )
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(Icons.edit_rounded, size: 14, color: AppColors.getPrimary(context).withValues(alpha: 0.5)),
+                    ],
+                  ),
                 ),
               ),
+        
+        const SizedBox(height: 24),
+
+        if (groupTransactions.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: Center(
+              child: Column(
+                children: [
+                  Icon(Icons.layers_clear_rounded, size: 48, color: Colors.grey.withValues(alpha: 0.3)),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Bu grupta henüz işlem yok.',
+                    style: TextStyle(color: Colors.grey.withValues(alpha: 0.6), fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
             ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            itemCount: groupTransactions.length,
+            physics: const NeverScrollableScrollPhysics(),
+            itemBuilder: (context, index) {
+              final tx = groupTransactions[index];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: FluidContainer(
+                  padding: const EdgeInsets.all(14),
+                  borderRadius: 24,
+                  isGlass: true,
+                  color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.01),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44, height: 44,
+                        decoration: BoxDecoration(
+                          color: tx.color.withValues(alpha: 0.12), 
+                          borderRadius: BorderRadius.circular(14)
+                        ),
+                        child: Icon(tx.icon, color: tx.color, size: 22),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tx.name, 
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)
+                            ),
+                            Text(
+                              '₺${tx.amount.toStringAsFixed(0)}', 
+                              style: TextStyle(
+                                color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context), 
+                                fontWeight: FontWeight.w900,
+                                fontSize: 13,
+                              )
+                            ),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => ref.read(transactionGroupsNotifierProvider).removeFromGroup(widget.group.id, tx.id),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.error.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.remove_circle_outline_rounded, color: AppColors.error, size: 18),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
-        ],
-      ),
+        
+        const SizedBox(height: 24),
+        
+        FluidButton(
+          onTap: () => _showAddTransactionPicker(context, group),
+          width: double.infinity,
+          color: AppColors.getPrimary(context).withValues(alpha: 0.1),
+          isSecondary: true,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add_circle_outline_rounded, color: AppColors.getPrimary(context), size: 20),
+              const SizedBox(width: 8),
+              Text(
+                l10n.addTransaction, 
+                style: TextStyle(
+                  color: AppColors.getPrimary(context), 
+                  fontWeight: FontWeight.w900,
+                )
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
   void _showAddTransactionPicker(BuildContext context, TransactionGroup group) {
     final l10n = AppLocalizations.of(context)!;
-    showDialog(
+    
+    FluidSheet.show(
       context: context,
-      builder: (ctx) {
-        final allTransactions = ref.watch(vaultTransactionsProvider);
-        final availableTx =
-            allTransactions.where((t) => t.groupId == null).toList()
-              ..sort((a, b) => b.date.compareTo(a.date));
+      title: l10n.addTransaction,
+      child: Consumer(
+        builder: (context, ref, _) {
+          final allTransactions = ref.watch(vaultTransactionsProvider);
+          final availableTx =
+              allTransactions.where((t) => t.groupId == null).toList()
+                ..sort((a, b) => b.date.compareTo(a.date));
 
-        return AlertDialog(
-          backgroundColor: AppColors.getSurface(context),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
-          ),
-          title: Text(
-            l10n.addTransaction,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          content: availableTx.isEmpty
-              ? Text(l10n.noRemainingTransactions)
-              : SizedBox(
-                  width: double.maxFinite,
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: availableTx.length,
-                    itemBuilder: (context, index) {
-                      final tx = availableTx[index];
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(tx.icon, color: tx.color),
-                        title: Text(tx.name),
-                        subtitle: Text('₺${tx.amount.toStringAsFixed(0)}'),
-                        onTap: () async {
-                          await ref
-                              .read(transactionGroupsNotifierProvider)
-                              .addToGroup(group.id, tx.id);
-                          if (!context.mounted) return;
-                          Navigator.pop(ctx);
-                        },
-                      );
-                    },
-                  ),
+          if (availableTx.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.check_circle_outline_rounded, size: 48, color: AppColors.getPrimary(context).withValues(alpha: 0.3)),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.noRemainingTransactions,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey.withValues(alpha: 0.6), fontWeight: FontWeight.w600),
+                    ),
+                  ],
                 ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(l10n.cancel),
-            ),
-          ],
-        );
-      },
+              ),
+            );
+          }
+
+          return ListView.separated(
+            shrinkWrap: true,
+            itemCount: availableTx.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final tx = availableTx[index];
+              return FluidContainer(
+                padding: const EdgeInsets.all(8),
+                borderRadius: 20,
+                isGlass: true,
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: tx.color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(tx.icon, color: tx.color, size: 20),
+                  ),
+                  title: Text(tx.name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  subtitle: Text('₺${tx.amount.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                  trailing: const Icon(Icons.add_rounded, color: Colors.grey),
+                  onTap: () async {
+                    await ref
+                        .read(transactionGroupsNotifierProvider)
+                        .addToGroup(group.id, tx.id);
+                    if (!context.mounted) return;
+                    Navigator.pop(context);
+                  },
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

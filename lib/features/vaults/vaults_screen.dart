@@ -42,7 +42,6 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
     final allTransactions = ref.watch(vaultTransactionsProvider);
     final groups = ref.watch(transactionGroupsProvider);
     final filter = ref.watch(transactionFilterProvider);
-    final isEditMode = ref.watch(editModeProvider);
     final selectedVaultId = ref.watch(selectedVaultProvider);
     final selectedPeriod = ref.watch(selectedPeriodProvider);
     final activeColor = ref.watch(rotaryColorProvider);
@@ -84,8 +83,6 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                   selectedVaultId: selectedVaultId,
                   onVaultSelect: (id) => ref.read(selectedVaultProvider.notifier).state = id,
                   activeColor: activeColor,
-                  isEditMode: isEditMode,
-                  onEditToggle: () => ref.read(editModeProvider.notifier).state = !isEditMode,
                   onManageVaults: () => _showVaultManagementSheet(context),
                   l10n: l10n,
                 ),
@@ -139,48 +136,119 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _CarvedContainer(
-                          size: 100,
-                          child: Icon(Icons.auto_graph_rounded, size: 40, color: activeColor.withValues(alpha: isDark ? 0.3 : 0.1)),
-                        ),
-                        const SizedBox(height: 32),
-                        Text(
-                          l10n.noTransactions.toUpperCase(), 
-                          style: TextStyle(
-                            color: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.3), 
-                            fontSize: 14, 
-                            fontWeight: FontWeight.w900, 
-                            letterSpacing: 2
-                          )
-                        ),
-                        const SizedBox(height: 100), // Navigasyondan kurtarmak için yukarı itiyoruz
-                      ],
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 120),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // İkon: Oyuğun derinliğinden yüzeye "fırlama" hissi
+                          TweenAnimationBuilder<double>(
+                            duration: const Duration(milliseconds: 1200),
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            curve: Curves.elasticOut, // Daha fiziksel, yaylı bir hareket
+                            builder: (context, value, child) {
+                              return _CarvedContainer(
+                                size: 120,
+                                // Konteyner sabit, içindeki çocuk (ikon) hareketli
+                                child: Transform.translate(
+                                  offset: Offset(0, 15 * (1 - value)), // Derinden yukarı doğru
+                                  child: Transform.scale(
+                                    scale: 0.4 + (0.6 * value), // Küçükten gerçeğe
+                                    child: Opacity(
+                                      opacity: value.clamp(0.0, 1.0),
+                                      child: child,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Icon(Icons.auto_graph_rounded, size: 48, color: activeColor.withValues(alpha: isDark ? 0.3 : 0.1)),
+                          ),
+                          const SizedBox(height: 32),
+                          // Yazı: İkon tam yerine oturmaya yakın (0.6) süzülerek gelir
+                          TweenAnimationBuilder<double>(
+                            duration: const Duration(milliseconds: 900),
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            curve: const Interval(0.6, 1.0, curve: Curves.easeOutCubic),
+                            builder: (context, value, child) {
+                              return Opacity(
+                                opacity: value,
+                                child: Transform.translate(
+                                  offset: Offset(0, 15 * (1 - value)),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: Text(
+                              l10n.noTransactions.toUpperCase(), 
+                              style: TextStyle(
+                                color: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.3), 
+                                fontSize: 14, 
+                                fontWeight: FontWeight.w900, 
+                                letterSpacing: 2
+                              )
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 )
               else
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(AppSizes.paddingMedium, 0, AppSizes.paddingMedium, 120),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final tx = filteredTransactions[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: TransactionCard(
-                            transaction: tx,
-                            onTap: () => _showTransactionDetail(context, tx),
-                            onLongPress: () => _handleTransactionLongPress(context, ref, tx),
+                  sliver: SliverMainAxisGroup(
+                    slivers: [
+                      SliverAnimatedOpacity(
+                        opacity: 1.0,
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeOutCubic,
+                        key: ValueKey('vault_list_${selectedVaultId ?? 'all'}'),
+                        sliver: SliverGrid(
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
+                            childAspectRatio: 0.85,
                           ),
-                        );
-                      },
-                      childCount: filteredTransactions.length,
-                    ),
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final tx = filteredTransactions[index];
+                              return TweenAnimationBuilder<double>(
+                                duration: Duration(milliseconds: 500 + (index % 6 * 80)), // Daha belirgin staggered gecikme
+                                tween: Tween(begin: 0.0, end: 1.0),
+                                curve: Curves.easeOutBack,
+                                builder: (context, value, child) {
+                                  return Opacity(
+                                    opacity: value.clamp(0.0, 1.0),
+                                    child: Transform.translate(
+                                      offset: Offset(0, 50 * (1 - value)), // Daha derin giriş mesafesi
+                                      child: Transform.scale(
+                                        scale: 0.9 + (0.1 * value), // Gelirken hafif büyüme
+                                        child: child,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: TransactionCard(
+                                  transaction: tx,
+                                  onTap: () => _showTransactionDetail(context, tx),
+                                  onLongPress: () => _handleTransactionLongPress(context, ref, tx),
+                                ),
+                              );
+                            },
+                            childCount: filteredTransactions.length,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+
+              // Sayfanın her zaman tam dönüşmesini sağlayacak alt boşluk
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 400), 
+              ),
             ],
           ),
         ],
@@ -225,24 +293,230 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
   }
 
   void _showTransactionDetail(BuildContext context, TransactionUI tx) {
+    final l10n = AppLocalizations.of(context)!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     FluidSheet.show(
       context: context,
       title: tx.name,
       child: Column(
         children: [
-          FluidContainer(
-            padding: const EdgeInsets.all(24),
-            isGlass: true,
-            color: tx.color.withValues(alpha: 0.1),
+          // 1. Üst Kısım: Devasa İkon ve Parlama Efekti
+          TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 1000),
+            tween: Tween(begin: 0.0, end: 1.0),
+            curve: Curves.elasticOut,
+            builder: (context, value, child) {
+              return Transform.scale(
+                scale: 0.5 + (0.5 * value),
+                child: Opacity(
+                  opacity: value.clamp(0.0, 1.0),
+                  child: child,
+                ),
+              );
+            },
+            child: Center(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Glow Effect
+                  Container(
+                    width: 140, height: 140,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          tx.color.withValues(alpha: 0.3),
+                          tx.color.withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Main Icon Container
+                  Container(
+                    width: 100, height: 100,
+                    decoration: BoxDecoration(
+                      color: tx.color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(36),
+                      border: Border.all(
+                        color: tx.color.withValues(alpha: 0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: Icon(tx.icon, size: 48, color: tx.color),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // 2. Tutar Alanı: Büyük ve Net
+          TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 700),
+            tween: Tween(begin: 0.0, end: 1.0),
+            curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
+            builder: (context, value, child) {
+              return Transform.translate(
+                offset: Offset(0, 30 * (1 - value)),
+                child: Opacity(opacity: value, child: child),
+              );
+            },
             child: Column(
               children: [
-                Icon(tx.icon, size: 48, color: tx.color),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: tx.color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    (localizedCategoryName(tx.categoryId, l10n) ?? l10n.all).toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 10, 
+                      fontWeight: FontWeight.w900, 
+                      color: tx.color, 
+                      letterSpacing: 2.0
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 16),
-                Text('₺${CurrencyUtils.formatFullAmount(tx.amount)}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -1)),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '₺${CurrencyUtils.formatFullAmount(tx.amount)}',
+                    style: TextStyle(
+                      fontSize: 56, 
+                      fontWeight: FontWeight.w900, 
+                      color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context),
+                      letterSpacing: -3,
+                      height: 1,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          
+          const SizedBox(height: 40),
+          
+          // 3. Detay Bilgiler: Staggered Liste
+          ...List.generate(3, (index) {
+            final labels = [l10n.vaults, l10n.all, l10n.period]; // "all" placeholder for Category label if not in l10n
+            final values = [
+              tx.groupId?.replaceFirst('v_', '') ?? l10n.mainVault, 
+              localizedCategoryName(tx.categoryId, l10n) ?? "-", 
+              _getPeriodLabel(tx.periodType, l10n)
+            ];
+            final icons = [Icons.account_balance_wallet_rounded, Icons.category_rounded, Icons.replay_rounded];
+            final displayLabels = [l10n.vaults, l10n.category, l10n.period];
+            
+            return TweenAnimationBuilder<double>(
+              duration: const Duration(milliseconds: 600),
+              tween: Tween(begin: 0.0, end: 1.0),
+              curve: Interval(0.4 + (index * 0.1), 1.0, curve: Curves.easeOutCubic),
+              builder: (context, value, child) {
+                return Transform.translate(
+                  offset: Offset(0, 20 * (1 - value)),
+                  child: Opacity(opacity: value, child: child),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: FluidContainer(
+                  padding: const EdgeInsets.all(18),
+                  borderRadius: 24,
+                  isGlass: true,
+                  color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.015),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40, height: 40,
+                        decoration: BoxDecoration(
+                          color: tx.color.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(icons[index], size: 20, color: tx.color),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(displayLabels[index], style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.getTextSecondary(context))),
+                      const Spacer(),
+                      Text(values[index], style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.getTextPrimary(context))),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          
+          const SizedBox(height: 32),
+
+          // 4. Aksiyon Butonları
+          TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 600),
+            tween: Tween(begin: 0.0, end: 1.0),
+            curve: const Interval(0.8, 1.0, curve: Curves.easeOutCubic),
+            builder: (context, value, child) {
+              return Opacity(opacity: value, child: child);
+            },
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _handleTransactionLongPress(context, ref, tx);
+                    },
+                    child: FluidContainer(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      borderRadius: 20,
+                      color: AppColors.getPrimary(context).withValues(alpha: 0.1),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.edit_note_rounded, size: 20, color: AppColors.getPrimary(context)),
+                          const SizedBox(width: 8),
+                          Text(l10n.edit, style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.getPrimary(context))),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final confirm = await showDialog<bool>(
+                      context: context, 
+                      builder: (ctx) => AlertDialog(
+                        backgroundColor: AppColors.getSurface(context), 
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), 
+                        title: Text(l10n.permanentDelete, style: const TextStyle(fontWeight: FontWeight.w900)), 
+                        content: Text(l10n.permanentDeleteDesc), 
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)), 
+                          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.ok, style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.w900)))
+                        ]
+                      )
+                    );
+                    if (confirm == true) { 
+                      await DatabaseService.deleteTransaction(tx.dbId!); 
+                      HapticFeedback.mediumImpact(); 
+                    }
+                  },
+                  child: FluidContainer(
+                    width: 56, height: 56,
+                    borderRadius: 20,
+                    color: AppColors.error.withValues(alpha: 0.1),
+                    child: const Icon(Icons.delete_sweep_rounded, color: AppColors.error),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -251,6 +525,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
   void _handleTransactionLongPress(BuildContext context, WidgetRef ref, TransactionUI tx) {
     if (tx.dbId == null) return;
     HapticFeedback.heavyImpact();
+    
     showTransactionActionMenu(
       context,
       name: tx.name,
@@ -271,15 +546,39 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
           ),
         );
       },
+      onRemoveFromVault: () async {
+        final groupingHelper = ref.read(transactionGroupingProvider);
+        await groupingHelper.setGroupId(tx.id, null);
+        HapticFeedback.mediumImpact();
+      },
       onDelete: () async {
-        final confirm = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(backgroundColor: AppColors.getSurface(context), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), title: Text(AppLocalizations.of(context)!.permanentDelete, style: const TextStyle(fontWeight: FontWeight.w900)), content: Text(AppLocalizations.of(context)!.permanentDeleteDesc), actions: [TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context)!.cancel)), TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.of(context)!.ok, style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.w900)))]));
-        if (confirm == true) { await DatabaseService.deleteTransaction(tx.dbId!); HapticFeedback.mediumImpact(); }
+        final confirm = await showDialog<bool>(
+          context: context, 
+          builder: (ctx) => AlertDialog(
+            backgroundColor: AppColors.getSurface(context), 
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), 
+            title: Text(AppLocalizations.of(context)!.permanentDelete, style: const TextStyle(fontWeight: FontWeight.w900)), 
+            content: Text(AppLocalizations.of(context)!.permanentDeleteDesc), 
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context)!.cancel)), 
+              TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.of(context)!.ok, style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.w900)))
+            ]
+          )
+        );
+        if (confirm == true) { 
+          await DatabaseService.deleteTransaction(tx.dbId!); 
+          HapticFeedback.mediumImpact(); 
+        }
       },
     );
   }
 
   void _showVaultManagementSheet(BuildContext context) {
-    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (context) => const VaultManagementSheet());
+    FluidSheet.show(
+      context: context,
+      title: AppLocalizations.of(context)!.vaultsAndGroups,
+      child: const VaultManagementSheet(),
+    );
   }
 }
 
@@ -290,8 +589,6 @@ class _TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
   final String? selectedVaultId;
   final Function(String?) onVaultSelect;
   final Color activeColor;
-  final bool isEditMode;
-  final VoidCallback onEditToggle;
   final VoidCallback onManageVaults;
   final AppLocalizations l10n;
 
@@ -301,8 +598,6 @@ class _TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.selectedVaultId,
     required this.onVaultSelect,
     required this.activeColor,
-    required this.isEditMode,
-    required this.onEditToggle,
     required this.onManageVaults,
     required this.l10n,
   });
@@ -347,27 +642,25 @@ class _TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
               ),
             ),
 
-            // AppBar Başlığı — sola kayarak kaybolur
+            // AppBar Başlığı — sola kayarak daha geç kaybolur
             Positioned(
-              left: 20 - (progress * 100),
+              left: 20 - (progress * 150), // Daha geniş bir alana kayıyor
               top: topPadding + 10,
               child: Opacity(
-                opacity: (1 - progress * 4).clamp(0.0, 1.0),
+                opacity: (1 - progress * 1.8).clamp(0.0, 1.0), // Daha yavaş sönümleniyor
                 child: Text(l10n.vaults, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -1.5)),
               ),
             ),
 
-            // Aksiyon Butonları — sağa kayarak kaybolur
+            // Aksiyon Butonları — sağa kayarak daha geç kaybolur
             Positioned(
-              right: 20 - (progress * 100),
+              right: 20 - (progress * 150), // Daha geniş bir alana kayıyor
               top: topPadding + 10,
               child: Opacity(
-                opacity: (1 - progress * 4).clamp(0.0, 1.0),
+                opacity: (1 - progress * 1.8).clamp(0.0, 1.0), // Daha yavaş sönümleniyor
                 child: Row(
                   children: [
                     _HeaderIconButton(icon: Icons.account_balance_wallet_rounded, onTap: onManageVaults),
-                    const SizedBox(width: 8),
-                    _HeaderIconButton(icon: isEditMode ? Icons.check_rounded : Icons.edit_note_rounded, onTap: onEditToggle, isSelected: isEditMode, activeColor: activeColor),
                   ],
                 ),
               ),
@@ -454,11 +747,13 @@ class _VaultCardStackState extends State<_VaultCardStack> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isCompact = widget.morphProgress > 0.8;
+    // Kasa kartları %5 bile küçülmeye başlasa etkileşimi (kaydırmayı) kapatıyoruz.
+    // Bu, "morf" olma işlemi sürerken kullanıcının kasa değiştirmesini engeller.
+    final bool isInteractingDisabled = widget.morphProgress > 0.05;
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
-        if (notification is ScrollEndNotification && !isCompact) {
+        if (notification is ScrollEndNotification && !isInteractingDisabled) {
           final page = _pageController.page?.round() ?? 0;
           if (_lastTargetIndex != page) {
             _lastTargetIndex = page;
@@ -470,7 +765,7 @@ class _VaultCardStackState extends State<_VaultCardStack> {
       },
       child: PageView.builder(
         controller: _pageController,
-        physics: isCompact ? const NeverScrollableScrollPhysics() : const PageScrollPhysics(),
+        physics: isInteractingDisabled ? const NeverScrollableScrollPhysics() : const PageScrollPhysics(),
         clipBehavior: Clip.none,
         itemCount: widget.deckItems.length,
         itemBuilder: (context, index) {
@@ -492,25 +787,32 @@ class _VaultCardStackState extends State<_VaultCardStack> {
               }
               
               final isCurrent = index == widget.currentIndex;
-              final cardOpacity = isCurrent ? 1.0 : (1 - widget.morphProgress * 2).clamp(0.0, 1.0);
+              final cardOpacity = isCurrent ? 1.0 : (1 - widget.morphProgress * 2.5).clamp(0.0, 1.0);
+              
+              // Kartları merkezden dışa doğru kaydıran offset
+              // Sol taraftakiler sola (-), sağ taraftakiler sağa (+) kayar
+              final double slideOutOffset = (index - widget.currentIndex) * (widget.morphProgress * 300);
 
               return Center(
                 child: Opacity(
                   opacity: cardOpacity * (isCurrent ? 1.0 : (value * 2 - 1).clamp(0.5, 1.0)),
-                  child: Transform.scale(
-                    scale: value,
-                    child: RepaintBoundary(
-                      child: _IntegratedVaultCard(
-                        vaultId: vaultId,
-                        income: income,
-                        expense: expense,
-                        balance: balance,
-                        txs: txs,
-                        activeColor: widget.activeColor,
-                        l10n: widget.l10n,
-                        vaultName: index == 0 ? widget.l10n.mainVault : widget.groups[index - 1].name,
-                        morphProgress: widget.morphProgress,
-                        isCurrent: isCurrent,
+                  child: Transform.translate(
+                    offset: Offset(slideOutOffset, 0), // Kenara kayma efekti
+                    child: Transform.scale(
+                      scale: value,
+                      child: RepaintBoundary(
+                        child: _IntegratedVaultCard(
+                          vaultId: vaultId,
+                          income: income,
+                          expense: expense,
+                          balance: balance,
+                          txs: txs,
+                          activeColor: widget.activeColor,
+                          l10n: widget.l10n,
+                          vaultName: index == 0 ? widget.l10n.mainVault : widget.groups[index - 1].name,
+                          morphProgress: widget.morphProgress,
+                          isCurrent: isCurrent,
+                        ),
                       ),
                     ),
                   ),

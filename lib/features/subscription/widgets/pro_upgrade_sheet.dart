@@ -4,15 +4,15 @@ import '../../../core/theme/app_constants.dart';
 import '../../../core/services/subscription_service.dart';
 import '../../../shared/widgets/fluid_button.dart';
 import '../../../shared/widgets/fluid_sheet.dart';
+import '../../../shared/widgets/membership_orb.dart';
 import '../../auth/widgets/liquid_background.dart';
 
 /// FinCast "Pro Üyelik" (Paywall) Sayfası.
-/// Kullanıcıyı premium özelliklere teşvik eden, akışkan tasarımlı alt sayfa.
 class ProUpgradeSheet extends ConsumerWidget {
   const ProUpgradeSheet({super.key});
 
-  static Future<void> show(BuildContext context) {
-    return FluidSheet.show(
+  static void show(BuildContext context) {
+    FluidSheet.show(
       context: context,
       child: const ProUpgradeSheet(),
     );
@@ -21,184 +21,167 @@ class ProUpgradeSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final primaryColor = AppColors.getPrimary(context);
-    final secondaryColor = AppColors.secondary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return LiquidBackground(
-      useSystemBackground: false,
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-              // Başlık ve İkon
-              _buildHeader(primaryColor),
-              const SizedBox(height: 32),
-              
-              // Özellik Listesi (Daha toplu)
-              Column(
-                children: [
-                  _buildFeatureItem(context, Icons.auto_awesome_rounded, 'AI Analizleri', 'Günlük 3 derin finansal analiz ve tahmin.', primaryColor),
-                  _buildFeatureItem(context, Icons.account_balance_wallet_rounded, 'Sınırsız Kasa', 'Dilediğiniz kadar kasa ve özel renkler.', secondaryColor),
-                  _buildFeatureItem(context, Icons.block_rounded, 'Sıfır Reklam', 'Kesintisiz ve akışkan deneyim.', Colors.amber),
-                ],
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // 📑 PLAN SEÇİM ALANI (Plan Selection)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'PLANLAR',
-                    style: TextStyle(
-                      fontSize: 12, 
-                      fontWeight: FontWeight.bold, 
-                      letterSpacing: 1.2,
-                      color: AppColors.getTextSecondary(context).withValues(alpha: 0.5),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  // MEVCUT PLAN (Current Plan)
-                  _buildCurrentPlanCard(context),
-                  const SizedBox(height: 12),
-                  
-                  // PRO SEÇENEKLERİ (Upgrade Options)
-                  _buildSubscriptionOption(
-                    context: context,
-                    title: 'Yıllık Pro',
-                    price: '₺199.99 / yıl',
-                    subtitle: 'Aylık ₺16.66\'ya gelir',
-                    badge: 'EN AVANTAJLI',
-                    savings: '%33 TASARRUF',
-                    ref: ref,
-                    isPopular: true,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSubscriptionOption(
-                    context: context,
-                    title: 'Aylık Pro',
-                    price: '₺24.99 / ay',
-                    subtitle: 'İstediğin zaman iptal et',
-                    ref: ref,
-                    isPopular: false,
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 24),
-              Text(
-                'Tüm planlar 7 gün ücretsiz deneme içerir.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.getTextSecondary(context).withValues(alpha: 0.3),
-                ),
-              ),
-              const SizedBox(height: AppSizes.paddingLarge),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(Color primaryColor) {
-    return Column(
+    return Stack(
+      clipBehavior: Clip.none,
       children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.05),
-              width: 0.5,
-            ),
+        // 🌊 Arka Plan Efekti
+        Positioned(
+          left: -AppSizes.paddingLarge,
+          right: -AppSizes.paddingLarge,
+          top: -AppSizes.paddingLarge,
+          bottom: -AppSizes.paddingLarge,
+          child: Opacity(
+            opacity: isDark ? 0.2 : 0.1,
+            child: const LiquidBackground(),
           ),
-          child: Container(
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 4,
-                  offset: const Offset(1, 1),
+        ),
+        
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 🔹 Üst Bar
+            _buildHeader(context, primaryColor),
+
+            const SizedBox(height: 12),
+            
+            // 🚀 Avantajlar Listesi
+            _buildFeatureItem(context, Icons.analytics_rounded, 'AI Analizleri', 'Günlük 3 derin finansal analiz ve tahmin.'),
+            _buildFeatureItem(context, Icons.account_balance_wallet_rounded, 'Sınırsız Kasa', 'Dilediğiniz kadar kasa ve özel renkler.'),
+            _buildFeatureItem(context, Icons.block_rounded, 'Sıfır Reklam', 'Kesintisiz ve akışkan deneyim.'),
+            
+            const SizedBox(height: 32),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'PLANLAR', 
+                style: TextStyle(
+                  fontSize: 11, 
+                  fontWeight: FontWeight.w900, 
+                  letterSpacing: 1.2,
+                  color: AppColors.getTextSecondary(context).withValues(alpha: 0.5),
                 ),
-              ],
+              ),
             ),
-            child: Icon(
-              Icons.rocket_launch_rounded, 
-              size: 40, 
-              color: primaryColor.withValues(alpha: 0.65), 
+            const SizedBox(height: 12),
+            
+            // PRO SEÇENEKLERİ (Upgrade Options)
+            _buildPlanCard(
+              context: context,
+              title: 'Yıllık Pro',
+              price: '₺199.99 / yıl',
+              subtitle: 'Aylık ₺16.66\'ya gelir',
+              badge: 'EN AVANTAJLI',
+              savings: '%33 TASARRUF',
+              ref: ref,
+              isPopular: true,
+              backgroundColor: Colors.pinkAccent.withValues(alpha: 0.12),
+              borderColor: primaryColor,
+              accentGradient: LinearGradient(
+                colors: [
+                  Colors.pinkAccent.withValues(alpha: 0.3), 
+                  Colors.transparent
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        // ✍️ KAZINMIŞ METİN (Etched Text)
-        Text(
-          'FinCast Pro\'ya Geçin',
-          style: TextStyle(
-            fontSize: 24, 
-            fontWeight: FontWeight.w900, 
-            letterSpacing: -1,
-            color: Colors.white.withValues(alpha: 0.8),
-            shadows: [
-              Shadow(color: Colors.black.withValues(alpha: 0.5), offset: const Offset(1, 1), blurRadius: 1),
-              Shadow(color: Colors.white.withValues(alpha: 0.1), offset: const Offset(-0.5, -0.5), blurRadius: 1),
-            ],
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Finansal potansiyelinizi %100 açığa çıkarın.',
-          style: TextStyle(
-            fontSize: 14, 
-            color: Colors.grey.withValues(alpha: 0.6),
-            shadows: [
-              Shadow(color: Colors.black.withValues(alpha: 0.3), offset: const Offset(0.5, 0.5), blurRadius: 0.5),
-            ],
-          ),
+            const SizedBox(height: 12),
+            _buildPlanCard(
+              context: context,
+              title: 'Aylık Pro',
+              price: '₺24.99 / ay',
+              subtitle: 'İstediğin zaman iptal et',
+              ref: ref,
+              accentGradient: LinearGradient(
+                colors: [
+                  Colors.pinkAccent.withValues(alpha: 0.06), 
+                  Colors.transparent
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            const SizedBox(height: 12),
+            
+            // MEVCUT PLAN (Current Plan) - Ghostly
+            _buildPlanCard(
+              context: context,
+              title: 'Ücretsiz Plan',
+              subtitle: 'Temel özellikler ile sınırlı kullanım.',
+              isCurrent: true,
+              borderColor: Colors.white.withValues(alpha: 0.02),
+              backgroundColor: Colors.transparent,
+              contentOpacity: 0.4,
+            ),
+
+            const SizedBox(height: 24),
+            
+            // 🔘 Alt Bilgi
+            Center(
+              child: Text(
+                'Tüm planlar 7 gün ücretsiz deneme içerir.',
+                style: TextStyle(fontSize: 12, color: AppColors.getTextSecondary(context).withValues(alpha: 0.4)),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
-  Widget _buildFeatureItem(BuildContext context, IconData icon, String title, String desc, Color color) {
+
+  Widget _buildHeader(BuildContext context, Color primaryColor) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        children: [
+          Hero(
+            tag: 'pro_orb',
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              child: MembershipOrb(
+                color: primaryColor,
+                size: 44,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'FinCast Pro\'ya Geçin',
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Finansal potansiyelinizi %100 açığa çıkarın.',
+            style: TextStyle(fontSize: 15, color: AppColors.getTextSecondary(context).withValues(alpha: 0.6)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureItem(BuildContext context, IconData icon, String title, String subtitle) {
+    final primaryColor = AppColors.getPrimary(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.08),
+              color: primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.03)),
             ),
-            child: Icon(icon, size: 20, color: color.withValues(alpha: 0.6)),
+            child: Icon(icon, color: primaryColor, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title, 
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                Text(
-                  desc,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.getTextSecondary(context).withValues(alpha: 0.5),
-                  ),
-                ),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(subtitle, style: TextStyle(fontSize: 13, color: AppColors.getTextSecondary(context).withValues(alpha: 0.5))),
               ],
             ),
           ),
@@ -207,161 +190,192 @@ class ProUpgradeSheet extends ConsumerWidget {
     );
   }
 
-
-  Widget _buildCurrentPlanCard(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.grey.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.check_circle_outline_rounded, size: 20, color: Colors.grey),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Ücretsiz Plan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                Text(
-                  'Temel özellikler ile sınırlı kullanım.', 
-                  style: TextStyle(fontSize: 12, color: AppColors.getTextSecondary(context).withValues(alpha: 0.5)),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.grey.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Text('MEVCUT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSubscriptionOption({
-    required BuildContext context, 
-    required String title, 
-    required String price, 
+  Widget _buildPlanCard({
+    required BuildContext context,
+    required String title,
     required String subtitle,
-    required WidgetRef ref,
-    bool isPopular = false,
+    String? price,
     String? badge,
     String? savings,
+    bool isCurrent = false,
+    bool isPopular = false,
+    Gradient? accentGradient,
+    Color? borderColor,
+    Color? backgroundColor,
+    double contentOpacity = 1.0,
+    WidgetRef? ref,
   }) {
     final primaryColor = AppColors.getPrimary(context);
     
     return FluidButton(
-      onTap: () async {
-        final service = ref.read(subscriptionServiceProvider);
-        await service.setProStatus(true);
-        if (context.mounted) Navigator.pop(context);
+      onTap: () {
+        if (!isCurrent && ref != null) {
+          ref.read(subscriptionServiceProvider).setProStatus(true);
+          Navigator.pop(context);
+        }
       },
+      isSecondary: true,
+      width: double.infinity,
+      padding: EdgeInsets.zero,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           Container(
-            padding: const EdgeInsets.all(4), // İçerideki padding FluidButton tarafından sağlanıyor olabilir, burası ek derinlik için
-            child: Row(
-              children: [
-                // İkon veya Radio-benzeri görsel
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isPopular ? primaryColor : Colors.white.withValues(alpha: 0.1),
-                      width: 2,
-                    ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: backgroundColor ?? (isCurrent 
+                  ? Colors.white.withValues(alpha: 0.002) 
+                  : (isPopular ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.04))),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: borderColor ?? (isCurrent 
+                    ? Colors.white.withValues(alpha: 0.01) 
+                    : (isPopular ? primaryColor : Colors.white.withValues(alpha: 0.08))),
+                width: isPopular ? 2.5 : 1.2,
+              ),
+              gradient: accentGradient,
+              boxShadow: [
+                if (isPopular)
+                  BoxShadow(
+                    color: primaryColor.withValues(alpha: 0.25),
+                    blurRadius: 20,
+                    spreadRadius: -2,
+                    offset: const Offset(0, 4),
                   ),
-                  child: isPopular ? Center(
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(color: primaryColor, shape: BoxShape.circle),
+              ],
+            ),
+            child: Opacity(
+              opacity: contentOpacity,
+              child: Row(
+                children: [
+                  // 🔘 SOL İKON (Hizalı Radyo/Check)
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isCurrent ? Colors.grey : (isPopular ? primaryColor : Colors.white.withValues(alpha: 0.1)),
+                        width: 2,
+                      ),
                     ),
-                  ) : null,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          if (savings != null) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
+                    child: isCurrent ? const Center(
+                      child: Icon(Icons.check_rounded, size: 14, color: Colors.grey),
+                    ) : null,
+                  ),
+                  const SizedBox(width: 16),
+                  
+                  // 📝 ORTA BİLGİ ALANI
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
                               child: Text(
-                                savings, 
-                                style: const TextStyle(color: Colors.green, fontSize: 9, fontWeight: FontWeight.bold),
+                                title, 
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            if (savings != null) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  savings, 
+                                  style: const TextStyle(color: Colors.green, fontSize: 9, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
                           ],
+                        ),
+                        Text(
+                          subtitle, 
+                          style: TextStyle(fontSize: 12, color: AppColors.getTextSecondary(context).withValues(alpha: 0.5)),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // 💰 SAĞ FİYAT VEYA ETİKET
+                  if (isCurrent)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text('MEVCUT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                    )
+                  else if (price != null)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12), // Çakışmayı engelle
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            price.split(' ').first, 
+                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                          ),
+                          Text(
+                            price.split(' ').skip(1).join(' '), 
+                            style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context).withValues(alpha: 0.5)),
+                          ),
                         ],
                       ),
-                      Text(
-                        subtitle, 
-                        style: TextStyle(fontSize: 12, color: AppColors.getTextSecondary(context).withValues(alpha: 0.5)),
-                      ),
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      price.split(' ').first, 
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
                     ),
-                    Text(
-                      price.split(' ').skip(1).join(' '), 
-                      style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context).withValues(alpha: 0.5)),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           
           if (badge != null)
             Positioned(
-              top: -12,
-              right: 8,
+              top: 15,
+              bottom: 15,
+              right: -18, // Kartın dışına çıkarıldı
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                width: 22,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [primaryColor, primaryColor.withValues(alpha: 0.8)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(10)),
                   boxShadow: [
-                    BoxShadow(color: primaryColor.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2)),
+                    BoxShadow(
+                      color: primaryColor.withValues(alpha: 0.4), 
+                      blurRadius: 10, 
+                      offset: const Offset(4, 0),
+                    ),
                   ],
                 ),
-                child: Text(
-                  badge,
-                  style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                child: Center(
+                  child: RotatedBox(
+                    quarterTurns: 1,
+                    child: Text(
+                      badge,
+                      style: const TextStyle(
+                        color: Colors.white, 
+                        fontSize: 8.5, 
+                        fontWeight: FontWeight.w900, 
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),

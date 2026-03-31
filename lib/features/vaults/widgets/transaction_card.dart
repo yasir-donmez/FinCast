@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import '../../../../core/theme/app_constants.dart';
 import '../../../../core/utils/currency_utils.dart';
-import '../../../shared/widgets/fluid_container.dart';
+import '../../../../shared/widgets/fluid_container.dart';
+import '../../../../shared/widgets/fluid_sheet.dart';
 import '../vaults_providers.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -59,13 +61,20 @@ class TransactionCard extends StatelessWidget {
     String? periodLabel;
     if (tx.periodType != 0) {
       switch (tx.periodType) {
-        case 1: periodLabel = 'HAFTALIK'; break;
-        case 2: periodLabel = 'AYLIK'; break;
-        case 3: periodLabel = 'YILLIK'; break;
+        case 1: periodLabel = l10n.weekly; break;
+        case 2: periodLabel = l10n.monthly; break;
+        case 3: periodLabel = l10n.yearly; break;
+        case 4: periodLabel = l10n.every2Weeks; break;
+        case 5: periodLabel = l10n.every3Weeks; break;
+        case 6: periodLabel = l10n.every3Months; break;
+        case 7: periodLabel = l10n.every6Months; break;
       }
     }
 
-    final displayName = localizedCategoryName(tx.categoryId, l10n) ?? tx.name;
+    // Üst Model (Kategori) ve Alt Model (İsim) Ayrımı
+    final mainModelName = localizedCategoryName(tx.categoryId, l10n) ?? l10n.all.toUpperCase();
+    final subModelName = tx.name;
+    
     final amountColor = tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context);
 
     return GestureDetector(
@@ -73,75 +82,126 @@ class TransactionCard extends StatelessWidget {
       onLongPress: onLongPress,
       child: FluidContainer(
         padding: const EdgeInsets.all(16),
-        borderRadius: 28,
+        borderRadius: 32,
         isGlass: true,
         color: tx.color.withValues(alpha: isDark ? 0.08 : 0.04),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            // Üst Bölüm: İkon ve Periyot Badge
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 48, height: 48,
+                  width: 44, height: 44,
                   decoration: BoxDecoration(
                     color: tx.color.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(tx.icon, color: tx.color, size: 24),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        displayName.toUpperCase(), 
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.withValues(alpha: 0.7), letterSpacing: 1.5),
-                        maxLines: 1, overflow: TextOverflow.ellipsis
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        tx.name, 
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.getTextPrimary(context)),
-                        maxLines: 1, overflow: TextOverflow.ellipsis
-                      ),
-                    ],
-                  ),
+                  child: Icon(tx.icon, color: tx.color, size: 22),
                 ),
                 if (periodLabel != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: amountColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                    child: Text(periodLabel, style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: amountColor)),
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      margin: const EdgeInsets.only(left: 8),
+                      decoration: BoxDecoration(
+                        color: amountColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        periodLabel.toUpperCase(), 
+                        style: TextStyle(fontSize: 7, fontWeight: FontWeight.w900, color: amountColor, letterSpacing: 0.5),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ),
               ],
             ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Column(
+            
+            // Orta Bölüm: Başlık Hiyerarşisi (Ana Model / Alt Model)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    if (tx.minAmount != null && tx.maxAmount != null) ...[
-                      Row(
-                        children: [
-                          Icon(Icons.unfold_more_rounded, size: 10, color: Colors.grey.withValues(alpha: 0.5)),
-                          const SizedBox(width: 4),
-                          Text(
-                            '₺${CurrencyUtils.formatAmount(tx.minAmount!)} - ₺${CurrencyUtils.formatAmount(tx.maxAmount!)}',
-                            style: TextStyle(fontSize: 10, color: Colors.grey.withValues(alpha: 0.8), fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                    Text(
+                      mainModelName.toUpperCase(), 
+                      style: TextStyle(
+                        fontSize: 8, 
+                        fontWeight: FontWeight.w900, 
+                        color: tx.color.withValues(alpha: 0.6), 
+                        letterSpacing: 1.5
                       ),
-                    ],
+                      maxLines: 1, 
+                      overflow: TextOverflow.ellipsis
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subModelName, 
+                      style: TextStyle(
+                        fontSize: 15, 
+                        fontWeight: FontWeight.bold, 
+                        color: AppColors.getTextPrimary(context),
+                        height: 1.15,
+                        letterSpacing: -0.2
+                      ),
+                      maxLines: 2, 
+                      overflow: TextOverflow.ellipsis
+                    ),
                   ],
                 ),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    '₺${CurrencyUtils.formatAmount(tx.amount)}', 
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: amountColor, letterSpacing: -1),
+              ),
+            ),
+            
+            // Alt Bölüm: Tutar ve Belirgin Range
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (tx.minAmount != null && tx.maxAmount != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withValues(alpha: isDark ? 0.1 : 0.05),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.unfold_more_rounded, size: 12, color: amountColor.withValues(alpha: 0.5)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '₺${CurrencyUtils.formatAmount(tx.minAmount!)} - ₺${CurrencyUtils.formatAmount(tx.maxAmount!)}',
+                          style: TextStyle(
+                            fontSize: 10.5, 
+                            color: isDark ? Colors.white70 : Colors.black87, 
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.2
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                SizedBox(
+                  width: double.infinity,
+                  child: FittedBox(
+                    alignment: Alignment.centerLeft,
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '₺${CurrencyUtils.formatAmount(tx.amount)}', 
+                      style: TextStyle(
+                        fontSize: 28, 
+                        fontWeight: FontWeight.w900, 
+                        color: amountColor, 
+                        letterSpacing: -1.5
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -153,56 +213,103 @@ class TransactionCard extends StatelessWidget {
   }
 }
 
-void showTransactionActionMenu(BuildContext context, {required String name, required VoidCallback onEdit, required VoidCallback onDelete, required bool isInVault}) {
+void showTransactionActionMenu(BuildContext context, {
+  required String name, 
+  required VoidCallback onEdit, 
+  required VoidCallback onDelete, 
+  VoidCallback? onRemoveFromVault,
+  required bool isInVault
+}) {
   final l10n = AppLocalizations.of(context)!;
-  showModalBottomSheet(
+
+  FluidSheet.show(
     context: context,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => Container(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
-      decoration: BoxDecoration(
-        color: AppColors.getBackground(context),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 40)],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 32), decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2))),
-          _buildActionItem(context, Icons.edit_note_rounded, l10n.edit, AppColors.primary, onEdit),
+    title: name,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 1. DÜZENLE
+        _buildActionItem(
+          context: context,
+          icon: Icons.edit_note_rounded,
+          label: l10n.edit,
+          color: AppColors.getPrimary(context),
+          onTap: () {
+            Navigator.pop(context);
+            onEdit();
+          },
+        ),
+        
+        // 2. KASADAN ÇIKAR (Sadece kasa içindeyse)
+        if (isInVault && onRemoveFromVault != null) ...[
           const SizedBox(height: 12),
           _buildActionItem(
-            context, 
-            isInVault ? Icons.logout_rounded : Icons.delete_sweep_rounded, 
-            isInVault ? l10n.removeFromVault : l10n.permanentDelete, 
-            AppColors.error, 
-            onDelete
+            context: context,
+            icon: Icons.outbox_rounded,
+            label: l10n.removeFromVault,
+            color: Colors.orange,
+            onTap: () {
+              Navigator.pop(context);
+              onRemoveFromVault();
+            },
           ),
         ],
-      ),
+
+        const SizedBox(height: 12),
+        
+        // 3. TAMAMEN SİL (Her zaman kırmızı ve tehlikeli)
+        _buildActionItem(
+          context: context,
+          icon: Icons.delete_sweep_rounded,
+          label: l10n.permanentDelete,
+          color: AppColors.error,
+          onTap: () {
+            Navigator.pop(context);
+            onDelete();
+          },
+        ),
+        const SizedBox(height: 16),
+      ],
     ),
   );
 }
 
-Widget _buildActionItem(BuildContext context, IconData icon, String label, Color color, VoidCallback onTap) {
+Widget _buildActionItem({
+  required BuildContext context,
+  required IconData icon,
+  required String label,
+  required Color color,
+  required VoidCallback onTap,
+}) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
   return GestureDetector(
-    onTap: () { Navigator.pop(context); onTap(); },
+    onTap: onTap,
     child: FluidContainer(
       padding: const EdgeInsets.all(16),
-      borderRadius: 20,
+      borderRadius: 24,
       isGlass: true,
-      color: color.withValues(alpha: 0.05),
+      color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.01),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Icon(icon, color: color, size: 22),
           ),
           const SizedBox(width: 16),
-          Text(label, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.getTextPrimary(context))),
+          Text(
+            label, 
+            style: TextStyle(
+              fontSize: 16, 
+              fontWeight: FontWeight.w800, 
+              color: AppColors.getTextPrimary(context)
+            )
+          ),
           const Spacer(),
-          const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+          Icon(Icons.chevron_right_rounded, color: Colors.grey.withValues(alpha: 0.5), size: 20),
         ],
       ),
     ),

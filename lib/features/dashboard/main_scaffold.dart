@@ -16,6 +16,7 @@ import '../../shared/widgets/fluid_sheet.dart';
 import 'package:flutter/rendering.dart';
 import '../../core/services/subscription_service.dart';
 import '../subscription/widgets/pro_upgrade_sheet.dart';
+import '../../shared/widgets/membership_orb.dart';
 
 import 'dashboard_scroll_provider.dart';
 
@@ -25,11 +26,9 @@ class MainScaffold extends ConsumerStatefulWidget {
   @override
   ConsumerState<MainScaffold> createState() => _MainScaffoldState();
 }
-
-class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProviderStateMixin {
+class _MainScaffoldState extends ConsumerState<MainScaffold> {
   int _currentIndex = 0;
   bool _isProButtonVisible = true;
-  AnimationController? _wobbleController;
 
   final List<Widget> _pages = [
     const DashboardScreen(),
@@ -41,11 +40,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
   @override
   void initState() {
     super.initState();
-    _wobbleController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    )..repeat();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(dashboardScrollProvider).addListener(_onScroll);
     });
@@ -53,7 +48,6 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
 
   @override
   void dispose() {
-    _wobbleController?.dispose();
     super.dispose();
   }
 
@@ -136,7 +130,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
         ),
 
         // 💎 PRO İKONU: Navbardan yükselen gerçekçi sıvı form (Artık Daire)
-        if (!subscription.isPro && _wobbleController != null)
+        if (!subscription.isPro)
           AnimatedPositioned(
             duration: const Duration(milliseconds: 1400),
             curve: shouldShowButton ? Curves.easeOutBack : Curves.easeInCirc,
@@ -157,18 +151,13 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
                       alignment: Alignment.center,
                       children: [
                         // 1. Hareketli Su Damlası + AI Yıldızları (Animated Liquid & Stars)
-                        AnimatedBuilder(
-                          animation: _wobbleController!,
-                          builder: (context, child) {
-                            return CustomPaint(
-                              size: const Size(50, 50),
-                              painter: _WaterDropPainter(
-                                color: activeColor,
-                                morphFactor: scaleFactor,
-                                wobbleValue: _wobbleController!.value,
-                              ),
-                            );
-                          },
+                        Hero(
+                          tag: 'pro_orb',
+                          child: MembershipOrb(
+                            color: activeColor,
+                            size: 50,
+                            morphFactor: scaleFactor,
+                          ),
                         ),
 
                         // 2. Gizli GestureDetector
@@ -295,142 +284,4 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> with TickerProvider
       ),
     );
   }
-}
-
-/// Samsung/Google AI tarzı hareketli AI Yıldızları içeren Su Damlası Ressamı
-class _WaterDropPainter extends CustomPainter {
-  final Color color;
-  final double morphFactor;
-  final double wobbleValue;
-
-  _WaterDropPainter({
-    required this.color, 
-    required this.morphFactor,
-    required this.wobbleValue,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
-    
-    // 1. DERİN GÖLGE (Deep Soft Shadow)
-    final shadowPaint = Paint()
-      ..color = color.withValues(alpha: 0.3 * morphFactor)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14);
-    canvas.drawCircle(center.translate(0, 6 * morphFactor), radius * morphFactor, shadowPaint);
-
-    // 2. ANA CAM GÖVDESİ (Premium Liquid Glass Base)
-    final glassPaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          Color.lerp(color, Colors.white, 0.1)!.withValues(alpha: 0.6), // Daha sönük merkez
-          color.withValues(alpha: 0.8),
-          Color.lerp(color, Colors.black, 0.2)!.withValues(alpha: 0.9), // Derin kenarlar
-        ],
-        stops: const [0.0, 0.7, 1.0],
-        center: const Alignment(-0.3, -0.3),
-        radius: 1.0,
-      ).createShader(Rect.fromCircle(center: center, radius: radius * morphFactor));
-    canvas.drawCircle(center, radius * morphFactor, glassPaint);
- 
-    // 3. İÇ DERİNLİK (Enhanced Inner Depth Shadow)
-    final innerDepthPaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          Colors.transparent,
-          Colors.black.withValues(alpha: 0.15 * morphFactor),
-        ],
-        stops: const [0.65, 1.0],
-      ).createShader(Rect.fromCircle(center: center, radius: radius * morphFactor));
-    canvas.drawCircle(center, radius * morphFactor, innerDepthPaint);
- 
-    // 4. PREMİUM KENAR IŞIĞI (Very Subtle Rim Light)
-    final rimPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0 * morphFactor
-      ..shader = LinearGradient(
-        colors: [
-          Colors.white.withValues(alpha: 0.15 * morphFactor),
-          Colors.transparent,
-          Colors.white.withValues(alpha: 0.03 * morphFactor),
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ).createShader(Rect.fromCircle(center: center, radius: radius * morphFactor));
-    canvas.drawCircle(center, radius * morphFactor * 0.98, rimPaint);
- 
-    // 5. ÜST YANSIMA (Muted Reflection Layer)
-    final reflectionPaint = Paint()
-      ..shader = LinearGradient(
-        colors: [
-          Colors.white.withValues(alpha: 0.12 * morphFactor),
-          Colors.white.withValues(alpha: 0.01 * morphFactor),
-          Colors.transparent,
-        ],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        stops: const [0.0, 0.5, 0.9],
-      ).createShader(Rect.fromCircle(center: center, radius: radius * morphFactor));
-    
-    final reflectionPath = Path()
-      ..addOval(Rect.fromCircle(center: center.translate(0, -radius * 0.2 * morphFactor), radius: radius * 0.7 * morphFactor));
-    
-    canvas.save();
-    canvas.clipPath(Path()..addOval(Rect.fromCircle(center: center, radius: radius * morphFactor)));
-    canvas.drawPath(reflectionPath, reflectionPaint);
-    canvas.restore();
- 
-    // 6. AI YILDIZLARI (Subdued Sparkle Effect)
-    if (morphFactor > 0.4) {
-      _paintAIStars(canvas, center, size, morphFactor);
-    }
-  }
- 
-  void _paintAIStars(Canvas canvas, Offset center, Size size, double morph) {
-    final t = wobbleValue * 2 * math.pi;
-    
-    // Daha düşük opaklıklar (More muted opacities)
-    final baseColor = Colors.white.withValues(alpha: (morph - 0.4) * 0.5);
-    final blueColor = const Color(0xFFE3F2FD).withValues(alpha: (morph - 0.4) * 0.3);
-    
-    _drawStar(canvas, center + Offset(0, -2 * morph), 10 * morph, t, baseColor); 
-    _drawStar(canvas, center + Offset(-12 * morph, 10 * morph), 5 * morph, t * -0.7, blueColor);
-    _drawStar(canvas, center + Offset(12 * morph, 6 * morph), 4 * morph, t * 1.3, baseColor.withValues(alpha: baseColor.alpha * 0.4));
-  }
- 
-  void _drawStar(Canvas canvas, Offset pos, double size, double rotation, Color color) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
- 
-    // ✨ ÇOK HAFİF PARLAMA (Muted Glow)
-    final glowPaint = Paint()
-      ..color = color.withValues(alpha: color.alpha * 0.2)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, size * 0.8);
-    canvas.drawCircle(pos, size * 1.2, glowPaint);
- 
-    final pulseScale = 1.0 + 0.1 * math.sin(rotation * 2); // Daha az nabız (pulse)
-    final s = size * pulseScale;
-    
-    final path = Path();
-    // Daha zarif, içbükey 4 kollu yıldız formu
-    path.moveTo(pos.dx, pos.dy - s);
-    path.quadraticBezierTo(pos.dx + s * 0.1, pos.dy - s * 0.1, pos.dx + s, pos.dy);
-    path.quadraticBezierTo(pos.dx + s * 0.1, pos.dy + s * 0.1, pos.dx, pos.dy + s);
-    path.quadraticBezierTo(pos.dx - s * 0.1, pos.dy + s * 0.1, pos.dx - s, pos.dy);
-    path.quadraticBezierTo(pos.dx - s * 0.1, pos.dy - s * 0.1, pos.dx, pos.dy - s);
-    
-    canvas.save();
-    canvas.translate(pos.dx, pos.dy);
-    canvas.rotate(rotation * 0.2); // Yavaş ve estetik dönüş
-    canvas.translate(-pos.dx, -pos.dy);
-    
-    canvas.drawPath(path, paint);
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(_WaterDropPainter oldDelegate) => 
-    oldDelegate.morphFactor != morphFactor || oldDelegate.wobbleValue != wobbleValue;
 }
