@@ -31,11 +31,11 @@ class _FluidFlipCardState extends State<FluidFlipCard> with SingleTickerProvider
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 650),
     );
     _animation = CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeInOutBack,
+      curve: Curves.easeInOutQuart,
     );
 
     if (!widget.isFront) _controller.value = 1.0;

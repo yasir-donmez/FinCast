@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_constants.dart';
+import '../../shared/widgets/fluid_button.dart';
 import '../../shared/widgets/neu_container.dart';
 import 'widgets/neumorphic_numpad.dart';
 import '../../core/database/database_service.dart';
@@ -15,7 +16,7 @@ class AddTransactionSheet extends ConsumerStatefulWidget {
   final double? initialMinAmount;
   final double? initialMaxAmount;
   final bool? initialIsIncome;
-  final int? initialVaultId;
+  final List<int>? initialVaultIds; // Çoklu kasa desteği
   final String? initialCategoryId;
 
   const AddTransactionSheet({
@@ -26,7 +27,7 @@ class AddTransactionSheet extends ConsumerStatefulWidget {
     this.initialMinAmount,
     this.initialMaxAmount,
     this.initialIsIncome,
-    this.initialVaultId,
+    this.initialVaultIds,
     this.initialCategoryId,
   });
 
@@ -37,7 +38,7 @@ class AddTransactionSheet extends ConsumerStatefulWidget {
 class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   int _tabIndex = 0;
   List<Vault> _vaults = [];
-  int? _selectedVaultId;
+  List<int> _selectedVaultIds = [];
   bool _showAdvancedOptions = false;
   String _currentAmount = "0";
   String _currentMin = "0";
@@ -49,10 +50,6 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   bool _isPrefilled = false;
   bool _isFlexibleAmount = false;
   int _periodType = 0;
-  String? _expandedPeriodCategory;
-  int _selectedDay = 1;
-  DateTime _selectedDateForRecurrence = DateTime.now();
-  int _duration = 0;
 
   AppLocalizations get l10n => AppLocalizations.of(context)!;
 
@@ -76,7 +73,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
     if (mounted) {
       setState(() {
         _vaults = vaults;
-        if (widget.initialVaultId != null) _selectedVaultId = widget.initialVaultId;
+        if (widget.initialVaultIds != null) {
+          _selectedVaultIds = List.from(widget.initialVaultIds!);
+        }
       });
     }
   }
@@ -111,21 +110,6 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
         }
         if (found) break;
       }
-    }
-    _loadInitialPeriod();
-  }
-
-  Future<void> _loadInitialPeriod() async {
-    if (widget.initialId == null) return;
-    final tx = await DatabaseService.getTransaction(widget.initialId!);
-    if (tx == null) return;
-    if (mounted) {
-      setState(() {
-        _periodType = tx.periodType;
-        if ([8, 9, 10].contains(_periodType)) _expandedPeriodCategory = 'gun';
-        else if ([1, 4, 5].contains(_periodType)) _expandedPeriodCategory = 'hafta';
-        else if ([2, 6, 7].contains(_periodType)) _expandedPeriodCategory = 'ay';
-      });
     }
   }
 
@@ -163,32 +147,40 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
       ..maxAmount = _isFlexibleAmount ? maxAmt : null
       ..periodType = _periodType
       ..date = widget.initialId != null ? tx.date : DateTime.now()
-      ..vaultId = _selectedVaultId;
+      ..vaultIds = _selectedVaultIds;
 
-    if (widget.initialId != null) await DatabaseService.updateTransaction(tx);
-    else await DatabaseService.addTransaction(tx);
+    if (widget.initialId != null) {
+      await DatabaseService.updateTransaction(tx);
+    } else {
+      await DatabaseService.addTransaction(tx);
+    }
   }
 
   void _onNumpadTap(String val) {
     setState(() {
       String current = _getActiveFieldContent();
-      if (current == "0") _setActiveFieldContent(val);
-      else if (current.length < 7) _setActiveFieldContent(current + val);
+      if (current == "0") {
+        _setActiveFieldContent(val);
+      } else if (current.length < 7) _setActiveFieldContent(current + val);
     });
   }
 
   void _onBackspaceTap() {
     setState(() {
       String current = _getActiveFieldContent();
-      if (current.length > 1) _setActiveFieldContent(current.substring(0, current.length - 1));
-      else _setActiveFieldContent("0");
+      if (current.length > 1) {
+        _setActiveFieldContent(current.substring(0, current.length - 1));
+      } else {
+        _setActiveFieldContent("0");
+      }
     });
   }
 
   String _getActiveFieldContent() => !_isFlexibleAmount ? _currentAmount : (_activeAmountField == 'min' ? _currentMin : _currentMax);
   void _setActiveFieldContent(String val) {
-    if (!_isFlexibleAmount) _currentAmount = val;
-    else if (_activeAmountField == 'min') _currentMin = val;
+    if (!_isFlexibleAmount) {
+      _currentAmount = val;
+    } else if (_activeAmountField == 'min') _currentMin = val;
     else _currentMax = val;
   }
 
@@ -241,7 +233,6 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
 
   Widget _buildPhysicalRockerSwitch() {
     final isIncome = _tabIndex == 1;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity, height: 70, margin: const EdgeInsets.symmetric(horizontal: 24),
       child: GestureDetector(
@@ -257,7 +248,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
               child: Row(
                 children: [
                   Expanded(child: Center(child: AnimatedOpacity(duration: const Duration(milliseconds: 300), opacity: isIncome ? 0.3 : 1.0, child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.arrow_downward_rounded, color: AppColors.error, size: 18), const SizedBox(width: 8), Text(l10n.expense.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: AppColors.error))])))),
-                  Container(width: 2, height: 30, color: Colors.grey.withOpacity(0.1)),
+                  Container(width: 2, height: 30, color: Colors.grey.withValues(alpha: 0.1)),
                   Expanded(child: Center(child: AnimatedOpacity(duration: const Duration(milliseconds: 300), opacity: isIncome ? 1.0 : 0.3, child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.arrow_upward_rounded, color: AppColors.primary, size: 18), const SizedBox(width: 8), Text(l10n.income.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: AppColors.primary))])))),
                 ],
               ),
@@ -292,7 +283,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
       onTap: () => setState(() => _activeAmountField = fieldType),
       child: NeuContainer(
         borderRadius: 20, isInnerShadow: true, showBezel: true,
-        color: isActive ? null : AppColors.getBackground(context).withOpacity(0.5),
+        color: isActive ? null : AppColors.getBackground(context).withValues(alpha: 0.5),
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text(label.toUpperCase(), style: TextStyle(fontSize: 10, color: isActive ? activeColor : Colors.grey, fontWeight: FontWeight.w900)), const SizedBox(height: 6), _DotMatrixText(text: value, fontSize: 24, color: isActive ? AppColors.getTextPrimary(context) : Colors.grey, isActive: isActive)]),
       ),
@@ -317,16 +308,18 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
               final displayName = showSubInfo ? (cat['subModels'] as List)[_selectedSubModelIndex]['name'] as String : cat['name'] as String;
 
               return GestureDetector(
-                onTap: () => setState(() { if (isSelected && (cat['subModels'] as List).isNotEmpty) _expandedCategoryIndex = _expandedCategoryIndex == index ? -1 : index; else { _selectedCategoryIndex = index; _selectedSubModelIndex = -1; _expandedCategoryIndex = -1; } }),
+                onTap: () => setState(() { if (isSelected && (cat['subModels'] as List).isNotEmpty) {
+                  _expandedCategoryIndex = _expandedCategoryIndex == index ? -1 : index;
+                } else { _selectedCategoryIndex = index; _selectedSubModelIndex = -1; _expandedCategoryIndex = -1; } }),
                 child: Padding(
                   padding: const EdgeInsets.only(right: 12),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 250), width: isSelected ? 95 : 80,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(24),
-                      color: isSelected ? AppColors.getInnerSurface(context) : (isDark ? AppColors.getSurface(context) : Colors.white.withOpacity(0.5)),
+                      color: isSelected ? AppColors.getInnerSurface(context) : (isDark ? AppColors.getSurface(context) : Colors.white.withValues(alpha: 0.5)),
                       border: isSelected ? Border.all(color: cat['color'], width: 1.5) : null,
-                      boxShadow: isSelected ? [BoxShadow(color: (cat['color'] as Color).withOpacity(0.2), blurRadius: 12)] : null,
+                      boxShadow: isSelected ? [BoxShadow(color: (cat['color'] as Color).withValues(alpha: 0.2), blurRadius: 12)] : null,
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -334,7 +327,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                         _DotMatrixText(text: displayName, fontSize: 9, color: isSelected ? AppColors.getTextPrimary(context) : Colors.grey, isActive: isSelected),
                         const SizedBox(height: 6),
                         Icon(displayIcon, color: isSelected ? cat['color'] : Colors.grey, size: isSelected ? 28 : 24),
-                        if (isSelected && (cat['subModels'] as List).isNotEmpty) Icon(Icons.expand_more_rounded, size: 14, color: (cat['color'] as Color).withOpacity(0.7)),
+                        if (isSelected && (cat['subModels'] as List).isNotEmpty) Icon(Icons.expand_more_rounded, size: 14, color: (cat['color'] as Color).withValues(alpha: 0.7)),
                       ],
                     ),
                   ),
@@ -364,7 +357,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(color: isSubSelected ? (cat['color'] as Color).withOpacity(0.1) : Colors.transparent, borderRadius: BorderRadius.circular(20), border: Border.all(color: isSubSelected ? cat['color'] : Colors.grey.withOpacity(0.2))),
+                decoration: BoxDecoration(color: isSubSelected ? (cat['color'] as Color).withValues(alpha: 0.1) : Colors.transparent, borderRadius: BorderRadius.circular(20), border: Border.all(color: isSubSelected ? cat['color'] : Colors.grey.withValues(alpha: 0.2))),
                 child: Row(children: [Icon(subs[idx]['icon'], size: 14, color: isSubSelected ? cat['color'] : Colors.grey), const SizedBox(width: 6), Text(subs[idx]['name'], style: TextStyle(fontSize: 11, fontWeight: isSubSelected ? FontWeight.bold : FontWeight.normal, color: isSubSelected ? cat['color'] : Colors.grey))]),
               ),
             ),
@@ -399,28 +392,58 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   }
 
   Widget _buildVaultSelectorRow() {
-    final selected = _selectedVaultId == null ? null : _vaults.firstWhere((v) => v.id == _selectedVaultId, orElse: () => _vaults.first);
+    String display = _selectedVaultIds.isEmpty ? l10n.generalBalance : "${_selectedVaultIds.length} ${l10n.vaults}";
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(l10n.vaultOrGroup, style: const TextStyle(fontWeight: FontWeight.bold)),
         GestureDetector(
           onTap: () => _showVaultPicker(),
-          child: NeuContainer(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), borderRadius: 12, child: Text(selected?.name ?? l10n.generalBalance, style: const TextStyle(fontWeight: FontWeight.bold))),
+          child: NeuContainer(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), borderRadius: 12, child: Text(display, style: const TextStyle(fontWeight: FontWeight.bold))),
         ),
       ],
     );
   }
 
   void _showVaultPicker() {
-    showModalBottomSheet(context: context, builder: (ctx) => Container(
-      height: 300, color: AppColors.getBackground(context),
-      child: ListView.builder(
-        itemCount: _vaults.length + 1,
-        itemBuilder: (c, i) {
-          final v = i == 0 ? null : _vaults[i-1];
-          return ListTile(title: Text(v?.name ?? l10n.generalBalance), onTap: () { setState(() => _selectedVaultId = v?.id); Navigator.pop(ctx); });
-        },
+    showModalBottomSheet(context: context, builder: (ctx) => StatefulBuilder(
+      builder: (context, setModalState) => Container(
+        height: 400, color: AppColors.getBackground(context),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(l10n.vaultOrGroup, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _vaults.length,
+                itemBuilder: (c, i) {
+                  final v = _vaults[i];
+                  final isSelected = _selectedVaultIds.contains(v.id);
+                  return CheckboxListTile(
+                    title: Text(v.name),
+                    value: isSelected,
+                    onChanged: (val) {
+                      setState(() {
+                        if (val == true) {
+                          _selectedVaultIds.add(v.id);
+                        } else {
+                          _selectedVaultIds.remove(v.id);
+                        }
+                      });
+                      setModalState(() {});
+                    },
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: FluidButton(onTap: () => Navigator.pop(ctx), child: const Text("TAMAM", style: TextStyle(fontWeight: FontWeight.bold))),
+            ),
+          ],
+        ),
       ),
     ));
   }
@@ -464,9 +487,9 @@ class _DotMatrixText extends StatelessWidget {
         text, key: ValueKey(text),
         style: TextStyle(
           fontFamily: 'monospace', fontSize: fontSize, fontWeight: FontWeight.w900, 
-          color: isActive ? color : color.withOpacity(0.2), 
+          color: isActive ? color : color.withValues(alpha: 0.2), 
           letterSpacing: 1, 
-          shadows: [if (isActive) Shadow(color: color.withOpacity(0.5), blurRadius: 10)]
+          shadows: [if (isActive) Shadow(color: color.withValues(alpha: 0.5), blurRadius: 10)]
         ),
       ),
     );

@@ -886,4 +886,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get selectCurrency => 'Choisir la devise';
+
+  @override
+  String get membershipPlan => 'Üyelik Planı';
+
+  @override
+  String get upgrade => 'Yükselt';
 }

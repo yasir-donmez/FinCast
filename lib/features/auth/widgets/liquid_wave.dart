@@ -67,11 +67,11 @@ class _WavePainter extends CustomPainter {
 
     final path = Path();
     
-    // Organik dalga formu (Dalgalı çember dilimi)
-    for (double i = 0; i <= 90; i += 2) {
+    // Organik dalga formu (Daha az segment ile daha hızlı render)
+    for (double i = 0; i <= 90; i += 5) {
       final double radians = i * (math.pi / 180);
-      // Dalga etkisi eklemek için sinüs vari bozulma
-      final double waveDistortion = 30 * math.sin(progress * 5 * math.pi + radians * 8);
+      // Dalga etkisi eklemek için sinüs vari bozulma - daha yumuşak faz
+      final double waveDistortion = 25 * math.sin(progress * 4 * math.pi + radians * 6);
       
       final double x = center.dx + (currentRadius + waveDistortion) * math.cos(radians);
       final double y = center.dy + (currentRadius + waveDistortion) * math.sin(radians);

@@ -7,9 +7,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/services/subscription_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_constants.dart';
-import '../../shared/widgets/fluid_container.dart';
 import '../../shared/widgets/fluid_sheet.dart';
 import '../../shared/widgets/fluid_button.dart';
+import '../../shared/widgets/fluid_dialog.dart';
 import '../../core/providers/settings_provider.dart';
 import '../dashboard/dashboard_providers.dart';
 
@@ -29,9 +29,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     super.initState();
     _scrollController = ScrollController()
       ..addListener(() {
-        setState(() {
-          _scrollOffset = _scrollController.offset;
-        });
+        if (mounted) {
+          setState(() {
+            _scrollOffset = _scrollController.offset;
+          });
+        }
       });
   }
 
@@ -50,7 +52,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Stack(
       children: [
-        // 1. PARALLAX ARKA PLAN
+        // 1. PARALLAX BACKGROUND
         Positioned(
           top: -100 - (_scrollOffset * 0.2),
           right: -50 + (_scrollOffset * 0.05),
@@ -72,7 +74,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               SliverPersistentHeader(
                 pinned: true,
                 delegate: _ProfileHeaderDelegate(
-                  expandedHeight: 280.0,
+                  expandedHeight: 180.0,
                   collapsedHeight: 80.0,
                   l10n: l10n,
                   activeColor: activeColor,
@@ -81,7 +83,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     final currentPro = ref.read(subscriptionServiceProvider).isPro;
                     await ref.read(subscriptionServiceProvider).setProStatus(!currentPro);
                   },
-                  onEditProfile: () => _showComingSoon(l10n.editProfile, l10n),
                 ),
               ),
 
@@ -90,7 +91,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
+                    
+                    // Membership Plan Card (Aligned with other settings)
+                    _buildMembershipCard(
+                      l10n: l10n,
+                      isPro: subscription.isPro,
+                      activeColor: activeColor,
+                      onTap: () async {
+                        final currentPro = ref.read(subscriptionServiceProvider).isPro;
+                        await ref.read(subscriptionServiceProvider).setProStatus(!currentPro);
+                      },
+                    ),
+
+                    const SizedBox(height: 30),
                     _buildPremiumSectionTitle(l10n.preferences, activeColor, Icons.tune_rounded),
                     const SizedBox(height: 12),
                     
@@ -171,6 +185,89 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  Widget _buildMembershipCard({
+    required AppLocalizations l10n,
+    required bool isPro,
+    required Color activeColor,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: InkWell(
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.getSurface(context).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: activeColor.withValues(alpha: isPro ? 0.3 : 0.05),
+                  width: 1.0,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: activeColor.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isPro ? Icons.workspace_premium_rounded : Icons.person_outline_rounded,
+                      color: activeColor,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isPro ? "FinCast PRO" : "Free Plan",
+                          style: TextStyle(
+                            color: AppColors.getTextPrimary(context),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          l10n.membershipPlan,
+                          style: TextStyle(
+                            color: AppColors.getTextSecondary(context).withValues(alpha: 0.6),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!isPro)
+                    Text(
+                      l10n.upgrade,
+                      style: TextStyle(
+                        color: activeColor,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    )
+                  else
+                    Icon(Icons.verified_rounded, color: activeColor, size: 20),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildPremiumSectionTitle(String title, Color activeColor, IconData icon) {
     return Container(
       height: 44,
@@ -198,27 +295,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Icon(icon, size: 18, color: activeColor.withValues(alpha: 0.8)),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Stack(
-                    children: [
-                      Text(
-                        title.toUpperCase(),
-                        style: TextStyle(
-                          color: AppColors.getLightShadow(context).withValues(alpha: 0.2),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      Text(
-                        title.toUpperCase(),
-                        style: TextStyle(
-                          color: AppColors.getTextPrimary(context).withValues(alpha: 0.7),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    title.toUpperCase(),
+                    style: TextStyle(
+                      color: AppColors.getTextPrimary(context).withValues(alpha: 0.7),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ),
               ],
@@ -441,15 +525,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showComingSoon(String feature, AppLocalizations l10n) {
-    showCupertinoDialog(
+    showFluidDialog(
       context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: Text(feature),
-        content: Text("\n${l10n.comingSoon}"),
-        actions: [
-          CupertinoDialogAction(child: Text(l10n.ok), onPressed: () => Navigator.pop(context)),
-        ],
-      ),
+      title: Text(feature),
+      content: Text("\n${l10n.comingSoon}"),
+      actions: [
+        TextButton(child: Text(l10n.ok), onPressed: () => Navigator.pop(context)),
+      ],
     );
   }
 
@@ -476,14 +558,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   String _getLanguageCode(String name) {
     switch (name) {
-      case "Türkçe": return 'tr';
-      case "English": return 'en';
-      case "Deutsch": return 'de';
-      case "Español": return 'es';
-      case "Français": return 'fr';
-      case "Português": return 'pt';
-      case "Italiano": return 'it';
-      case "日本語": return 'ja';
+      case 'Türkçe': return 'tr';
+      case 'English': return 'en';
+      case 'Deutsch': return 'de';
+      case 'Español': return 'es';
+      case 'Français': return 'fr';
+      case 'Português': return 'pt';
+      case 'Italiano': return 'it';
+      case '日本語': return 'ja';
       default: return 'tr';
     }
   }
@@ -651,7 +733,7 @@ class _EtchedLiquidPainter extends CustomPainter {
     final textStyle = TextStyle(
       fontSize: fontSize,
       fontWeight: FontWeight.w900,
-      letterSpacing: -2.5,
+      letterSpacing: 1.5,
       color: AppColors.getTextPrimary(context),
     );
 
@@ -668,13 +750,46 @@ class _EtchedLiquidPainter extends CustomPainter {
 
     canvas.saveLayer(textRect.inflate(50), Paint());
 
-    final lightTP = TextPainter(text: TextSpan(text: text, style: textStyle.copyWith(color: AppColors.getLightShadow(context).withValues(alpha: 0.3))), textDirection: TextDirection.ltr)..layout();
-    lightTP.paint(canvas, textRect.topLeft + const Offset(1.5, 2.0));
+    // 1. RIM HIGHLIGHT
+    final bezelTP = TextPainter(
+      text: TextSpan(
+        text: text, 
+        style: textStyle.copyWith(
+          color: AppColors.getLightShadow(context).withValues(alpha: 0.4),
+          shadows: [
+            Shadow(color: AppColors.getLightShadow(context).withValues(alpha: 0.2), offset: const Offset(0.5, 0.7), blurRadius: 1),
+          ],
+        )
+      ), 
+      textDirection: TextDirection.ltr
+    )..layout();
+    bezelTP.paint(canvas, textRect.topLeft + const Offset(0.5, 0.7));
 
-    final darkTP = TextPainter(text: TextSpan(text: text, style: textStyle.copyWith(color: AppColors.getDarkShadow(context).withValues(alpha: 0.5))), textDirection: TextDirection.ltr)..layout();
-    darkTP.paint(canvas, textRect.topLeft + const Offset(-1.5, -1.5));
+    // 2. INNER WALL SHADOW
+    final darkTP = TextPainter(
+      text: TextSpan(
+        text: text, 
+        style: textStyle.copyWith(
+          color: Colors.black.withValues(alpha: 0.7),
+        )
+      ), 
+      textDirection: TextDirection.ltr
+    )..layout();
+    darkTP.paint(canvas, textRect.topLeft + const Offset(-0.8, -1.0));
 
-    final baseTP = TextPainter(text: TextSpan(text: text, style: textStyle.copyWith(color: AppColors.getInnerSurface(context).withValues(alpha: 0.9))), textDirection: TextDirection.ltr)..layout();
+    // 3. ETCHED BASE
+    final baseTP = TextPainter(
+      text: TextSpan(
+        text: text, 
+        style: textStyle.copyWith(
+          color: AppColors.getInnerSurface(context).withValues(alpha: 1.0),
+          shadows: [
+            Shadow(color: Colors.black.withValues(alpha: 0.4), offset: const Offset(0.2, 0.2), blurRadius: 1.5),
+          ],
+        )
+      ), 
+      textDirection: TextDirection.ltr
+    )..layout();
     baseTP.paint(canvas, textRect.topLeft);
 
     if (progress > 0) {
@@ -722,7 +837,6 @@ class _ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Color activeColor;
   final bool isPro;
   final VoidCallback onTogglePro;
-  final VoidCallback onEditProfile;
 
   _ProfileHeaderDelegate({
     required this.expandedHeight,
@@ -731,7 +845,6 @@ class _ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.activeColor,
     required this.isPro,
     required this.onTogglePro,
-    required this.onEditProfile,
   });
 
   @override
@@ -746,34 +859,13 @@ class _ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
           alignment: Alignment.center,
           clipBehavior: Clip.hardEdge,
           children: [
-            // 1. LIQUID PRO ORB (HAVADA ASILI KÜRE)
-            if (isPro)
-              Positioned(
-                top: 50 - (shrinkOffset * 0.4),
-                child: Opacity(
-                  opacity: (1 - progress * 2.5).clamp(0, 1),
-                  child: GestureDetector(
-                    onTap: onTogglePro, // Küreye basınca normal üye yapar
-                    child: _FloatingOrb(activeColor: activeColor),
-                  ),
-                ),
-              ),
-
-            // 2. CENTERED ETCHED NAME
             Positioned(
-              top: (isPro ? 160 : 100) - (shrinkOffset * 0.7),
-              child: GestureDetector(
-                onTap: () async {
-                  // İsim üzerine tıklandığında Pro değilse Pro yapar (Test için kolaylık)
-                  if (!isPro) {
-                    onTogglePro(); 
-                  }
-                },
-                child: _EtchedLiquidText(
-                  progress: progress,
-                  activeColor: activeColor,
-                  text: "Yasir Dönmez",
-                ),
+              top: 64 - (shrinkOffset * 0.4),
+              child: _EtchedLiquidText(
+                progress: progress,
+                activeColor: activeColor,
+                text: "Yasir Dönmez",
+                fontSize: 40,
               ),
             ),
           ],
@@ -792,79 +884,7 @@ class _ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 }
 
-class _FloatingOrb extends StatefulWidget {
-  final Color activeColor;
-  const _FloatingOrb({required this.activeColor});
 
-  @override
-  State<_FloatingOrb> createState() => _FloatingOrbState();
-}
-
-class _FloatingOrbState extends State<_FloatingOrb> with SingleTickerProviderStateMixin {
-  late AnimationController _floatController;
-
-  @override
-  void initState() {
-    super.initState();
-    _floatController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _floatController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _floatController,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, math.sin(_floatController.value * math.pi * 2) * 8),
-          child: Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: widget.activeColor.withValues(alpha: 0.3),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                )
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(35),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
-                  ),
-                  child: Center(
-                    child: _EtchedLiquidText(
-                      progress: 0.6, // Sabit doluluk
-                      activeColor: widget.activeColor,
-                      text: "PRO",
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
 
 class _LiquidBlob extends StatelessWidget {
   final Color color;

@@ -8,10 +8,12 @@ import '../../core/database/database_service.dart';
 import '../../core/utils/currency_utils.dart';
 import '../../shared/widgets/fluid_container.dart';
 import '../../shared/widgets/fluid_sheet.dart';
+import '../../shared/widgets/fluid_dialog.dart';
 import 'vaults_providers.dart';
 import 'widgets/transaction_card.dart';
 import '../transactions/add_transaction_sheet.dart'; 
 import 'widgets/vault_management_sheet.dart';
+import 'widgets/vault_detail_sheet.dart';
 import '../dashboard/dashboard_providers.dart';
 
 class VaultsScreen extends ConsumerStatefulWidget {
@@ -49,7 +51,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
 
     final vaultTransactions = selectedVaultId == null
         ? allTransactions
-        : allTransactions.where((t) => t.groupId == selectedVaultId).toList();
+        : allTransactions.where((t) => t.groupIds.contains(selectedVaultId)).toList();
 
     var filteredTransactions = vaultTransactions.where((t) {
       if (filter == TransactionFilter.income) return t.isIncome;
@@ -84,6 +86,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                   onVaultSelect: (id) => ref.read(selectedVaultProvider.notifier).state = id,
                   activeColor: activeColor,
                   onManageVaults: () => _showVaultManagementSheet(context),
+                  onAddVault: () => _showAddVaultSheet(context),
                   l10n: l10n,
                 ),
               ),
@@ -247,34 +250,12 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
 
               // Sayfanın her zaman tam dönüşmesini sağlayacak alt boşluk
               const SliverToBoxAdapter(
-                child: SizedBox(height: 400), 
+                child: SizedBox(height: 100), 
               ),
             ],
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildFAB(BuildContext context, Color activeColor) {
-    return GestureDetector(
-      onTap: () => _showAddTransactionSheet(context),
-      child: FluidContainer(
-        width: 64, height: 64,
-        borderRadius: 24,
-        color: activeColor,
-        isGlass: false,
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
-      ),
-    );
-  }
-
-  void _showAddTransactionSheet(BuildContext context) {
-    HapticFeedback.heavyImpact();
-    FluidSheet.show(
-      context: context,
-      title: AppLocalizations.of(context)!.addTransaction,
-      child: const AddTransactionSheet(),
     );
   }
 
@@ -403,9 +384,8 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
           
           // 3. Detay Bilgiler: Staggered Liste
           ...List.generate(3, (index) {
-            final labels = [l10n.vaults, l10n.all, l10n.period]; // "all" placeholder for Category label if not in l10n
             final values = [
-              tx.groupId?.replaceFirst('v_', '') ?? l10n.mainVault, 
+              tx.groupIds.isNotEmpty ? tx.groupIds.first.replaceFirst('v_', '') : l10n.mainVault, 
               localizedCategoryName(tx.categoryId, l10n) ?? "-", 
               _getPeriodLabel(tx.periodType, l10n)
             ];
@@ -487,18 +467,23 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                 GestureDetector(
                   onTap: () async {
                     Navigator.pop(context);
-                    final confirm = await showDialog<bool>(
-                      context: context, 
-                      builder: (ctx) => AlertDialog(
-                        backgroundColor: AppColors.getSurface(context), 
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), 
-                        title: Text(l10n.permanentDelete, style: const TextStyle(fontWeight: FontWeight.w900)), 
-                        content: Text(l10n.permanentDeleteDesc), 
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancel)), 
-                          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.ok, style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.w900)))
-                        ]
-                      )
+                    final confirm = await showFluidDialog<bool>(
+                      context: context,
+                      accentColor: AppColors.error,
+                      icon: const Icon(Icons.delete_forever_rounded),
+                      title: Text(l10n.permanentDelete),
+                      content: Text(l10n.permanentDeleteDesc),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false), 
+                          child: Text(l10n.cancel, style: TextStyle(color: AppColors.getTextSecondary(context))),
+                        ),
+                        _FluidDialogButton(
+                          label: l10n.ok,
+                          onTap: () => Navigator.pop(context, true),
+                          color: AppColors.error,
+                        ),
+                      ]
                     );
                     if (confirm == true) { 
                       await DatabaseService.deleteTransaction(tx.dbId!); 
@@ -526,10 +511,21 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
     if (tx.dbId == null) return;
     HapticFeedback.heavyImpact();
     
+    final selectedVaultId = ref.read(selectedVaultProvider);
+
     showTransactionActionMenu(
       context,
       name: tx.name,
-      isInVault: tx.groupId != null,
+      isInVault: tx.groupIds.isNotEmpty,
+      showOnDashboard: tx.showOnDashboard,
+      onToggleDashboard: (val) async {
+        final record = await DatabaseService.getTransaction(tx.dbId!);
+        if (record != null) {
+          record.showOnDashboard = val;
+          await DatabaseService.updateTransaction(record);
+          HapticFeedback.mediumImpact();
+        }
+      },
       onEdit: () {
         FluidSheet.show(
           context: context,
@@ -541,29 +537,38 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
             initialMinAmount: tx.minAmount,
             initialMaxAmount: tx.maxAmount,
             initialIsIncome: tx.isIncome,
-            initialVaultId: tx.groupId != null ? int.tryParse(tx.groupId!.replaceFirst('v_', '')) : null,
+            initialVaultIds: tx.groupIds.map((vId) => int.parse(vId.replaceFirst('v_', ''))).toList(),
             initialCategoryId: tx.categoryId,
           ),
         );
       },
       onRemoveFromVault: () async {
         final groupingHelper = ref.read(transactionGroupingProvider);
-        await groupingHelper.setGroupId(tx.id, null);
-        HapticFeedback.mediumImpact();
+        if (tx.groupIds.isNotEmpty) {
+          // If we are in a specific vault view, remove that vault. Otherwise remove the first one.
+          final vaultToRemove = selectedVaultId ?? tx.groupIds.first;
+          await groupingHelper.removeFromVault(tx.id, vaultToRemove);
+          HapticFeedback.mediumImpact();
+        }
       },
       onDelete: () async {
-        final confirm = await showDialog<bool>(
+        final confirm = await showFluidDialog<bool>(
           context: context, 
-          builder: (ctx) => AlertDialog(
-            backgroundColor: AppColors.getSurface(context), 
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), 
-            title: Text(AppLocalizations.of(context)!.permanentDelete, style: const TextStyle(fontWeight: FontWeight.w900)), 
-            content: Text(AppLocalizations.of(context)!.permanentDeleteDesc), 
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context)!.cancel)), 
-              TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.of(context)!.ok, style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.w900)))
-            ]
-          )
+          accentColor: AppColors.error,
+          icon: const Icon(Icons.delete_forever_rounded),
+          title: Text(AppLocalizations.of(context)!.permanentDelete), 
+          content: Text(AppLocalizations.of(context)!.permanentDeleteDesc), 
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false), 
+              child: Text(AppLocalizations.of(context)!.cancel, style: TextStyle(color: AppColors.getTextSecondary(context))),
+            ), 
+            _FluidDialogButton(
+              label: AppLocalizations.of(context)!.ok,
+              onTap: () => Navigator.pop(context, true),
+              color: AppColors.error,
+            ),
+          ]
         );
         if (confirm == true) { 
           await DatabaseService.deleteTransaction(tx.dbId!); 
@@ -580,6 +585,24 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
       child: const VaultManagementSheet(),
     );
   }
+
+  void _showAddVaultSheet(BuildContext context) {
+    HapticFeedback.heavyImpact();
+    FluidSheet.show(
+      context: context,
+      title: 'Yeni Kasa',
+      child: const VaultManagementSheet(startInAddMode: true),
+    );
+  }
+
+  void _showVaultDetail(BuildContext context, String vaultId) {
+    HapticFeedback.mediumImpact();
+    FluidSheet.show(
+      context: context,
+      title: 'Kasa Detayı',
+      child: VaultDetailSheet(vaultId: vaultId),
+    );
+  }
 }
 
 /// GERÇEK MORPHING DESTE DELEGATE
@@ -590,6 +613,7 @@ class _TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Function(String?) onVaultSelect;
   final Color activeColor;
   final VoidCallback onManageVaults;
+  final VoidCallback onAddVault;
   final AppLocalizations l10n;
 
   _TrueMorphDeckHeaderDelegate({
@@ -599,6 +623,7 @@ class _TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.onVaultSelect,
     required this.activeColor,
     required this.onManageVaults,
+    required this.onAddVault,
     required this.l10n,
   });
 
@@ -608,7 +633,6 @@ class _TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
     final progress = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
     final deckItems = [null, ...groups.map((g) => g.id)];
     final currentIndex = deckItems.indexOf(selectedVaultId);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Arka plan daha hızlı opak olsun — konteyner erirken bar zaten orada
     final bgAlpha = Curves.easeOutQuad.transform((progress * 1.6).clamp(0.0, 1.0));
@@ -661,35 +685,12 @@ class _TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
                 child: Row(
                   children: [
                     _HeaderIconButton(icon: Icons.account_balance_wallet_rounded, onTap: onManageVaults),
+                    const SizedBox(width: 8),
+                    _HeaderIconButton(icon: Icons.add_rounded, onTap: onAddVault),
                   ],
                 ),
               ),
             ),
-
-            // Organik alt çizgi — compact modda konteyneri değil, ince bir çizgi
-            if (progress > 0.6)
-              Positioned(
-                bottom: 0,
-                left: 20,
-                right: 20,
-                child: Opacity(
-                  opacity: ((progress - 0.6) * 2.5).clamp(0.0, 1.0),
-                  child: Container(
-                    height: 0.5,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
-                          (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
-                          Colors.transparent,
-                        ],
-                        stops: const [0.0, 0.2, 0.8, 1.0],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
       ),
@@ -770,7 +771,7 @@ class _VaultCardStackState extends State<_VaultCardStack> {
         itemCount: widget.deckItems.length,
         itemBuilder: (context, index) {
           final vaultId = widget.deckItems[index];
-          final txs = vaultId == null ? widget.allTransactions : widget.allTransactions.where((t) => t.groupId == vaultId).toList();
+          final txs = vaultId == null ? widget.allTransactions : widget.allTransactions.where((t) => t.groupIds.contains(vaultId)).toList();
           final income = txs.where((t) => t.isIncome).fold<double>(0, (sum, t) => sum + t.monthlyEquivalent);
           final expense = txs.where((t) => !t.isIncome).fold<double>(0, (sum, t) => sum + t.monthlyEquivalent);
           final balance = income - expense;
@@ -801,17 +802,24 @@ class _VaultCardStackState extends State<_VaultCardStack> {
                     child: Transform.scale(
                       scale: value,
                       child: RepaintBoundary(
-                        child: _IntegratedVaultCard(
-                          vaultId: vaultId,
-                          income: income,
-                          expense: expense,
-                          balance: balance,
-                          txs: txs,
-                          activeColor: widget.activeColor,
-                          l10n: widget.l10n,
-                          vaultName: index == 0 ? widget.l10n.mainVault : widget.groups[index - 1].name,
-                          morphProgress: widget.morphProgress,
-                          isCurrent: isCurrent,
+                        child: GestureDetector(
+                          onTap: isCurrent && vaultId != null ? () {
+                            // Find the state to call _showVaultDetail
+                            final state = context.findAncestorStateOfType<_VaultsScreenState>();
+                            if (state != null) state._showVaultDetail(context, vaultId);
+                          } : null,
+                          child: _IntegratedVaultCard(
+                            vaultId: vaultId,
+                            income: income,
+                            expense: expense,
+                            balance: balance,
+                            txs: txs,
+                            activeColor: widget.activeColor,
+                            l10n: widget.l10n,
+                            vaultName: index == 0 ? widget.l10n.mainVault : widget.groups[index - 1].name,
+                            morphProgress: widget.morphProgress,
+                            isCurrent: isCurrent,
+                          ),
                         ),
                       ),
                     ),
@@ -912,6 +920,7 @@ class _IntegratedVaultCard extends StatelessWidget {
 
   Widget _buildMorphContent(BuildContext context, double primaryMorph, double secondaryOpacity) {
     final hasFlexibleTx = txs.any((t) => t.minAmount != null || t.maxAmount != null);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     // Font boyutları — smooth lerp
     final double titleFontSize = lerpDouble(11, 18, primaryMorph)!;
@@ -959,7 +968,7 @@ class _IntegratedVaultCard extends StatelessWidget {
               child: Align(
                 alignment: Alignment.lerp(Alignment.center, Alignment.centerLeft, primaryMorph)!,
                 child: Text(
-                  primaryMorph < 0.4 ? vaultName.toUpperCase() : vaultName,
+                  vaultName,
                   style: TextStyle(
                     fontSize: titleFontSize,
                     fontWeight: FontWeight.w900,
@@ -1014,12 +1023,27 @@ class _IntegratedVaultCard extends StatelessWidget {
                           Expanded(child: _buildMiniStat(l10n.expense, expense, AppColors.getExpense(context))),
                         ],
                       ),
-                      if (hasFlexibleTx) ...[
-                        const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(height: 1, thickness: 0.5)),
-                        _buildRangeStats(txs),
-                      ],
+                      
+                      // Ayırıcı Çizgi (Gelir-Gider Altında)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Divider(
+                          height: 1, 
+                          thickness: 0.5, 
+                          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08)
+                        ),
+                      ),
+
+                      // İstatistik Alanı - İkonu sabitlemek için sabit yükseklik (40px)
+                      SizedBox(
+                        height: 40,
+                        child: hasFlexibleTx 
+                          ? _buildRangeStats(txs)
+                          : const SizedBox.shrink(),
+                      ),
+
                       const SizedBox(height: 12),
-                      const Icon(Icons.unfold_more_rounded, size: 16, color: Colors.grey),
+                      const Icon(Icons.swap_horiz_rounded, size: 16, color: Colors.grey),
                     ],
                   ),
                 ),
@@ -1041,8 +1065,8 @@ class _IntegratedVaultCard extends StatelessWidget {
   }
 
   Widget _buildRangeStats(List<TransactionUI> txs) {
-    final minNet = txs.where((t) => t.isIncome).fold<double>(0, (s, t) => s + t.minMonthlyEquivalent) - txs.where((t) => !t.isIncome).fold<double>(0, (s, t) => s + t.maxMonthlyEquivalent);
-    final maxNet = txs.where((t) => t.isIncome).fold<double>(0, (s, t) => s + t.maxMonthlyEquivalent) - txs.where((t) => !t.isIncome).fold<double>(0, (s, t) => s + t.minMonthlyEquivalent);
+    final minNet = txs.where((t) => t.isIncome).fold<double>(0.0, (s, t) => s + t.minMonthlyEquivalent) - txs.where((t) => !t.isIncome).fold<double>(0.0, (s, t) => s + t.maxMonthlyEquivalent);
+    final maxNet = txs.where((t) => t.isIncome).fold<double>(0.0, (s, t) => s + t.maxMonthlyEquivalent) - txs.where((t) => !t.isIncome).fold<double>(0.0, (s, t) => s + t.minMonthlyEquivalent);
     
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -1104,7 +1128,12 @@ class _HeaderIconButton extends StatelessWidget {
   final VoidCallback onTap;
   final bool isSelected;
   final Color? activeColor;
-  const _HeaderIconButton({required this.icon, required this.onTap, this.isSelected = false, this.activeColor});
+  const _HeaderIconButton({
+    required this.icon, 
+    required this.onTap,
+    this.isSelected = false,
+    this.activeColor,
+  });
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -1114,13 +1143,38 @@ class _HeaderIconButton extends StatelessWidget {
   }
 }
 
-class _LiquidBlob extends StatelessWidget {
+class _FluidDialogButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
   final Color color;
-  final double size;
-  const _LiquidBlob({required this.color, required this.size});
+
+  const _FluidDialogButton({
+    required this.label,
+    required this.onTap,
+    required this.color,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)])), child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50), child: Container(color: Colors.transparent)));
+    return GestureDetector(
+      onTap: onTap,
+      child: FluidContainer(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        borderRadius: 16,
+        color: color.withValues(alpha: 0.15),
+        borderWidth: 1.5,
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w900,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -1189,6 +1243,36 @@ class _CarvedContainer extends StatelessWidget {
             child: child,
           ),
         ),
+      ),
+    );
+  }
+}
+
+
+/// Arka planda süzülen sıvımsı renk kütlesi
+class _LiquidBlob extends StatelessWidget {
+  final Color color;
+  final double size;
+
+  const _LiquidBlob({required this.color, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            color,
+            color.withValues(alpha: 0),
+          ],
+        ),
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+        child: Container(color: Colors.transparent),
       ),
     );
   }

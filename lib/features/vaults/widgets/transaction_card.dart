@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_constants.dart';
 import '../../../../core/utils/currency_utils.dart';
 import '../../../../shared/widgets/fluid_container.dart';
@@ -71,10 +71,8 @@ class TransactionCard extends StatelessWidget {
       }
     }
 
-    // Üst Model (Kategori) ve Alt Model (İsim) Ayrımı
     final mainModelName = localizedCategoryName(tx.categoryId, l10n) ?? l10n.all.toUpperCase();
     final subModelName = tx.name;
-    
     final amountColor = tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context);
 
     return GestureDetector(
@@ -87,11 +85,9 @@ class TransactionCard extends StatelessWidget {
         color: tx.color.withValues(alpha: isDark ? 0.08 : 0.04),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Üst Bölüm: İkon ve Periyot Badge
+            // ÜST BÖLÜM: İkon ve Belirteçler
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
@@ -102,27 +98,59 @@ class TransactionCard extends StatelessWidget {
                   ),
                   child: Icon(tx.icon, color: tx.color, size: 22),
                 ),
-                if (periodLabel != null)
-                  Flexible(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      margin: const EdgeInsets.only(left: 8),
-                      decoration: BoxDecoration(
-                        color: amountColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
+                const SizedBox(width: 8),
+                // İkonun yanındaki dikey belirteç alanı
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Dashboard ve Kasa Noktaları Grubu
+                      Row(
+                        children: [
+                          if (tx.showOnDashboard)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 4),
+                              child: Icon(Icons.dashboard_rounded, color: AppColors.getPrimary(context), size: 12),
+                            ),
+                          if (tx.groupIds.isNotEmpty)
+                            Consumer(
+                              builder: (context, ref, _) {
+                                return Wrap(
+                                  spacing: 3,
+                                  children: tx.groupIds.map((vId) {
+                                    return Container(
+                                      width: 6, height: 6,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.getPrimary(context).withValues(alpha: 0.6),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    );
+                                  }).toList(),
+                                );
+                              },
+                            ),
+                        ],
                       ),
-                      child: Text(
-                        periodLabel.toUpperCase(), 
-                        style: TextStyle(fontSize: 7, fontWeight: FontWeight.w900, color: amountColor, letterSpacing: 0.5),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+                      if (periodLabel != null)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: amountColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            periodLabel.toUpperCase(), 
+                            style: TextStyle(fontSize: 6.5, fontWeight: FontWeight.w900, color: amountColor, letterSpacing: 0.5),
+                          ),
+                        ),
+                    ],
                   ),
+                ),
               ],
             ),
             
-            // Orta Bölüm: Başlık Hiyerarşisi (Ana Model / Alt Model)
+            // ORTA BÖLÜM: Kategori ve İsim
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -159,48 +187,33 @@ class TransactionCard extends StatelessWidget {
               ),
             ),
             
-            // Alt Bölüm: Tutar ve Belirgin Range
+            // ALT BÖLÜM: Tutar
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (tx.minAmount != null && tx.maxAmount != null)
                   Container(
-                    margin: const EdgeInsets.only(bottom: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    margin: const EdgeInsets.only(bottom: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.grey.withValues(alpha: isDark ? 0.1 : 0.05),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.unfold_more_rounded, size: 12, color: amountColor.withValues(alpha: 0.5)),
-                        const SizedBox(width: 4),
-                        Text(
-                          '₺${CurrencyUtils.formatAmount(tx.minAmount!)} - ₺${CurrencyUtils.formatAmount(tx.maxAmount!)}',
-                          style: TextStyle(
-                            fontSize: 10.5, 
-                            color: isDark ? Colors.white70 : Colors.black87, 
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.2
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      '₺${CurrencyUtils.formatAmount(tx.minAmount!)} - ₺${CurrencyUtils.formatAmount(tx.maxAmount!)}',
+                      style: TextStyle(fontSize: 9, color: isDark ? Colors.white70 : Colors.black87, fontWeight: FontWeight.w800),
                     ),
                   ),
-                SizedBox(
-                  width: double.infinity,
-                  child: FittedBox(
-                    alignment: Alignment.centerLeft,
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      '₺${CurrencyUtils.formatAmount(tx.amount)}', 
-                      style: TextStyle(
-                        fontSize: 28, 
-                        fontWeight: FontWeight.w900, 
-                        color: amountColor, 
-                        letterSpacing: -1.5
-                      ),
+                FittedBox(
+                  alignment: Alignment.centerLeft,
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '₺${CurrencyUtils.formatAmount(tx.amount)}', 
+                    style: TextStyle(
+                      fontSize: 28, 
+                      fontWeight: FontWeight.w900, 
+                      color: amountColor, 
+                      letterSpacing: -1.5
                     ),
                   ),
                 ),
@@ -218,58 +231,85 @@ void showTransactionActionMenu(BuildContext context, {
   required VoidCallback onEdit, 
   required VoidCallback onDelete, 
   VoidCallback? onRemoveFromVault,
-  required bool isInVault
+  required bool isInVault,
+  bool? showOnDashboard,
+  Function(bool)? onToggleDashboard,
 }) {
   final l10n = AppLocalizations.of(context)!;
+  bool currentShowOnDashboard = showOnDashboard ?? false;
 
   FluidSheet.show(
     context: context,
     title: name,
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // 1. DÜZENLE
-        _buildActionItem(
-          context: context,
-          icon: Icons.edit_note_rounded,
-          label: l10n.edit,
-          color: AppColors.getPrimary(context),
-          onTap: () {
-            Navigator.pop(context);
-            onEdit();
-          },
-        ),
-        
-        // 2. KASADAN ÇIKAR (Sadece kasa içindeyse)
-        if (isInVault && onRemoveFromVault != null) ...[
-          const SizedBox(height: 12),
-          _buildActionItem(
-            context: context,
-            icon: Icons.outbox_rounded,
-            label: l10n.removeFromVault,
-            color: Colors.orange,
-            onTap: () {
-              Navigator.pop(context);
-              onRemoveFromVault();
-            },
-          ),
-        ],
+    child: StatefulBuilder(
+      builder: (context, setState) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildActionItem(
+              context: context,
+              icon: Icons.edit_note_rounded,
+              label: l10n.edit,
+              color: AppColors.getPrimary(context),
+              onTap: () {
+                Navigator.pop(context);
+                onEdit();
+              },
+            ),
 
-        const SizedBox(height: 12),
-        
-        // 3. TAMAMEN SİL (Her zaman kırmızı ve tehlikeli)
-        _buildActionItem(
-          context: context,
-          icon: Icons.delete_sweep_rounded,
-          label: l10n.permanentDelete,
-          color: AppColors.error,
-          onTap: () {
-            Navigator.pop(context);
-            onDelete();
-          },
-        ),
-        const SizedBox(height: 16),
-      ],
+            const SizedBox(height: 12),
+
+            if (onToggleDashboard != null)
+              _buildActionItem(
+                context: context,
+                icon: currentShowOnDashboard ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                label: currentShowOnDashboard ? 'Ana Sayfadan Kaldır' : 'Ana Sayfada Göster',
+                color: currentShowOnDashboard ? Colors.blue : Colors.grey,
+                trailing: Switch(
+                  value: currentShowOnDashboard,
+                  onChanged: (val) {
+                    setState(() => currentShowOnDashboard = val);
+                    onToggleDashboard(val);
+                  },
+                  activeThumbColor: Colors.blue,
+                ),
+                onTap: () {
+                  final newVal = !currentShowOnDashboard;
+                  setState(() => currentShowOnDashboard = newVal);
+                  onToggleDashboard(newVal);
+                },
+              ),
+            
+            if (isInVault && onRemoveFromVault != null) ...[
+              const SizedBox(height: 12),
+              _buildActionItem(
+                context: context,
+                icon: Icons.outbox_rounded,
+                label: l10n.removeFromVault,
+                color: Colors.orange,
+                onTap: () {
+                  Navigator.pop(context);
+                  onRemoveFromVault();
+                },
+              ),
+            ],
+
+            const SizedBox(height: 12),
+            
+            _buildActionItem(
+              context: context,
+              icon: Icons.delete_sweep_rounded,
+              label: l10n.permanentDelete,
+              color: AppColors.error,
+              onTap: () {
+                Navigator.pop(context);
+                onDelete();
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        );
+      }
     ),
   );
 }
@@ -280,6 +320,7 @@ Widget _buildActionItem({
   required String label,
   required Color color,
   required VoidCallback onTap,
+  Widget? trailing,
 }) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
   return GestureDetector(
@@ -309,7 +350,10 @@ Widget _buildActionItem({
             )
           ),
           const Spacer(),
-          Icon(Icons.chevron_right_rounded, color: Colors.grey.withValues(alpha: 0.5), size: 20),
+          if (trailing != null) 
+            trailing
+          else
+            Icon(Icons.chevron_right_rounded, color: Colors.grey.withValues(alpha: 0.5), size: 20),
         ],
       ),
     ),

@@ -282,5 +282,7 @@
   "layout4": "4'lü",
   "moveForward": "Öne Taşı",
   "moveBackward": "Arkaya Taşı",
-  "selectCurrency": "Para Birimi Seçin"
+  "selectCurrency": "Para Birimi Seçin",
+  "membershipPlan": "Üyelik Planı",
+  "upgrade": "Yükselt"
 }

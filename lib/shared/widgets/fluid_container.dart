@@ -17,7 +17,8 @@ class FluidContainer extends StatelessWidget {
   final Color? color;
   final List<BoxShadow>? extraShadows;
   final double blur;
-  final double? borderWidth; // Yeni parametre
+  final double? borderWidth;
+  final Color? borderColor; // Yeni: Özel çerçeve rengi
 
   const FluidContainer({
     super.key,
@@ -32,7 +33,8 @@ class FluidContainer extends StatelessWidget {
     this.color,
     this.extraShadows,
     this.blur = 15.0,
-    this.borderWidth, // Parametre listesine eklendi
+    this.borderWidth,
+    this.borderColor,
   });
 
   @override
@@ -52,14 +54,14 @@ class FluidContainer extends StatelessWidget {
           radius: 1.5,
           colors: [
             isDark 
-              ? Colors.white.withValues(alpha: 0.16) 
-              : Colors.white.withValues(alpha: 0.18), 
+              ? Colors.white.withValues(alpha: 0.12) 
+              : Colors.white.withValues(alpha: 0.15), 
             Colors.transparent,
             isDark 
-              ? Colors.black.withValues(alpha: 0.28) 
-              : AppColors.lightDarkShadow.withValues(alpha: 0.1), 
+              ? Colors.black.withValues(alpha: 0.22) 
+              : AppColors.lightDarkShadow.withValues(alpha: 0.08), 
           ],
-          stops: const [0.0, 0.55, 1.0],
+          stops: const [0.0, 0.45, 1.0],
         )
       : null;
 
@@ -95,6 +97,11 @@ class FluidContainer extends StatelessWidget {
       ]
     ];
 
+    // Varsayılan çerçeve rengi (Eğer borderColor verilmemişse)
+    final defaultBorderColor = isDark 
+        ? Colors.white.withValues(alpha: 0.12) 
+        : Colors.white.withValues(alpha: 0.8);
+
     return Container(
       width: width,
       height: height,
@@ -107,8 +114,8 @@ class FluidContainer extends StatelessWidget {
         gradient: gradient,
         boxShadow: shadows,
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.8),
-          width: borderWidth ?? 0.8, // Dinamik genişlik
+          color: borderColor ?? defaultBorderColor,
+          width: borderWidth ?? 0.8,
         ),
       ),
       child: ClipRRect(

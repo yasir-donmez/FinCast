@@ -82,19 +82,19 @@ class FluidSheet extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.05),
+                  isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.08),
                   Colors.transparent,
                 ],
               ),
-              color: surfaceColor.withValues(alpha: isDark ? 0.85 : 1.0),
+              color: surfaceColor.withValues(alpha: isDark ? 0.94 : 1.0), // Opaklığı artırdık (0.85 -> 0.94)
               borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusLarge * 2.5)),
               border: Border.all(
-                color: Colors.white.withValues(alpha: isDark ? 0.1 : 0.3),
+                color: Colors.white.withValues(alpha: isDark ? 0.15 : 0.4),
                 width: 1.0,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: Colors.black.withValues(alpha: 0.4),
                   blurRadius: 40,
                   offset: const Offset(0, -10),
                   spreadRadius: -5,
@@ -104,7 +104,7 @@ class FluidSheet extends StatelessWidget {
             child: ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusLarge * 2.5)),
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 30.0, sigmaY: 30.0),
+                filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0), // Blur azaltıldı (30 -> 20)
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [

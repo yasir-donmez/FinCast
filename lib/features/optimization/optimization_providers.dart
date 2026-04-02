@@ -73,7 +73,7 @@ class OptimizationEngine {
     // 1. Kapsama göre filtrele
     final List<TransactionRecord> scopedTxs = scopeVaultId == null
         ? allTransactions
-        : allTransactions.where((t) => t.vaultId == scopeVaultId).toList();
+        : allTransactions.where((t) => t.vaultIds.contains(scopeVaultId)).toList();
 
     final List<Vault> scopedVaults = scopeVaultId == null
         ? allVaults

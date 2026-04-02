@@ -32,10 +32,10 @@ class SubscriptionService extends ChangeNotifier {
   // ... (limit getters remain the same)
   int get maxVaults => isPro ? 999 : 2;
   int get dailyAiLimit => isPro ? 3 : 0;
-  int get usedAiCount => _prefs.getInt('fincast_ai_usage_${_today}') ?? 0;
+  int get usedAiCount => _prefs.getInt('fincast_ai_usage_$_today') ?? 0;
 
   Future<void> incrementAiUsage() async {
-    await _prefs.setInt('fincast_ai_usage_${_today}', usedAiCount + 1);
+    await _prefs.setInt('fincast_ai_usage_$_today', usedAiCount + 1);
     notifyListeners();
   }
 

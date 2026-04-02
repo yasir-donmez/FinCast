@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../dashboard/main_scaffold.dart';
@@ -38,7 +37,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
     super.initState();
     _waveController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 700),
     );
   }
 
@@ -55,7 +54,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
     _waveController.forward(from: 0);
     _resetErrors();
     
-    await Future.delayed(const Duration(milliseconds: 300));
+    // Switch mode slightly before the flip finishes for smoother visual integration
+    await Future.delayed(const Duration(milliseconds: 250));
     
     if (mounted) {
       setState(() {
@@ -166,6 +166,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
   @override
   Widget build(BuildContext context) {
     final primaryColor = AppColors.getPrimary(context);
+    final size = MediaQuery.of(context).size;
+    final screenHeight = size.height;
+    
+    // Dynamically adjust spacings based on screen height
+    final double topSpacer = screenHeight * 0.03;
+    final double heroToCardSpacer = screenHeight * 0.05;
+    final double cardToBottomSpacer = screenHeight * 0.04;
 
     return Scaffold(
       body: LiquidBackground(
@@ -184,18 +191,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 20),
-                      _buildHero(primaryColor),
-                      const SizedBox(height: 48),
+                      SizedBox(height: topSpacer),
+                      _buildHero(context, primaryColor, screenHeight),
+                      SizedBox(height: heroToCardSpacer),
 
                       FluidFlipCard(
                         isFront: _isLogin,
-                        front: _buildLoginForm(context),
-                        back: _buildRegisterForm(context),
+                        front: _buildLoginForm(context, screenHeight),
+                        back: _buildRegisterForm(context, screenHeight),
                       ),
 
-                      const SizedBox(height: 40),
+                      SizedBox(height: cardToBottomSpacer),
                       _buildBottomActions(context, primaryColor),
+                      const SizedBox(height: 20), // Extra space for scrolling
                     ],
                   ),
                 ),
@@ -207,13 +215,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
     );
   }
 
-  Widget _buildHero(Color primaryColor) {
+  Widget _buildHero(BuildContext context, Color primaryColor, double screenHeight) {
+    final double fontSize = (screenHeight * 0.06).clamp(32.0, 56.0);
+    
     return Column(
       children: [
         Text(
           'FinCast',
           style: TextStyle(
-            fontSize: 48,
+            fontSize: fontSize,
             fontWeight: FontWeight.w900,
             color: AppColors.getTextPrimary(context),
             letterSpacing: -3,
@@ -221,7 +231,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
         ),
         const SizedBox(height: 4),
         Container(
-          width: 40,
+          width: fontSize * 0.8,
           height: 4,
           decoration: BoxDecoration(
             color: primaryColor,
@@ -232,7 +242,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
     );
   }
 
-  Widget _buildLoginForm(BuildContext context) {
+  Widget _buildLoginForm(BuildContext context, double screenHeight) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -245,10 +255,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
         ),
         const SizedBox(height: 8),
         Text(
-          'Hesabınıza giriş yaparak finanlarınıza hükmedin.',
-          style: TextStyle(color: AppColors.getTextSecondary(context).withValues(alpha: 0.7), fontSize: 13),
+          'Hesabınıza giriş yaparak finanslarınıza hükmedin.',
+          style: TextStyle(
+            color: AppColors.getTextSecondary(context).withValues(alpha: 0.7), 
+            fontSize: (screenHeight * 0.016).clamp(11.0, 14.0),
+          ),
         ),
-        const SizedBox(height: 32),
+        SizedBox(height: screenHeight * 0.035),
         FluidTextField(
           controller: _emailController,
           hintText: 'E-posta',
@@ -256,7 +269,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
           errorText: _emailError,
           keyboardType: TextInputType.emailAddress,
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: screenHeight * 0.02),
         FluidTextField(
           controller: _passwordController,
           hintText: 'Şifre',
@@ -280,11 +293,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
             },
             child: Text(
               'Şifremi Unuttum',
-              style: TextStyle(color: AppColors.getPrimary(context).withValues(alpha: 0.8), fontSize: 12),
+              style: TextStyle(
+                color: AppColors.getPrimary(context).withValues(alpha: 0.8), 
+                fontSize: (screenHeight * 0.015).clamp(10.0, 13.0),
+              ),
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: screenHeight * 0.015),
         _isLoading
             ? const Center(child: CircularProgressIndicator())
             : FluidButton(
@@ -292,13 +308,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
                 width: double.infinity,
                 child: const Text('Giriş Yap'),
               ),
-        const SizedBox(height: 32),
-        _buildSocialLogin(context),
+        SizedBox(height: screenHeight * 0.035),
+        _buildSocialLogin(context, screenHeight),
       ],
     );
   }
 
-  Widget _buildRegisterForm(BuildContext context) {
+  Widget _buildRegisterForm(BuildContext context, double screenHeight) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -312,9 +328,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
         const SizedBox(height: 8),
         Text(
           'FinCast dünyasına katılarak limitlerinizi belirleyin.',
-          style: TextStyle(color: AppColors.getTextSecondary(context).withValues(alpha: 0.7), fontSize: 13),
+          style: TextStyle(
+            color: AppColors.getTextSecondary(context).withValues(alpha: 0.7), 
+            fontSize: (screenHeight * 0.016).clamp(11.0, 14.0),
+          ),
         ),
-        const SizedBox(height: 32),
+        SizedBox(height: screenHeight * 0.035),
         FluidTextField(
           controller: _emailController,
           hintText: 'E-posta',
@@ -322,7 +341,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
           errorText: _emailError,
           keyboardType: TextInputType.emailAddress,
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: screenHeight * 0.02),
         FluidTextField(
           controller: _passwordController,
           hintText: 'Şifre',
@@ -338,7 +357,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
             onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
           ),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: screenHeight * 0.02),
         FluidTextField(
           controller: _confirmPasswordController,
           hintText: 'Şifre Tekrar',
@@ -354,7 +373,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
             onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
           ),
         ),
-        const SizedBox(height: 32),
+        SizedBox(height: screenHeight * 0.035),
         _isLoading
             ? const Center(child: CircularProgressIndicator())
             : FluidButton(
@@ -367,7 +386,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
     );
   }
 
-  Widget _buildSocialLogin(BuildContext context) {
+  Widget _buildSocialLogin(BuildContext context, double screenHeight) {
     return Column(
       children: [
         Row(
@@ -375,12 +394,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
             Expanded(child: Divider(color: AppColors.getTextSecondary(context).withValues(alpha: 0.1))),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text('Veya', style: TextStyle(color: AppColors.getTextSecondary(context).withValues(alpha: 0.4), fontSize: 12)),
+              child: Text(
+                'Veya', 
+                style: TextStyle(
+                  color: AppColors.getTextSecondary(context).withValues(alpha: 0.4), 
+                  fontSize: (screenHeight * 0.015).clamp(10.0, 12.0),
+                ),
+              ),
             ),
             Expanded(child: Divider(color: AppColors.getTextSecondary(context).withValues(alpha: 0.1))),
           ],
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: screenHeight * 0.025),
         FluidButton(
           onTap: _signInWithGoogle,
           isSecondary: true,
@@ -388,9 +413,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.g_mobiledata, size: 28, color: AppColors.getTextPrimary(context)),
+              Icon(Icons.g_mobiledata, size: (screenHeight * 0.035).clamp(24.0, 32.0), color: AppColors.getTextPrimary(context)),
               const SizedBox(width: 8),
-              const Text('Google ile Devam Et', style: TextStyle(fontSize: 14)),
+              Text(
+                'Google ile Devam Et', 
+                style: TextStyle(fontSize: (screenHeight * 0.017).clamp(12.0, 15.0)),
+              ),
             ],
           ),
         ),

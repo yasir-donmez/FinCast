@@ -883,4 +883,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get selectCurrency => 'Selecionar moeda';
+
+  @override
+  String get membershipPlan => 'Üyelik Planı';
+
+  @override
+  String get upgrade => 'Yükselt';
 }

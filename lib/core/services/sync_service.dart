@@ -83,7 +83,7 @@ class SyncService {
         'date': tx.date.toIso8601String(),
         'period_type': tx.periodType,
         'is_archived': tx.isArchived,
-        'vault_id': (await DatabaseService.isar.vaults.filter().idEqualTo(tx.vaultId ?? -1).findFirst())?.remoteId,
+        'vault_id': (await DatabaseService.isar.vaults.filter().idEqualTo(tx.vaultIds.isNotEmpty ? tx.vaultIds.first : -1).findFirst())?.remoteId,
       };
 
       await _supabase.from('transaction_records').upsert(data);

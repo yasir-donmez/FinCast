@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_constants.dart';
@@ -80,7 +79,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
     FluidSheet.show(
       context: context,
       title: AppLocalizations.of(context)!.addTransaction,
-      child: AddTransactionSheet(initialVaultId: preselectedVaultId),
+      child: AddTransactionSheet(initialVaultIds: preselectedVaultId != null ? [preselectedVaultId] : []),
     );
   }
 

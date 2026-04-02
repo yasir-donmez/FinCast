@@ -1813,6 +1813,18 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Para Birimi Seçin'**
   String get selectCurrency;
+
+  /// No description provided for @membershipPlan.
+  ///
+  /// In tr, this message translates to:
+  /// **'Üyelik Planı'**
+  String get membershipPlan;
+
+  /// No description provided for @upgrade.
+  ///
+  /// In tr, this message translates to:
+  /// **'Yükselt'**
+  String get upgrade;
 }
 
 class _AppLocalizationsDelegate

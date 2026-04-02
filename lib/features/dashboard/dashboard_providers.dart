@@ -4,11 +4,11 @@ import '../../core/providers/db_providers.dart';
 import '../../core/utils/icon_utils.dart';
 import '../vaults/vaults_providers.dart';
 
-/// Dashboard'da gösterilecek ortak kart veri modeli
+/// Dashboard'daki bir öğeyi temsil eder (Kasa/Grup veya Tekil İşlem)
 class DashboardItem {
   final String id;
   final String name;
-  final String? categoryId; // ID bazlı ikon/renk için
+  final String? categoryId;
   final double balance;
   final String currency;
   final String? iconCode;
@@ -46,12 +46,6 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
 
   final List<DashboardItem> items = [];
 
-  // Pre-group transactions by groupId for O(N+M) performance
-  final Map<String?, List<TransactionUI>> groupedTransactions = {};
-  for (final t in transactions) {
-    groupedTransactions.putIfAbsent(t.groupId, () => []).add(t);
-  }
-
   // 1. Görünür Kasaları (Grupları) ekle
   final sortedVaults = vaults.where((v) => v.showOnDashboard).toList()
     ..sort((a, b) {
@@ -62,8 +56,8 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
 
   for (final v in sortedVaults) {
     final String vaultGroupId = 'v_${v.id}';
-    // Kasa içindeki işlemleri Map'ten hızlıca çek
-    final groupTx = (groupedTransactions[vaultGroupId] ?? [])
+    // Kasa içindeki işlemleri bul
+    final groupTx = transactions.where((t) => t.groupIds.contains(vaultGroupId)).toList()
       ..sort((a, b) => b.date.compareTo(a.date));
 
     double groupBalance = 0;
@@ -126,26 +120,24 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
     );
   }
 
-  // 2. Görünür Tekil İşlemleri ekle (Map'ten null anahtarı ile çek)
-  final standaloneTxs = groupedTransactions[null] ?? [];
+  // 2. Görünür Tekil İşlemleri ekle (Herhangi bir kasaya bağlı olmayan VE showOnDashboard olanlar)
+  final standaloneTxs = transactions.where((t) => t.groupIds.isEmpty && t.showOnDashboard).toList();
   for (final t in standaloneTxs) {
-    if (t.showOnDashboard) {
-      items.add(
-        DashboardItem(
-          id: t.id, 
-          name: t.name,
-          categoryId: t.categoryId,
-          balance: t.isIncome ? t.amount : -t.amount,
-          currency: '₺',
-          iconCode: t.iconCode ?? t.categoryId,
-          isGroup: false,
-          minLimit: t.minAmount,
-          maxLimit: t.maxAmount,
-          dashboardOrder: 0,
-          dashboardLayoutType: t.dashboardLayoutType,
-        ),
-      );
-    }
+    items.add(
+      DashboardItem(
+        id: t.id, 
+        name: t.name,
+        categoryId: t.categoryId,
+        balance: t.isIncome ? t.amount : -t.amount,
+        currency: '₺',
+        iconCode: t.iconCode ?? t.categoryId,
+        isGroup: false,
+        minLimit: t.minAmount,
+        maxLimit: t.maxAmount,
+        dashboardOrder: 0,
+        dashboardLayoutType: t.dashboardLayoutType,
+      ),
+    );
   }
 
   return items;

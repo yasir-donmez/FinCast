@@ -885,4 +885,10 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get selectCurrency => 'Seleziona valuta';
+
+  @override
+  String get membershipPlan => 'Üyelik Planı';
+
+  @override
+  String get upgrade => 'Yükselt';
 }

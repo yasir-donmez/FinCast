@@ -40,9 +40,9 @@ class TransactionRecord {
   /// Kaydın oluştuğu veya gerçekleşeceği tarih
   late DateTime date;
 
-  /// Hangi Kasa (Vault) ile ilişkili? (İlişkisel Veritabanı kullanımı)
-  /// Bu, ID üzerinden ilişki tutar
-  int? vaultId;
+  /// Hangi Kasalar (Vault) ile ilişkili? (Çoklu Kasa Desteği)
+  /// İşlem tektir ancak birden fazla kasada listelenebilir.
+  List<int> vaultIds = [];
 
   /// Ana sayfada gösterilsin mi?
   bool showOnDashboard = false;

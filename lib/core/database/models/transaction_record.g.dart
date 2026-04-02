@@ -107,10 +107,10 @@ const TransactionRecordSchema = CollectionSchema(
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
-    r'vaultId': PropertySchema(
+    r'vaultIds': PropertySchema(
       id: 18,
-      name: r'vaultId',
-      type: IsarType.long,
+      name: r'vaultIds',
+      type: IsarType.longList,
     )
   },
   estimateSize: _transactionRecordEstimateSize,
@@ -192,6 +192,7 @@ int _transactionRecordEstimateSize(
     }
   }
   bytesCount += 3 + object.title.length * 3;
+  bytesCount += 3 + object.vaultIds.length * 8;
   return bytesCount;
 }
 
@@ -219,7 +220,7 @@ void _transactionRecordSerialize(
   writer.writeLong(offsets[15], object.syncStatus);
   writer.writeString(offsets[16], object.title);
   writer.writeDateTime(offsets[17], object.updatedAt);
-  writer.writeLong(offsets[18], object.vaultId);
+  writer.writeLongList(offsets[18], object.vaultIds);
 }
 
 TransactionRecord _transactionRecordDeserialize(
@@ -248,7 +249,7 @@ TransactionRecord _transactionRecordDeserialize(
   object.syncStatus = reader.readLong(offsets[15]);
   object.title = reader.readString(offsets[16]);
   object.updatedAt = reader.readDateTime(offsets[17]);
-  object.vaultId = reader.readLongOrNull(offsets[18]);
+  object.vaultIds = reader.readLongList(offsets[18]) ?? [];
   return object;
 }
 
@@ -296,7 +297,7 @@ P _transactionRecordDeserializeProp<P>(
     case 17:
       return (reader.readDateTime(offset)) as P;
     case 18:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readLongList(offset) ?? []) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -2008,76 +2009,147 @@ extension TransactionRecordQueryFilter
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
-      vaultIdIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'vaultId',
-      ));
-    });
-  }
-
-  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
-      vaultIdIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'vaultId',
-      ));
-    });
-  }
-
-  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
-      vaultIdEqualTo(int? value) {
+      vaultIdsElementEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'vaultId',
+        property: r'vaultIds',
         value: value,
       ));
     });
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
-      vaultIdGreaterThan(
-    int? value, {
+      vaultIdsElementGreaterThan(
+    int value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         include: include,
-        property: r'vaultId',
+        property: r'vaultIds',
         value: value,
       ));
     });
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
-      vaultIdLessThan(
-    int? value, {
+      vaultIdsElementLessThan(
+    int value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.lessThan(
         include: include,
-        property: r'vaultId',
+        property: r'vaultIds',
         value: value,
       ));
     });
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
-      vaultIdBetween(
-    int? lower,
-    int? upper, {
+      vaultIdsElementBetween(
+    int lower,
+    int upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
-        property: r'vaultId',
+        property: r'vaultIds',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      vaultIdsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'vaultIds',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      vaultIdsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'vaultIds',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      vaultIdsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'vaultIds',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      vaultIdsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'vaultIds',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      vaultIdsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'vaultIds',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      vaultIdsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'vaultIds',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
     });
   }
 }
@@ -2339,20 +2411,6 @@ extension TransactionRecordQuerySortBy
       sortByUpdatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.desc);
-    });
-  }
-
-  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
-      sortByVaultId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'vaultId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
-      sortByVaultIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'vaultId', Sort.desc);
     });
   }
 }
@@ -2623,20 +2681,6 @@ extension TransactionRecordQuerySortThenBy
       return query.addSortBy(r'updatedAt', Sort.desc);
     });
   }
-
-  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
-      thenByVaultId() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'vaultId', Sort.asc);
-    });
-  }
-
-  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
-      thenByVaultIdDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'vaultId', Sort.desc);
-    });
-  }
 }
 
 extension TransactionRecordQueryWhereDistinct
@@ -2768,9 +2812,9 @@ extension TransactionRecordQueryWhereDistinct
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QDistinct>
-      distinctByVaultId() {
+      distinctByVaultIds() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'vaultId');
+      return query.addDistinctBy(r'vaultIds');
     });
   }
 }
@@ -2901,9 +2945,10 @@ extension TransactionRecordQueryProperty
     });
   }
 
-  QueryBuilder<TransactionRecord, int?, QQueryOperations> vaultIdProperty() {
+  QueryBuilder<TransactionRecord, List<int>, QQueryOperations>
+      vaultIdsProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'vaultId');
+      return query.addPropertyName(r'vaultIds');
     });
   }
 }

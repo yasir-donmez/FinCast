@@ -876,4 +876,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get selectCurrency => '通貨を選択';
+
+  @override
+  String get membershipPlan => 'Üyelik Planı';
+
+  @override
+  String get upgrade => 'Yükselt';
 }

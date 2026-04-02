@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/db_providers.dart';
 import '../../core/database/database_service.dart';
 import '../../core/database/models/transaction_record.dart';
-import '../../core/database/models/vault.dart';
 import '../../core/utils/icon_utils.dart';
 
 /// Tek bir işlem kaydı (UI Model)
@@ -24,7 +23,7 @@ class TransactionUI {
   final String? iconCode;   // İkon referansı (ID veya özel kod)
   final bool showOnDashboard;
   final int dashboardLayoutType;
-  String? groupId; // null ise grupsuz
+  List<String> groupIds = []; // Çoklu kasa desteği
 
   TransactionUI({
     required this.id,
@@ -43,8 +42,8 @@ class TransactionUI {
     this.iconCode,
     required this.showOnDashboard,
     this.dashboardLayoutType = 4,
-    this.groupId,
-  });
+    List<String>? groupIds,
+  }) : groupIds = groupIds ?? [];
 
   /// Belirli bir tutarın aylık karşılığını hesaplar.
   double _calculateMonthly(double baseAmount) {
@@ -110,6 +109,7 @@ class TransactionUI {
       iconCode: record.iconCode,
       showOnDashboard: record.showOnDashboard,
       dashboardLayoutType: record.dashboardLayoutType,
+      groupIds: record.vaultIds.map((vId) => 'v_$vId').toList(),
     );
   }
 }
@@ -125,20 +125,6 @@ class TransactionGroup {
     required this.name,
     List<String>? transactionIds,
   }) : transactionIds = transactionIds ?? [];
-
-  /// DB Vault modelinden TransactionGroup'a dönüştür
-  factory TransactionGroup.fromDB(Vault vault, List<TransactionRecord> allTx) {
-    final relatedTxIds = allTx.where((t) => t.vaultId == vault.id).toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
-
-    final txIds = relatedTxIds.map((t) => 'db_${t.id}').toList();
-
-    return TransactionGroup(
-      id: 'v_${vault.id}',
-      name: vault.name,
-      transactionIds: txIds,
-    );
-  }
 }
 
 /// Filtreleme tipi
@@ -152,40 +138,90 @@ final transactionFilterProvider = StateProvider<TransactionFilter>(
 /// DB'den gelen işlemleri UI modeline çeviren provider
 final vaultTransactionsProvider = Provider<List<TransactionUI>>((ref) {
   final dbRecords = ref.watch(allTransactionsProvider);
-
-  return dbRecords.map((r) {
-    final tx = TransactionUI.fromDB(r);
-    // Gruplama durumunu DB vaultId'den al
-    if (r.vaultId != null) {
-      tx.groupId = 'v_${r.vaultId}';
-    }
-    return tx;
-  }).toList();
+  return dbRecords.map((r) => TransactionUI.fromDB(r)).toList();
 });
 
 /// Gruplama işlemi için yardımcı notifier
-/// Artık sadece DB operasyonlarını tetikler
 final transactionGroupingProvider = Provider(
   (ref) => TransactionGroupingHelper(),
 );
 
 class TransactionGroupingHelper {
-  Future<void> setGroupId(String transactionId, String? groupId) async {
+  /// Bir işleme kasa ekler veya çıkarır (Toggle)
+  Future<void> toggleVault(String transactionId, String vaultId) async {
     if (!transactionId.startsWith('db_')) return;
-    final id = int.tryParse(transactionId.replaceFirst('db_', ''));
-    if (id == null) return;
+    final txId = int.tryParse(transactionId.replaceFirst('db_', ''));
+    if (txId == null) return;
 
-    final record = await DatabaseService.getTransaction(id);
+    if (!vaultId.startsWith('v_')) return;
+    final vId = int.tryParse(vaultId.replaceFirst('v_', ''));
+    if (vId == null) return;
+
+    final record = await DatabaseService.getTransaction(txId);
     if (record == null) return;
 
-    if (groupId == null) {
-      record.vaultId = null;
-    } else if (groupId.startsWith('v_')) {
-      final vId = int.tryParse(groupId.replaceFirst('v_', ''));
-      record.vaultId = vId;
+    final currentVaults = List<int>.from(record.vaultIds);
+    if (currentVaults.contains(vId)) {
+      currentVaults.remove(vId);
+    } else {
+      currentVaults.add(vId);
     }
-
+    
+    record.vaultIds = currentVaults;
     await DatabaseService.updateTransaction(record);
+  }
+
+  /// Bir işlemden kasayı tamamen çıkarır
+  Future<void> removeFromVault(String transactionId, String vaultId) async {
+     if (!transactionId.startsWith('db_')) return;
+    final txId = int.tryParse(transactionId.replaceFirst('db_', ''));
+    if (txId == null) return;
+
+    if (!vaultId.startsWith('v_')) return;
+    final vId = int.tryParse(vaultId.replaceFirst('v_', ''));
+    if (vId == null) return;
+
+    final record = await DatabaseService.getTransaction(txId);
+    if (record == null) return;
+
+    final currentVaults = List<int>.from(record.vaultIds);
+    currentVaults.remove(vId);
+    
+    record.vaultIds = currentVaults;
+    await DatabaseService.updateTransaction(record);
+  }
+
+  /// Tek seferde kasanın tüm içeriğini set eder (Picker için)
+  Future<void> setVaultTransactions(String vaultId, List<String> transactionIds) async {
+    if (!vaultId.startsWith('v_')) return;
+    final vId = int.tryParse(vaultId.replaceFirst('v_', ''));
+    if (vId == null) return;
+
+    final allTx = await DatabaseService.getAllTransactions();
+    
+    // İşlem listesindeki her işlem için bu kasayı ekle/çıkar
+    for (final record in allTx) {
+      final txUiId = 'db_${record.id}';
+      final currentVaults = List<int>.from(record.vaultIds);
+      bool changed = false;
+
+      if (transactionIds.contains(txUiId)) {
+        if (!currentVaults.contains(vId)) {
+          currentVaults.add(vId);
+          changed = true;
+        }
+      } else {
+        if (currentVaults.contains(vId)) {
+          currentVaults.remove(vId);
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        record.vaultIds = currentVaults;
+        await DatabaseService.updateTransaction(record);
+      }
+    }
   }
 }
 
@@ -195,7 +231,7 @@ final transactionGroupsProvider = Provider<List<TransactionGroup>>((ref) {
   final allTx = ref.watch(vaultTransactionsProvider);
 
   return vaults.map((v) {
-    final relatedTxIds = allTx.where((t) => t.groupId == 'v_${v.id}').toList()
+    final relatedTxIds = allTx.where((t) => t.groupIds.contains('v_${v.id}')).toList()
       ..sort((a, b) => b.date.compareTo(a.date));
 
     return TransactionGroup(
@@ -226,21 +262,6 @@ class TransactionGroupsHelper {
     }
   }
 
-  /// Gruba işlem ekle
-  Future<void> addToGroup(String groupId, String transactionId) async {
-    final helper = TransactionGroupingHelper();
-    await helper.setGroupId(transactionId, groupId);
-  }
-
-  /// Gruptan işlem çıkar
-  Future<void> removeFromGroup(String groupId, String transactionId) async {
-    final helper = TransactionGroupingHelper();
-    await helper.setGroupId(transactionId, null);
-
-    // Eğer grupta hiç işlem kalmadıysa (veya 1 tane kaldıysa kullanıcının tercihine göre) grubu silebiliriz.
-    // Ancak şimdilik manuel silmeyi bekleyelim veya otomatik kontrol ekleyelim.
-  }
-
   /// Grubu tamamen sil
   Future<void> deleteGroup(String groupId) async {
     if (!groupId.startsWith('v_')) return;
@@ -249,37 +270,16 @@ class TransactionGroupsHelper {
 
     // Önce bu gruptaki tüm işlemleri çıkar
     final allTx = await DatabaseService.getAllTransactions();
-    final relatedTx = allTx.where((t) => t.vaultId == id);
-    for (final tx in relatedTx) {
-      tx.vaultId = null;
-      await DatabaseService.updateTransaction(tx);
+    for (final tx in allTx) {
+      if (tx.vaultIds.contains(id)) {
+        final updatedVaults = List<int>.from(tx.vaultIds)..remove(id);
+        tx.vaultIds = updatedVaults;
+        await DatabaseService.updateTransaction(tx);
+      }
     }
 
     // Kasayı (Grubu) sil
     await DatabaseService.deleteVault(id);
-  }
-
-  /// Kasaların sırasını güncelle (Sıralama özelliği için)
-  Future<void> reorderGroups(List<String> groupIds) async {
-    final vaults = await DatabaseService.getAllVaults();
-    final updatedVaults = <Vault>[];
-
-    for (int i = 0; i < groupIds.length; i++) {
-      final groupId = groupIds[i];
-      if (!groupId.startsWith('v_')) continue;
-      final id = int.tryParse(groupId.replaceFirst('v_', ''));
-      if (id == null) continue;
-
-      final vault = vaults.where((v) => v.id == id).firstOrNull;
-      if (vault != null) {
-        vault.dashboardOrder = i;
-        updatedVaults.add(vault);
-      }
-    }
-
-    if (updatedVaults.isNotEmpty) {
-      await DatabaseService.updateAllVaults(updatedVaults);
-    }
   }
 }
 

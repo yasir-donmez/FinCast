@@ -884,4 +884,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectCurrency => 'Select Currency';
+
+  @override
+  String get membershipPlan => 'Membership Plan';
+
+  @override
+  String get upgrade => 'Upgrade';
 }

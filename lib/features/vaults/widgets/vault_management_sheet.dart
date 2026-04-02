@@ -5,29 +5,34 @@ import '../../../core/theme/app_constants.dart';
 import '../../../core/database/database_service.dart';
 import '../../../core/database/models/vault.dart';
 import '../../../core/utils/icon_utils.dart';
+import '../../../core/utils/currency_utils.dart';
 import '../../../shared/widgets/fluid_container.dart';
 import '../../../shared/widgets/fluid_button.dart';
-import '../../../core/services/subscription_service.dart';
+import '../../../shared/widgets/fluid_dialog.dart';
 import '../../../core/providers/db_providers.dart';
-import '../../../features/subscription/widgets/pro_upgrade_sheet.dart';
-import '../../../l10n/app_localizations.dart';
+import '../vaults_providers.dart';
 import '../../auth/widgets/liquid_wave.dart';
 
+enum ManagementTab { vaults, transactions }
+
 class VaultManagementSheet extends ConsumerStatefulWidget {
-  const VaultManagementSheet({super.key});
+  final bool startInAddMode;
+  const VaultManagementSheet({super.key, this.startInAddMode = false});
 
   @override
   ConsumerState<VaultManagementSheet> createState() => _VaultManagementSheetState();
 }
 
-class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> with SingleTickerProviderStateMixin {
-  bool _isAdding = false;
+class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> with TickerProviderStateMixin {
+  late bool _isAdding;
+  ManagementTab _activeTab = ManagementTab.vaults;
   final TextEditingController _nameController = TextEditingController();
   late AnimationController _waveController;
 
   @override
   void initState() {
     super.initState();
+    _isAdding = widget.startInAddMode;
     _waveController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -41,141 +46,67 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
     super.dispose();
   }
 
-  void _toggleView() {
+  void _switchTab(ManagementTab tab) {
+    if (_activeTab == tab) return;
     HapticFeedback.mediumImpact();
-    // Dalga animasyonunu tetikle
-    _waveController.forward(from: 0.0);
-    
-    // Yarısında (dalga tam kaplamışken) içeriği değiştir
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) {
-        setState(() => _isAdding = !_isAdding);
-      }
-    });
+    setState(() => _activeTab = tab);
   }
 
   @override
   Widget build(BuildContext context) {
     final vaults = ref.watch(allVaultsProvider);
+    final transactions = ref.watch(vaultTransactionsProvider);
+    final standaloneTransactions = transactions.where((t) => t.groupIds.isEmpty).toList();
+    
     final activeColor = AppColors.getPrimary(context);
     final secondaryColor = AppColors.getSecondary(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     
     return Stack(
       children: [
-        // Pembe Dalga Efekti (Liquid Wave)
         Positioned.fill(
           child: IgnorePointer(
             child: LiquidWave(
               controller: _waveController,
-              color: secondaryColor, // Pembe/İkincil renk
+              color: secondaryColor,
               isTriggered: true,
             ),
           ),
         ),
 
-        // Klavye ile birlikte yükselen içerik
-        Padding(
-          padding: EdgeInsets.only(bottom: keyboardHeight),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500),
-            layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
-              return Stack(
-                alignment: Alignment.topCenter,
-                children: <Widget>[
-                  ...previousChildren,
-                  if (currentChild != null) currentChild,
-                ],
-              );
-            },
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              final isAddingView = child.key == const ValueKey('add_view');
-              // Görünüm değişimine göre farklı kayma yönleri
-              final beginOffset = isAddingView ? const Offset(0.2, 0) : const Offset(-0.2, 0);
-              
-              return FadeTransition(
-                opacity: animation,
-                child: SlideTransition(
-                  position: Tween<Offset>(begin: beginOffset, end: Offset.zero).animate(
-                    CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)
-                  ),
-                  child: child,
-                ),
-              );
-            },
-            child: _isAdding 
-              ? _buildAddVaultView(context, activeColor, isDark)
-              : _buildListView(context, vaults, activeColor, isDark),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildListView(BuildContext context, List<Vault> vaults, Color activeColor, bool isDark) {
-    return Column(
-      key: ValueKey('list_view'),
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (vaults.isNotEmpty)
-          ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: const BouncingScrollPhysics(),
-              itemCount: vaults.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                return _buildManagementItem(
-                  context: context, 
-                  vault: vaults[index], 
-                  activeColor: activeColor,
-                  isDark: isDark,
-                );
-              },
-            ),
-          )
-        else
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Opacity(
-                opacity: 0.5,
-                child: Column(
-                  children: [
-                    Icon(Icons.account_balance_wallet_outlined, size: 48, color: activeColor),
-                    const SizedBox(height: 12),
-                    const Text('Henüz bir kasa bulunmuyor.', style: TextStyle(fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        
-        const SizedBox(height: 24),
-        
-        FluidButton(
-          onTap: () {
-            final subscription = ref.read(subscriptionServiceProvider);
-            if (vaults.length >= subscription.maxVaults) {
-              ProUpgradeSheet.show(context);
-            } else {
-              _toggleView();
-            }
-          },
-          width: double.infinity,
-          color: activeColor.withValues(alpha: 0.1),
-          isSecondary: true,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+        // AnimatedSize sayesinde içerik değiştikçe sheet yumuşakça boy değiştirir
+        AnimatedSize(
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOutCubic,
+          alignment: Alignment.topCenter,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.add_rounded, color: activeColor),
-              const SizedBox(width: 8),
-              Text(
-                'Yeni Kasa Ekle', 
-                style: TextStyle(color: activeColor, fontWeight: FontWeight.bold)
+              if (!_isAdding) _buildPremiumTabSelector(activeColor, isDark),
+              
+              const SizedBox(height: 12),
+
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 400),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 0.05), 
+                        end: Offset.zero
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
+                child: _isAdding 
+                  ? _buildAddVaultView(context, activeColor, isDark)
+                  : (_activeTab == ManagementTab.vaults 
+                      ? _buildVaultListView(context, vaults, activeColor, isDark)
+                      : _buildTransactionListView(context, standaloneTransactions, activeColor, isDark)),
               ),
             ],
           ),
@@ -184,40 +115,272 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
     );
   }
 
-  Widget _buildAddVaultView(BuildContext context, Color activeColor, bool isDark) {
+  Widget _buildPremiumTabSelector(Color activeColor, bool isDark) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      height: 50,
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Stack(
+        children: [
+          // Hareketli Arka Plan (Indicator)
+          AnimatedAlign(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOutBack,
+            alignment: _activeTab == ManagementTab.vaults ? Alignment.centerLeft : Alignment.centerRight,
+            child: Container(
+              width: MediaQuery.of(context).size.width / 2 - 20,
+              height: 42,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: activeColor,
+                borderRadius: BorderRadius.circular(21),
+                boxShadow: [
+                  BoxShadow(
+                    color: activeColor.withValues(alpha: 0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  )
+                ],
+              ),
+            ),
+          ),
+          // Tab Yazıları
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _switchTab(ManagementTab.vaults),
+                  child: Center(
+                    child: Text(
+                      'Kasalar',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                        color: _activeTab == ManagementTab.vaults ? Colors.white : Colors.grey,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _switchTab(ManagementTab.transactions),
+                  child: Center(
+                    child: Text(
+                      'İşlemler',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                        color: _activeTab == ManagementTab.transactions ? Colors.white : Colors.grey,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVaultListView(BuildContext context, List<Vault> vaults, Color activeColor, bool isDark) {
     return Column(
-      key: ValueKey('add_view'),
+      key: const ValueKey('vault_list'),
       mainAxisSize: MainAxisSize.min,
       children: [
-        const SizedBox(height: 8),
+        if (vaults.isNotEmpty)
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.5),
+            child: ListView.separated(
+              shrinkWrap: true,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              physics: const BouncingScrollPhysics(),
+              itemCount: vaults.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, index) => _buildVaultItem(context, vaults[index], activeColor, isDark),
+            ),
+          )
+        else
+          _buildEmptyState('Henüz bir kasa bulunmuyor.', Icons.account_balance_wallet_outlined, activeColor),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  Widget _buildTransactionListView(BuildContext context, List<TransactionUI> txs, Color activeColor, bool isDark) {
+    return Column(
+      key: const ValueKey('tx_list'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (txs.isNotEmpty)
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.5),
+            child: ListView.separated(
+              shrinkWrap: true,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              physics: const BouncingScrollPhysics(),
+              itemCount: txs.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, index) => _buildTransactionItem(context, txs[index], activeColor, isDark),
+            ),
+          )
+        else
+          _buildEmptyState('Tekil işlem bulunamadı.', Icons.receipt_long_rounded, activeColor),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState(String message, IconData icon, Color color) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 60),
+      child: Opacity(
+        opacity: 0.5,
+        child: Column(
+          children: [
+            Icon(icon, size: 48, color: color),
+            const SizedBox(height: 12),
+            Text(message, style: const TextStyle(fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVaultItem(BuildContext context, Vault vault, Color activeColor, bool isDark) {
+    return FluidContainer(
+      padding: const EdgeInsets.all(12),
+      isGlass: true,
+      borderRadius: 24,
+      color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.01),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: activeColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+            child: Icon(IconUtils.getIcon(vault.iconCode ?? vault.name), color: activeColor, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(vault.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, letterSpacing: -0.5)),
+                Text(vault.currency, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.withValues(alpha: 0.6))),
+              ],
+            ),
+          ),
+          Transform.scale(
+            scale: 0.8,
+            child: Switch(
+              value: vault.showOnDashboard,
+              activeThumbColor: activeColor,
+              onChanged: (val) async {
+                vault.showOnDashboard = val;
+                await DatabaseService.updateVault(vault);
+                HapticFeedback.lightImpact();
+              },
+            ),
+          ),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: () => _confirmDeleteVault(context, vault),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: AppColors.getError(context).withValues(alpha: 0.08), shape: BoxShape.circle),
+              child: Icon(Icons.delete_outline_rounded, color: AppColors.getError(context), size: 18),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransactionItem(BuildContext context, TransactionUI tx, Color activeColor, bool isDark) {
+    return FluidContainer(
+      padding: const EdgeInsets.all(12),
+      isGlass: true,
+      borderRadius: 24,
+      color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.01),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: tx.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+            child: Icon(tx.icon, color: tx.color, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(tx.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: -0.5)),
+                Text('₺${CurrencyUtils.formatAmount(tx.amount)}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context))),
+              ],
+            ),
+          ),
+          Transform.scale(
+            scale: 0.8,
+            child: Switch(
+              value: tx.showOnDashboard,
+              activeThumbColor: activeColor,
+              onChanged: (val) async {
+                if (tx.dbId == null) return;
+                final record = await DatabaseService.getTransaction(tx.dbId!);
+                if (record != null) {
+                  record.showOnDashboard = val;
+                  await DatabaseService.updateTransaction(record);
+                  HapticFeedback.lightImpact();
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddVaultView(BuildContext context, Color activeColor, bool isDark) {
+    return Column(
+      key: const ValueKey('add_view'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 12),
         FluidContainer(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-          borderRadius: 20,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          borderRadius: 24,
           isGlass: true,
-          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.04),
           child: TextField(
             controller: _nameController,
             autofocus: true,
-            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
-            decoration: const InputDecoration(
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.5),
+            decoration: InputDecoration(
               hintText: 'Kasa Adı (örn. Birikim, Tatil)',
-              hintStyle: TextStyle(fontWeight: FontWeight.w500, color: Colors.grey),
+              hintStyle: TextStyle(fontWeight: FontWeight.w600, color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.3), fontSize: 16),
               border: InputBorder.none,
             ),
           ),
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 40),
         Row(
           children: [
             Expanded(
               child: FluidButton(
-                onTap: _toggleView,
-                color: Colors.grey.withValues(alpha: 0.1),
+                onTap: () => Navigator.pop(context),
                 isSecondary: true,
                 child: const Text('İptal', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
               flex: 2,
               child: FluidButton(
@@ -229,113 +392,74 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
                       ..showOnDashboard = true;
                     await DatabaseService.addVault(newVault);
                     _nameController.clear();
-                    _toggleView();
+                    if (context.mounted) Navigator.pop(context);
                   }
                 },
                 color: activeColor,
-                child: const Text(
-                  'Kasa Oluştur', 
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)
-                ),
+                child: const Text('Kasa Oluştur', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
       ],
     );
   }
 
-  Widget _buildManagementItem({
-    required BuildContext context, 
-    required Vault vault, 
-    required Color activeColor,
-    required bool isDark,
-  }) {
-    return FluidContainer(
-      padding: const EdgeInsets.all(16),
-      isGlass: true,
-      borderRadius: 28,
-      color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.01),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: activeColor.withValues(alpha: 0.1), 
-              borderRadius: BorderRadius.circular(18)
-            ),
-            child: Icon(
-              IconUtils.getIcon(vault.iconCode ?? vault.name), 
-              color: activeColor, 
-              size: 24
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  vault.name, 
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, letterSpacing: -0.5)
-                ),
-                Text(
-                  vault.currency, 
-                  style: TextStyle(
-                    fontSize: 12, 
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.getTextSecondary(context).withValues(alpha: 0.6)
-                  )
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: vault.showOnDashboard,
-            activeThumbColor: activeColor,
-            onChanged: (val) async {
-              vault.showOnDashboard = val;
-              await DatabaseService.updateVault(vault);
-            },
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () => _confirmDelete(context, vault),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.getError(context).withValues(alpha: 0.1), 
-                shape: BoxShape.circle
-              ),
-              child: Icon(Icons.delete_outline_rounded, color: AppColors.getError(context), size: 20),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _confirmDelete(BuildContext context, Vault vault) async {
-    final confirm = await showDialog<bool>(
+  void _confirmDeleteVault(BuildContext context, Vault vault) async {
+    final confirm = await showFluidDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.getSurface(context),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Kasa Silinsin mi?', style: TextStyle(fontWeight: FontWeight.w900)),
-        content: Text('${vault.name} kasası ve içindeki tüm işlemler silinecek.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('İptal')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Sil', style: TextStyle(color: AppColors.getError(context), fontWeight: FontWeight.bold)),
+      accentColor: AppColors.error,
+      icon: const Icon(Icons.account_balance_wallet_rounded),
+      title: const Text('Kasa Silinsin mi?'),
+      content: Text('${vault.name} kasası ve içindeki tüm işlemler silinecek.'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false), 
+          child: Text('İptal', style: TextStyle(color: AppColors.getTextSecondary(context))),
+        ),
+        _FluidDialogButton(
+          label: 'Sil',
+          onTap: () => Navigator.pop(context, true),
+          color: AppColors.error,
+        ),
+      ],
+    );
+    if (confirm == true) await DatabaseService.deleteVault(vault.id);
+  }
+}
+
+class _FluidDialogButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  final Color color;
+
+  const _FluidDialogButton({
+    required this.label,
+    required this.onTap,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: FluidContainer(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        borderRadius: 16,
+        color: color.withValues(alpha: 0.15),
+        borderWidth: 1.5,
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w900,
+              fontSize: 14,
+            ),
           ),
-        ],
+        ),
       ),
     );
-
-    if (confirm == true) {
-      await DatabaseService.deleteVault(vault.id);
-    }
   }
 }

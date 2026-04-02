@@ -282,5 +282,7 @@
   "layout4": "4-item",
   "moveForward": "Move Forward",
   "moveBackward": "Move Backward",
-  "selectCurrency": "Select Currency"
+  "selectCurrency": "Select Currency",
+  "membershipPlan": "Membership Plan",
+  "upgrade": "Upgrade"
 }
