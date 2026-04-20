@@ -193,3 +193,39 @@ Future<T?> showFluidDialog<T>({
     },
   );
 }
+
+class FluidDialogButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  final Color color;
+
+  const FluidDialogButton({
+    super.key,
+    required this.label,
+    required this.onTap,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: FluidContainer(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        borderRadius: 16,
+        color: color.withValues(alpha: 0.15),
+        borderWidth: 1.5,
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w900,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
