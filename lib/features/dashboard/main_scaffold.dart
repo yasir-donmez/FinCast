@@ -102,7 +102,70 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
           extendBody: true,
           backgroundColor: backgroundColor,
           body: _pages[_currentIndex],
-          bottomNavigationBar: SafeArea(
+        ),
+
+        // 💎 PRO İKONU: Navbardan yükselen gerçekçi sıvı form (Z-Index: 1 - Navbar'ın arkasında)
+        if (!subscription.isPro)
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeOutQuart,
+            // bottom: 124 (Açık - Navbar'dan uzak), 12 (Gizli - Navbar içinden çıkış)
+            bottom: shouldShowButton ? 124 : 12, 
+            right: 28,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(end: shouldShowButton ? 1.0 : 0.0),
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeOutCubic,
+              builder: (context, scaleFactor, child) {
+                return Opacity(
+                  opacity: scaleFactor.clamp(0.0, 1.0), 
+                  child: Transform.scale(
+                    scale: scaleFactor,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // 1. Hareketli Su Damlası + AI Yıldızları
+                        HeroMode(
+                          enabled: shouldShowButton && scaleFactor > 0.5,
+                          child: Hero(
+                            tag: 'pro_orb',
+                            child: MembershipOrb(
+                              color: activeColor,
+                              size: 50,
+                              morphFactor: scaleFactor,
+                            ),
+                          ),
+                        ),
+
+                        // 2. Gizli GestureDetector (Sadece büyükken aktif)
+                        if (shouldShowButton)
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                HapticFeedback.mediumImpact();
+                                ProUpgradeSheet.show(context);
+                              },
+                              borderRadius: BorderRadius.circular(30),
+                              child: const SizedBox(width: 60, height: 60),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+        // 📱 CUSTOM NAVBAR (Z-Index: 2 - En üstte)
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Material(
+            type: MaterialType.transparency,
+            child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: FluidContainer(
@@ -126,58 +189,8 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
               ),
             ),
           ),
-        ),
-
-        // 💎 PRO İKONU: Navbardan yükselen gerçekçi sıvı form (Artık Daire)
-        if (!subscription.isPro)
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 1400),
-            curve: shouldShowButton ? Curves.easeOutBack : Curves.easeInCirc,
-            // bottom: 124 (Açık - Nava daha uzak), 12 (Gizli - Navbar içinden çıkış)
-            bottom: shouldShowButton ? 124 : 12, 
-            right: 28,
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: shouldShowButton ? 1.0 : 0.0),
-              duration: const Duration(milliseconds: 1000),
-              curve: Curves.easeInOutBack,
-              builder: (context, scaleFactor, child) {
-                return AnimatedOpacity(
-                  duration: const Duration(milliseconds: 600),
-                  opacity: shouldShowButton ? 1.0 : 0.0, 
-                  child: Transform.scale(
-                    scale: scaleFactor,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // 1. Hareketli Su Damlası + AI Yıldızları (Animated Liquid & Stars)
-                        Hero(
-                          tag: 'pro_orb',
-                          child: MembershipOrb(
-                            color: activeColor,
-                            size: 50,
-                            morphFactor: scaleFactor,
-                          ),
-                        ),
-
-                        // 2. Gizli GestureDetector
-                        Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              HapticFeedback.mediumImpact();
-                              ProUpgradeSheet.show(context);
-                            },
-                            borderRadius: BorderRadius.circular(30),
-                            child: const SizedBox(width: 60, height: 60),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
           ),
+        ),
       ],
     );
   }

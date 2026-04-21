@@ -16,6 +16,7 @@ class TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
   final VoidCallback onAddVault;
   final AppLocalizations l10n;
   final Function(String) onVaultTap;
+  final double topPadding;
 
   TrueMorphDeckHeaderDelegate({
     required this.groups,
@@ -27,16 +28,28 @@ class TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.onAddVault,
     required this.l10n,
     required this.onVaultTap,
+    required this.topPadding,
   });
 
+  // --- Tasarım Sistemi Sabitleri ---
+  static const double kCompactCardHeight = 56.0;
+  static const double kExpandedCardHeight = 300.0;
+  static const double kHeaderBottomBuffer = 20.0; // Pinned haldeyken alttaki nefes payı
+  
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     final topPadding = MediaQuery.of(context).padding.top;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final progress = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
     final deckItems = [null, ...groups.map((g) => g.id)];
     final currentIndex = deckItems.indexOf(selectedVaultId);
 
     final bgAlpha = Curves.easeOutQuad.transform((progress * 1.6).clamp(0.0, 1.0));
+
+    // Kilitli haldeki içerik alanı (Status Bar hariç geri kalan alan)
+    final double availableHeaderHeight = minExtent - topPadding;
+    // İçeriği dikeyde ortalamak için gereken offset (ama görsel ağırlık için hafif yukarı -4px)
+    final double compactTopOffset = topPadding + ((availableHeaderHeight - kCompactCardHeight) / 2) - 2;
 
     return SizedBox.expand(
       child: ClipRect(
@@ -46,14 +59,22 @@ class TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
             sigmaY: bgAlpha * 20,
           ),
           child: Container(
-            color: AppColors.getBackground(context).withValues(alpha: bgAlpha * 0.15),
+            decoration: BoxDecoration(
+              color: AppColors.getBackground(context).withValues(alpha: bgAlpha * 0.15),
+              border: Border(
+                bottom: BorderSide(
+                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: progress > 0.95 ? (progress - 0.95) * 2 : 0.0),
+                  width: 0.5,
+                ),
+              ),
+            ),
             child: Stack(
               clipBehavior: Clip.none,
               children: [
                 Positioned(
-                  top: lerpDouble(topPadding + 80, topPadding + 4, progress)!,
+                  top: lerpDouble(topPadding + 80, compactTopOffset, progress)!,
                   left: 0, right: 0,
-                  height: lerpDouble(300, 56, progress)!,
+                  height: lerpDouble(kExpandedCardHeight, kCompactCardHeight, progress)!,
                   child: VaultCardStack(
                     deckItems: deckItems,
                     allTransactions: allTransactions,
@@ -101,7 +122,7 @@ class TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
   @override
   double get maxExtent => 420;
   @override
-  double get minExtent => 60 + 40;
+  double get minExtent => topPadding + kCompactCardHeight + kHeaderBottomBuffer;
   @override
   bool shouldRebuild(covariant TrueMorphDeckHeaderDelegate oldDelegate) => true;
 }

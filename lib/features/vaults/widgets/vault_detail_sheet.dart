@@ -7,6 +7,7 @@ import '../../../core/database/models/vault.dart';
 import '../../../core/providers/db_providers.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../shared/widgets/fluid_container.dart';
+import '../../../shared/widgets/fluid_switch.dart';
 import '../vaults_providers.dart';
 
 enum VaultDetailTab { transactions, manage }
@@ -60,12 +61,14 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
     
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeColor = AppColors.getPrimary(context);
+    final screenHeight = MediaQuery.of(context).size.height;
+    final scalingFactor = (screenHeight / 812.0).clamp(0.85, 1.0);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildTabSelector(activeColor, isDark),
-        const SizedBox(height: 12),
+        _buildTabSelector(activeColor, isDark, scalingFactor),
+        SizedBox(height: 12 * scalingFactor),
         AnimatedSize(
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeInOutCubic,
@@ -95,10 +98,10 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
     );
   }
 
-  Widget _buildTabSelector(Color activeColor, bool isDark) {
+  Widget _buildTabSelector(Color activeColor, bool isDark, double scalingFactor) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      height: 48,
+      margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8 * scalingFactor),
+      height: 48 * scalingFactor,
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(24),
@@ -111,8 +114,8 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
             alignment: _activeTab == VaultDetailTab.transactions ? Alignment.centerLeft : Alignment.centerRight,
             child: Container(
               width: (MediaQuery.of(context).size.width - 64) / 2,
-              height: 40,
-              margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              height: 40 * scalingFactor,
+              margin: EdgeInsets.symmetric(horizontal: 4, vertical: 4 * scalingFactor),
               decoration: BoxDecoration(
                 color: activeColor,
                 borderRadius: BorderRadius.circular(20),
@@ -137,7 +140,7 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
                       'İşlemler',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        fontSize: 13,
+                        fontSize: 13 * scalingFactor,
                         color: _activeTab == VaultDetailTab.transactions ? Colors.white : Colors.grey,
                       ),
                     ),
@@ -153,7 +156,7 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
                       'Yönet',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        fontSize: 13,
+                        fontSize: 13 * scalingFactor,
                         color: _activeTab == VaultDetailTab.manage ? Colors.white : Colors.grey,
                       ),
                     ),
@@ -168,6 +171,8 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
   }
 
   Widget _buildMainView(BuildContext context, Vault vault, List<TransactionUI> vaultTransactions, Color activeColor, bool isDark) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final scalingFactor = (screenHeight / 812.0).clamp(0.85, 1.0);
     return Column(
       key: const ValueKey('main_view'),
       mainAxisSize: MainAxisSize.min,
@@ -181,7 +186,7 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
                   ? TextField(
                       controller: _nameController,
                       autofocus: true,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                      style: TextStyle(fontSize: 22 * scalingFactor, fontWeight: FontWeight.w900),
                       decoration: InputDecoration(
                         hintText: 'Kasa Adı',
                         suffixIcon: IconButton(
@@ -209,7 +214,7 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
                         children: [
                           Text(
                             vault.name,
-                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                            style: TextStyle(fontSize: 22 * scalingFactor, fontWeight: FontWeight.w900, letterSpacing: -0.5),
                           ),
                           const SizedBox(width: 8),
                           Icon(Icons.edit_rounded, size: 16, color: activeColor.withValues(alpha: 0.5)),
@@ -223,24 +228,24 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
                   'Ana Sayfa', 
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)
                 ),
-                Transform.scale(
-                  scale: 0.8,
-                  child: Switch(
-                    value: vault.showOnDashboard, 
-                    activeThumbColor: activeColor,
-                    onChanged: (val) async {
-                      vault.showOnDashboard = val;
-                      await DatabaseService.updateVault(vault);
-                      HapticFeedback.lightImpact();
-                    }
-                  ),
+                FluidSwitch(
+                  value: vault.showOnDashboard, 
+                  activeColor: activeColor,
+                  activeIcon: Icons.visibility_rounded,
+                  inactiveIcon: Icons.visibility_off_rounded,
+                  scalingFactor: 0.8, // Match the scale the user had
+                  onChanged: (val) async {
+                    vault.showOnDashboard = val;
+                    await DatabaseService.updateVault(vault);
+                    HapticFeedback.lightImpact();
+                  }
                 ),
               ],
             ),
           ],
         ),
         
-        const SizedBox(height: 24),
+        SizedBox(height: 24 * scalingFactor),
 
         // 2. İŞLEM LİSTESİ BAŞLIĞI
         Row(
@@ -258,7 +263,7 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
           _buildEmptyState('Bu kasada henüz işlem yok.', Icons.layers_clear_rounded, activeColor)
         else
           ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45),
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4 * scalingFactor),
             child: ListView.separated(
               shrinkWrap: true,
               padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -278,22 +283,22 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
                         width: 40, height: 40,
                         decoration: BoxDecoration(
                           color: tx.color.withValues(alpha: 0.12), 
-                          borderRadius: BorderRadius.circular(14)
+                          borderRadius: BorderRadius.circular(14 * scalingFactor)
                         ),
-                        child: Icon(tx.icon, color: tx.color, size: 20),
+                        child: Icon(tx.icon, color: tx.color, size: 20 * scalingFactor),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(tx.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: -0.2)),
+                            Text(tx.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15 * scalingFactor, letterSpacing: -0.2)),
                             Text(
                               '₺${CurrencyUtils.formatAmount(tx.amount)}', 
                               style: TextStyle(
                                 color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context), 
                                 fontWeight: FontWeight.w900,
-                                fontSize: 13,
+                                fontSize: 13 * scalingFactor,
                               )
                             ),
                           ],
@@ -317,6 +322,8 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
   }
 
   Widget _buildSelectionView(BuildContext context, List<TransactionUI> allTransactions, List<TransactionUI> vaultTransactions, Color activeColor, bool isDark) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final scalingFactor = (screenHeight / 812.0).clamp(0.85, 1.0);
     return Column(
       key: const ValueKey('selection_view'),
       mainAxisSize: MainAxisSize.min,
@@ -325,9 +332,9 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'İŞLEM SEÇİMİ', 
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -0.5)
+              style: TextStyle(fontSize: 18 * scalingFactor, fontWeight: FontWeight.w900, letterSpacing: -0.5)
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -345,7 +352,7 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
         const SizedBox(height: 16),
         
         ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.5),
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45 * scalingFactor),
           child: ListView.separated(
             shrinkWrap: true,
             padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -362,41 +369,41 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
                   HapticFeedback.selectionClick();
                 },
                 child: FluidContainer(
-                  padding: const EdgeInsets.all(12),
-                  borderRadius: 24,
+                  padding: EdgeInsets.all(12 * scalingFactor),
+                  borderRadius: 24 * scalingFactor,
                   isGlass: true,
                   color: isSelected ? activeColor.withValues(alpha: 0.08) : (isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.01)),
                   child: Row(
                     children: [
                       Container(
-                        width: 36, height: 36,
+                        width: 36 * scalingFactor, height: 36 * scalingFactor,
                         decoration: BoxDecoration(
                           color: tx.color.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(tx.icon, color: tx.color, size: 18),
+                        child: Icon(tx.icon, color: tx.color, size: 18 * scalingFactor),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(tx.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, letterSpacing: -0.2)),
-                            Text('₺${CurrencyUtils.formatAmount(tx.amount)}', style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+                            Text(tx.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14 * scalingFactor, letterSpacing: -0.2)),
+                            Text('₺${CurrencyUtils.formatAmount(tx.amount)}', style: TextStyle(fontSize: 12 * scalingFactor, color: Colors.grey, fontWeight: FontWeight.w600)),
                           ],
                         ),
                       ),
-                      Transform.scale(
-                        scale: 0.8,
-                        child: Switch(
-                          value: isSelected, 
-                          activeThumbColor: activeColor,
-                          onChanged: (val) async {
-                            final helper = ref.read(transactionGroupingProvider);
-                            await helper.toggleVault(tx.id, widget.vaultId);
-                            HapticFeedback.selectionClick();
-                          }
-                        ),
+                      FluidSwitch(
+                        value: isSelected, 
+                        activeColor: activeColor,
+                        activeIcon: Icons.check_rounded,
+                        inactiveIcon: Icons.close_rounded,
+                        scalingFactor: 0.8, // Match the scale the user had
+                        onChanged: (val) async {
+                          final helper = ref.read(transactionGroupingProvider);
+                          await helper.toggleVault(tx.id, widget.vaultId);
+                          HapticFeedback.selectionClick();
+                        }
                       ),
                     ],
                   ),
@@ -411,16 +418,18 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
   }
 
   Widget _buildEmptyState(String message, IconData icon, Color color) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final scalingFactor = (screenHeight / 812.0).clamp(0.85, 1.0);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 60),
+      padding: EdgeInsets.symmetric(vertical: 60 * scalingFactor),
       child: Opacity(
         opacity: 0.5,
         child: Column(
           children: [
-            Icon(icon, size: 48, color: color),
-            const SizedBox(height: 12),
-            Text(message, style: const TextStyle(fontWeight: FontWeight.w600)),
+            Icon(icon, size: 48 * scalingFactor, color: color),
+            SizedBox(height: 12 * scalingFactor),
+            Text(message, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14 * scalingFactor)),
           ],
         ),
       ),

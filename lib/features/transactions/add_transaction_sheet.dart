@@ -13,6 +13,8 @@ import 'widgets/transaction_category_data.dart';
 import 'widgets/transaction_category_selector.dart';
 import 'widgets/transaction_vault_selector.dart';
 import 'widgets/transaction_period_selector.dart';
+import '../../shared/widgets/fluid_switch.dart';
+import '../../shared/widgets/fluid_button.dart';
 
 class AddTransactionSheet extends ConsumerStatefulWidget {
   final int? initialId;
@@ -188,7 +190,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
           periodType: tx.periodType,
           expandedPeriodCategory: expCat,
           selectedDay: _periodData.selectedDay,
-          selectedDateForRecurrence: tx.date ?? DateTime.now(),
+          selectedDateForRecurrence: tx.date,
           duration: 0, 
         );
       });
@@ -280,12 +282,15 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
         ? TransactionCategoryData.getExpenseCategories(context, l10n)
         : TransactionCategoryData.getIncomeCategories(context, l10n);
 
+    final screenHeight = MediaQuery.of(context).size.height;
+    final scalingFactor = (screenHeight / 812.0).clamp(0.85, 1.0);
+
     return Container(
       decoration: const BoxDecoration(color: Colors.transparent),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: AppSizes.paddingMedium),
+          SizedBox(height: AppSizes.paddingMedium * scalingFactor),
           TransactionTypeToggle(
                     tabIndex: _tabIndex,
                     onTabChanged: (index) {
@@ -351,9 +356,12 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                                 color: AppColors.getTextPrimary(context),
                               ),
                             ),
-                            Switch(
+                            FluidSwitch(
                               value: _isFlexibleAmount,
                               activeColor: AppColors.getPrimary(context),
+                              activeIcon: Icons.tune_rounded,
+                              inactiveIcon: Icons.horizontal_rule_rounded,
+                              scalingFactor: scalingFactor,
                               onChanged: (val) {
                                 setState(() {
                                   _isFlexibleAmount = val;
@@ -393,42 +401,21 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                       horizontal: AppSizes.paddingMedium, 
                       vertical: AppSizes.paddingLarge
                     ),
-                    child: GestureDetector(
+                    child: FluidButton(
                       onTap: () {
                         FocusManager.instance.primaryFocus?.unfocus();
                         _saveTransaction();
                       },
-                      child: Container(
-                        width: double.infinity,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.getPrimary(context),
-                              AppColors.getPrimary(context).withOpacity(0.8),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.getPrimary(context).withOpacity(0.4),
-                              blurRadius: 16,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            l10n.save, 
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
+                      width: double.infinity,
+                      height: 64,
+                      color: AppColors.getPrimary(context),
+                      child: Text(
+                        l10n.save, 
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
                         ),
                       ),
                     ),

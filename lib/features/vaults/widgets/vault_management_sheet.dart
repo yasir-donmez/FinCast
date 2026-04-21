@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_constants.dart';
@@ -12,6 +13,7 @@ import '../../../shared/widgets/fluid_dialog.dart';
 import '../../../core/providers/db_providers.dart';
 import '../vaults_providers.dart';
 import '../../auth/widgets/liquid_wave.dart';
+import '../../../shared/widgets/fluid_switch.dart';
 
 enum ManagementTab { vaults, transactions }
 
@@ -64,6 +66,9 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
     final secondaryColor = AppColors.getSecondary(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
+    final screenHeight = MediaQuery.of(context).size.height;
+    final scalingFactor = (screenHeight / 812.0).clamp(0.85, 1.0);
+    
     return Stack(
       children: [
         Positioned.fill(
@@ -84,7 +89,7 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (!_isAdding) _buildPremiumTabSelector(activeColor, isDark),
+              if (!_isAdding) _buildPremiumTabSelector(activeColor, isDark, scalingFactor),
               
               const SizedBox(height: 12),
 
@@ -105,10 +110,10 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
                   );
                 },
                 child: _isAdding 
-                  ? _buildAddVaultView(context, activeColor, isDark)
+                  ? _buildAddVaultView(context, activeColor, isDark, scalingFactor)
                   : (_activeTab == ManagementTab.vaults 
-                      ? _buildVaultListView(context, vaults, activeColor, isDark)
-                      : _buildTransactionListView(context, standaloneTransactions, activeColor, isDark)),
+                      ? _buildVaultListView(context, vaults, activeColor, isDark, scalingFactor)
+                      : _buildTransactionListView(context, standaloneTransactions, activeColor, isDark, scalingFactor)),
               ),
             ],
           ),
@@ -117,13 +122,13 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
     );
   }
 
-  Widget _buildPremiumTabSelector(Color activeColor, bool isDark) {
+  Widget _buildPremiumTabSelector(Color activeColor, bool isDark, double scalingFactor) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      height: 50,
+      margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8 * scalingFactor),
+      height: 50 * scalingFactor,
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(25),
+        borderRadius: BorderRadius.circular(25 * scalingFactor),
       ),
       child: Stack(
         children: [
@@ -133,17 +138,17 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
             curve: Curves.easeInOutBack,
             alignment: _activeTab == ManagementTab.vaults ? Alignment.centerLeft : Alignment.centerRight,
             child: Container(
-              width: MediaQuery.of(context).size.width / 2 - 20,
-              height: 42,
-              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: math.max(0, MediaQuery.of(context).size.width / 2 - 20),
+              height: 42 * scalingFactor,
+              margin: EdgeInsets.symmetric(horizontal: 4, vertical: 4 * scalingFactor),
               decoration: BoxDecoration(
                 color: activeColor,
-                borderRadius: BorderRadius.circular(21),
+                borderRadius: BorderRadius.circular(21 * scalingFactor),
                 boxShadow: [
                   BoxShadow(
                     color: activeColor.withValues(alpha: 0.3),
                     blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    offset: Offset(0, 4 * scalingFactor),
                   )
                 ],
               ),
@@ -161,7 +166,7 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
                       'Kasalar',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        fontSize: 14,
+                        fontSize: 14 * scalingFactor,
                         color: _activeTab == ManagementTab.vaults ? Colors.white : Colors.grey,
                       ),
                     ),
@@ -177,7 +182,7 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
                       'İşlemler',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        fontSize: 14,
+                        fontSize: 14 * scalingFactor,
                         color: _activeTab == ManagementTab.transactions ? Colors.white : Colors.grey,
                       ),
                     ),
@@ -191,105 +196,105 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
     );
   }
 
-  Widget _buildVaultListView(BuildContext context, List<Vault> vaults, Color activeColor, bool isDark) {
+  Widget _buildVaultListView(BuildContext context, List<Vault> vaults, Color activeColor, bool isDark, double scalingFactor) {
     return Column(
       key: const ValueKey('vault_list'),
       mainAxisSize: MainAxisSize.min,
       children: [
         if (vaults.isNotEmpty)
           ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.5),
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45 * scalingFactor),
             child: ListView.separated(
               shrinkWrap: true,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8 * scalingFactor),
               physics: const BouncingScrollPhysics(),
               itemCount: vaults.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, index) => _buildVaultItem(context, vaults[index], activeColor, isDark),
+              separatorBuilder: (_, __) => SizedBox(height: 10 * scalingFactor),
+              itemBuilder: (context, index) => _buildVaultItem(context, vaults[index], activeColor, isDark, scalingFactor),
             ),
           )
         else
-          _buildEmptyState('Henüz bir kasa bulunmuyor.', Icons.account_balance_wallet_outlined, activeColor),
+          _buildEmptyState('Henüz bir kasa bulunmuyor.', Icons.account_balance_wallet_outlined, activeColor, scalingFactor),
         const SizedBox(height: 12),
       ],
     );
   }
 
-  Widget _buildTransactionListView(BuildContext context, List<TransactionUI> txs, Color activeColor, bool isDark) {
+  Widget _buildTransactionListView(BuildContext context, List<TransactionUI> txs, Color activeColor, bool isDark, double scalingFactor) {
     return Column(
       key: const ValueKey('tx_list'),
       mainAxisSize: MainAxisSize.min,
       children: [
         if (txs.isNotEmpty)
           ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.5),
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45 * scalingFactor),
             child: ListView.separated(
               shrinkWrap: true,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8 * scalingFactor),
               physics: const BouncingScrollPhysics(),
               itemCount: txs.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, index) => _buildTransactionItem(context, txs[index], activeColor, isDark),
+              separatorBuilder: (_, __) => SizedBox(height: 10 * scalingFactor),
+              itemBuilder: (context, index) => _buildTransactionItem(context, txs[index], activeColor, isDark, scalingFactor),
             ),
           )
         else
-          _buildEmptyState('Tekil işlem bulunamadı.', Icons.receipt_long_rounded, activeColor),
+          _buildEmptyState('Tekil işlem bulunamadı.', Icons.receipt_long_rounded, activeColor, scalingFactor),
         const SizedBox(height: 12),
       ],
     );
   }
 
-  Widget _buildEmptyState(String message, IconData icon, Color color) {
+  Widget _buildEmptyState(String message, IconData icon, Color color, double scalingFactor) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 60),
+      padding: EdgeInsets.symmetric(vertical: 60 * scalingFactor),
       child: Opacity(
         opacity: 0.5,
         child: Column(
           children: [
-            Icon(icon, size: 48, color: color),
-            const SizedBox(height: 12),
-            Text(message, style: const TextStyle(fontWeight: FontWeight.w600)),
+            Icon(icon, size: 48 * scalingFactor, color: color),
+            SizedBox(height: 12 * scalingFactor),
+            Text(message, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13 * scalingFactor)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildVaultItem(BuildContext context, Vault vault, Color activeColor, bool isDark) {
+  Widget _buildVaultItem(BuildContext context, Vault vault, Color activeColor, bool isDark, double scalingFactor) {
     return FluidContainer(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12 * scalingFactor),
       isGlass: true,
-      borderRadius: 24,
+      borderRadius: 24 * scalingFactor,
       color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.01),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: activeColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
-            child: Icon(IconUtils.getIcon(vault.iconCode ?? vault.name), color: activeColor, size: 22),
+            padding: EdgeInsets.all(10 * scalingFactor),
+            decoration: BoxDecoration(color: activeColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16 * scalingFactor)),
+            child: Icon(IconUtils.getIcon(vault.iconCode ?? vault.name), color: activeColor, size: 22 * scalingFactor),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12 * scalingFactor),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(vault.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, letterSpacing: -0.5)),
-                Text(vault.currency, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.withValues(alpha: 0.6))),
+                Text(vault.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16 * scalingFactor, letterSpacing: -0.5)),
+                Text(vault.currency, style: TextStyle(fontSize: 11 * scalingFactor, fontWeight: FontWeight.w600, color: Colors.grey.withValues(alpha: 0.6))),
               ],
             ),
           ),
-          Transform.scale(
-            scale: 0.8,
-            child: Switch(
-              value: vault.showOnDashboard,
-              activeThumbColor: activeColor,
-              onChanged: (val) async {
-                vault.showOnDashboard = val;
-                await DatabaseService.updateVault(vault);
-                HapticFeedback.lightImpact();
-              },
-            ),
+          FluidSwitch(
+            value: vault.showOnDashboard,
+            activeColor: activeColor,
+            activeIcon: Icons.visibility_rounded,
+            inactiveIcon: Icons.visibility_off_rounded,
+            scalingFactor: scalingFactor,
+            onChanged: (val) async {
+              vault.showOnDashboard = val;
+              await DatabaseService.updateVault(vault);
+              HapticFeedback.lightImpact();
+            },
           ),
           const SizedBox(width: 4),
           GestureDetector(
@@ -305,77 +310,77 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
     );
   }
 
-  Widget _buildTransactionItem(BuildContext context, TransactionUI tx, Color activeColor, bool isDark) {
+  Widget _buildTransactionItem(BuildContext context, TransactionUI tx, Color activeColor, bool isDark, double scalingFactor) {
     return FluidContainer(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12 * scalingFactor),
       isGlass: true,
-      borderRadius: 24,
+      borderRadius: 24 * scalingFactor,
       color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.01),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: tx.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
-            child: Icon(tx.icon, color: tx.color, size: 22),
+            padding: EdgeInsets.all(10 * scalingFactor),
+            decoration: BoxDecoration(color: tx.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16 * scalingFactor)),
+            child: Icon(tx.icon, color: tx.color, size: 22 * scalingFactor),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12 * scalingFactor),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(tx.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: -0.5)),
-                Text('₺${CurrencyUtils.formatAmount(tx.amount)}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context))),
+                Text(tx.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15 * scalingFactor, letterSpacing: -0.5)),
+                Text('₺${CurrencyUtils.formatAmount(tx.amount)}', style: TextStyle(fontSize: 12 * scalingFactor, fontWeight: FontWeight.w800, color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context))),
               ],
             ),
           ),
-          Transform.scale(
-            scale: 0.8,
-            child: Switch(
-              value: tx.showOnDashboard,
-              activeThumbColor: activeColor,
-              onChanged: (val) async {
-                if (tx.dbId == null) return;
-                final record = await DatabaseService.getTransaction(tx.dbId!);
-                if (record != null) {
-                  record.showOnDashboard = val;
-                  await DatabaseService.updateTransaction(record);
-                  HapticFeedback.lightImpact();
-                }
-              },
-            ),
+          FluidSwitch(
+            value: tx.showOnDashboard,
+            activeColor: activeColor,
+            activeIcon: Icons.visibility_rounded,
+            inactiveIcon: Icons.visibility_off_rounded,
+            scalingFactor: scalingFactor,
+            onChanged: (val) async {
+              if (tx.dbId == null) return;
+              final record = await DatabaseService.getTransaction(tx.dbId!);
+              if (record != null) {
+                record.showOnDashboard = val;
+                await DatabaseService.updateTransaction(record);
+                HapticFeedback.lightImpact();
+              }
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAddVaultView(BuildContext context, Color activeColor, bool isDark) {
+  Widget _buildAddVaultView(BuildContext context, Color activeColor, bool isDark, double scalingFactor) {
     return Column(
       key: const ValueKey('add_view'),
       mainAxisSize: MainAxisSize.min,
       children: [
-        const SizedBox(height: 12),
+        SizedBox(height: 12 * scalingFactor),
         FluidContainer(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-          borderRadius: 24,
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4 * scalingFactor),
+          borderRadius: 24 * scalingFactor,
           isGlass: true,
           color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.04),
           child: TextField(
             controller: _nameController,
             autofocus: true,
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17 * scalingFactor),
             decoration: InputDecoration(
-              icon: Icon(Icons.drive_file_rename_outline_rounded, color: activeColor.withValues(alpha: 0.5), size: 22),
+              icon: Icon(Icons.drive_file_rename_outline_rounded, color: activeColor.withValues(alpha: 0.5), size: 22 * scalingFactor),
               hintText: 'Kasa Adı (örn. Birikim)',
-              hintStyle: TextStyle(fontWeight: FontWeight.w500, color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.2), fontSize: 15),
+              hintStyle: TextStyle(fontWeight: FontWeight.w500, color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.2), fontSize: 15 * scalingFactor),
               border: InputBorder.none,
             ),
           ),
         ),
-        const SizedBox(height: 16), // Boşluk eklendi
+        SizedBox(height: 16 * scalingFactor),
         FluidContainer(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-          borderRadius: 24,
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4 * scalingFactor),
+          borderRadius: 24 * scalingFactor,
           isGlass: true,
           color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.04),
           child: TextField(
@@ -384,18 +389,18 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
             ],
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17 * scalingFactor),
             decoration: InputDecoration(
-              icon: Icon(Icons.payments_rounded, color: activeColor.withValues(alpha: 0.5), size: 22),
+              icon: Icon(Icons.payments_rounded, color: activeColor.withValues(alpha: 0.5), size: 22 * scalingFactor),
               hintText: 'Başlangıç Bakiyesi',
               suffixText: '₺',
-              suffixStyle: TextStyle(fontWeight: FontWeight.w900, color: activeColor),
-              hintStyle: TextStyle(fontWeight: FontWeight.w500, color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.2), fontSize: 15),
+              suffixStyle: TextStyle(fontWeight: FontWeight.w900, color: activeColor, fontSize: 15 * scalingFactor),
+              hintStyle: TextStyle(fontWeight: FontWeight.w500, color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.2), fontSize: 15 * scalingFactor),
               border: InputBorder.none,
             ),
           ),
         ),
-        const SizedBox(height: 32),
+        SizedBox(height: 32 * scalingFactor),
         FluidButton(
           onTap: () async {
             if (_nameController.text.isNotEmpty) {
@@ -415,16 +420,17 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
           },
           color: activeColor,
           width: double.infinity,
-          child: const Row(
+          height: 60 * scalingFactor,
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add_task_rounded, color: Colors.white, size: 20),
-              SizedBox(width: 8),
-              Text('Kasa Oluştur', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+              Icon(Icons.add_task_rounded, color: Colors.white, size: 20 * scalingFactor),
+              SizedBox(width: 8 * scalingFactor),
+              Text('Kasa Oluştur', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15 * scalingFactor)),
             ],
           ),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24 * scalingFactor),
       ],
     );
   }

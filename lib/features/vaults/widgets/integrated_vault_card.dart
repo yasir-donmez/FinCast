@@ -89,20 +89,42 @@ class IntegratedVaultCard extends StatelessWidget {
   }
 
   Widget _buildMorphContent(BuildContext context, bool isDark) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // contentT ve widthT tanımları burada da lazım (veya build'den geçmeli)
+    final double widthT = Curves.easeOutQuart.transform(morphProgress);
+    final double cardWidth = lerpDouble(screenWidth * 0.70, screenWidth, widthT)!;
+    final double effectiveWidth = isCurrent ? cardWidth : screenWidth * 0.70;
+    
     final hasFlexibleTx = txs.any((t) => t.minAmount != null || t.maxAmount != null);
     
     // Animasyon progressleri
-    final double contentT = Curves.easeInOutCubic.transform((morphProgress * 1.2).clamp(0.0, 1.0));
-    final double magneticT = Curves.easeOutBack.transform(morphProgress);
+    final double contentT = Curves.easeInOutCubic.transform(morphProgress);
+    final double magneticT = Curves.easeOutCubic.transform(morphProgress); // easeOutBack yerine daha yumuşak cubic
     
-    final double titleFontSize = lerpDouble(11, 17, contentT)!;
-    final double balanceFontSize = lerpDouble(42, 16, contentT)!;
-    final double titleLetterSpacing = lerpDouble(1.8, -0.4, contentT)!;
-    final double balanceLetterSpacing = lerpDouble(-2.5, 0.2, contentT)!;
+    // Smooth Size Logic
+    final double titleFontSize = lerpDouble(12, 17, contentT)!; // 11 yerine 12'den başlatıp daha yumuşak yaptık
+    final double balanceFontSize = lerpDouble(42, 18, contentT)!; // 16 yerine 18 (header'da daha okunaklı)
+    final double titleLetterSpacing = lerpDouble(1.2, -0.4, contentT)!;
+    final double balanceLetterSpacing = lerpDouble(-2.0, 0.2, contentT)!;
     
-    final double badgePadH = lerpDouble(0, 14, contentT)!;
+    final double badgePadH = lerpDouble(0, 12, contentT)!;
     final double badgePadV = lerpDouble(0, 6, contentT)!;
-    final double badgeBgAlpha = contentT * (isDark ? 0.15 : 0.08);
+    final double badgeBgAlpha = contentT * (isDark ? 0.12 : 0.06);
+
+    // Smooth Color Logic
+    final Color textColor = AppColors.getTextPrimary(context);
+    final Color nameColor = Color.lerp(
+      activeColor.withValues(alpha: 0.9),
+      textColor,
+      contentT,
+    )!;
+
+    final Color balanceColor = Color.lerp(
+      activeColor,
+      activeColor, // Tutar rengini koruyabiliriz veya isterseniz o da değişebilir. 
+      // Kullanıcı "dediklerim tutar içinde geçerli" dediği için tutar rengini de hafifçe lerp edelim.
+      contentT,
+    )!;
     
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -110,8 +132,8 @@ class IntegratedVaultCard extends StatelessWidget {
         
         // --- Geniş Mod (Expanded) Pozisyonları ---
         final double titleExpandedTop = h * 0.12;
-        final double balanceExpandedTop = titleExpandedTop + 30;
-        final double secondaryExpandedTop = balanceExpandedTop + 60;
+        final double balanceExpandedTop = titleExpandedTop + 30; // 30px spacing
+        final double secondaryExpandedTop = balanceExpandedTop + 65; // Biraz daha boşluk
         
         // --- Dar Mod (Compact) Pozisyonları ---
         final double titleCompactTop = (h - titleFontSize) / 2;
@@ -120,25 +142,32 @@ class IntegratedVaultCard extends StatelessWidget {
         final double titleTop = lerpDouble(titleExpandedTop, titleCompactTop, magneticT)!;
         final double balanceTop = lerpDouble(balanceExpandedTop, balanceCompactTop, magneticT)!;
         
-        final double secondaryOpacity = (1 - morphProgress * 4.5).clamp(0.0, 1.0);
+        final double secondaryOpacity = (1 - morphProgress * 3.5).clamp(0.0, 1.0); // Daha geç kaybolsun
         
         return Stack(
           clipBehavior: Clip.none,
           children: [
             // === TITLE ===
             Positioned(
-              left: 0, right: 0,
+              left: 4, right: 4, 
               top: titleTop,
               child: Align(
                 alignment: Alignment.lerp(Alignment.center, Alignment.centerLeft, magneticT)!,
-                child: Text(
-                  vaultName,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: titleFontSize,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: titleLetterSpacing,
-                    color: contentT > 0.8 ? null : activeColor.withValues(alpha: lerpDouble(0.8, 1.0, contentT)!),
+                child: Container(
+                  constraints: BoxConstraints(
+                    // Kasa modunda kartın %85'ini, Header modunda %55'ini kullanabilir
+                    maxWidth: lerpDouble(effectiveWidth * 0.85, screenWidth * 0.55, magneticT)!,
+                  ),
+                  child: Text(
+                    vaultName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: titleFontSize,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: titleLetterSpacing,
+                      color: nameColor,
+                    ),
                   ),
                 ),
               ),
@@ -146,25 +175,33 @@ class IntegratedVaultCard extends StatelessWidget {
             
             // === BALANCE ===
             Positioned(
-              left: 0, right: 0,
+              left: 4, right: 4,
               top: balanceTop,
               child: Align(
                 alignment: Alignment.lerp(Alignment.center, Alignment.centerRight, magneticT)!,
                 child: Container(
+                  constraints: BoxConstraints(
+                    // Kasa modunda kart genişliği kadar, Header modunda %42'si kadar yer kaplayabilir
+                    maxWidth: lerpDouble(effectiveWidth - 24, screenWidth * 0.42, magneticT)!,
+                  ),
                   padding: EdgeInsets.symmetric(horizontal: badgePadH, vertical: badgePadV),
                   decoration: BoxDecoration(
                     color: activeColor.withValues(alpha: badgeBgAlpha),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
-                    contentT > 0.6
-                      ? '₺${CurrencyUtils.formatAmount(balance)}'
-                      : '₺${CurrencyUtils.formatFullAmount(balance)}',
-                    style: TextStyle(
-                      fontSize: balanceFontSize,
-                      fontWeight: FontWeight.w900,
-                      color: activeColor,
-                      letterSpacing: balanceLetterSpacing,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.lerp(Alignment.center, Alignment.centerRight, magneticT)!,
+                    child: Text(
+                      contentT > 0.7
+                        ? '₺${CurrencyUtils.formatAmount(balance)}'
+                        : '₺${CurrencyUtils.formatFullAmount(balance)}',
+                      style: TextStyle(
+                        fontSize: balanceFontSize,
+                        fontWeight: FontWeight.w900,
+                        color: balanceColor,
+                        letterSpacing: balanceLetterSpacing,
+                      ),
                     ),
                   ),
                 ),

@@ -46,6 +46,29 @@ class _VaultCardStackState extends State<VaultCardStack> {
   @override
   void didUpdateWidget(covariant VaultCardStack oldWidget) {
     super.didUpdateWidget(oldWidget);
+    
+    // YENİ: Manyetik Kilit Mantığı
+    // Eğer dikey kaydırma (morphing) başladıysa ve yatayda tam oturmamışsak, hemen en yakın sayfaya kilitlen.
+    if (widget.morphProgress > 0.01 && oldWidget.morphProgress <= 0.01) {
+      if (_pageController.hasClients) {
+        final double? currentPage = _pageController.page;
+        if (currentPage != null) {
+          final int targetPage = currentPage.round();
+          // Eğer şu anki sayfa hedef sayfadan farklıysa veya tam integer değilse kilitlen
+          if ((currentPage - targetPage).abs() > 0.01) {
+             _pageController.animateToPage(
+              targetPage, 
+              duration: const Duration(milliseconds: 200), 
+              curve: Curves.easeOutCubic
+            );
+            // Seçimi de anında güncelle ki header verisi doğru gelsin
+            // HATA FİX: Build aşamasında provider değiştirmemek için mikro görev (microtask) içine alıyoruz.
+            Future.microtask(() => widget.onVaultSelect(widget.deckItems[targetPage]));
+          }
+        }
+      }
+    }
+
     if (oldWidget.currentIndex != widget.currentIndex && _pageController.hasClients) {
       if (_lastTargetIndex != widget.currentIndex) {
         _lastTargetIndex = widget.currentIndex;
@@ -62,8 +85,8 @@ class _VaultCardStackState extends State<VaultCardStack> {
 
   @override
   Widget build(BuildContext context) {
-    // Kasa kartları %5 bile küçülmeye başlasa etkileşimi (kaydırmayı) kapatıyoruz.
-    final bool isInteractingDisabled = widget.morphProgress > 0.05;
+    // Kasa kartları %1 bile küçülmeye başlasa etkileşimi (kaydırmayı) kapatıyoruz.
+    final bool isInteractingDisabled = widget.morphProgress > 0.01;
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
@@ -101,17 +124,18 @@ class _VaultCardStackState extends State<VaultCardStack> {
               }
               
               final isCurrent = index == widget.currentIndex;
-              final cardOpacity = isCurrent ? 1.0 : (1 - widget.morphProgress * 2.5).clamp(0.0, 1.0);
+              final cardOpacity = isCurrent ? 1.0 : (1 - widget.morphProgress * 3.5).clamp(0.0, 1.0);
               
-              final double slideOutOffset = (index - widget.currentIndex) * (widget.morphProgress * 300);
+              // Seçili olmayan kartlar daha hızlı yanlara doğru kaysın (Depth Effect)
+              final double slideOutOffset = (index - widget.currentIndex) * (widget.morphProgress * 450);
 
               return Center(
                 child: Opacity(
-                  opacity: cardOpacity * (isCurrent ? 1.0 : (value * 2 - 1).clamp(0.5, 1.0)),
+                  opacity: cardOpacity * (isCurrent ? 1.0 : (value * 2 - 1).clamp(0.0, 1.0)),
                   child: Transform.translate(
                     offset: Offset(slideOutOffset, 0),
                     child: Transform.scale(
-                      scale: value,
+                      scale: isCurrent ? value : value * (1 - widget.morphProgress * 0.2), // Küçük bir küçülme eklendi
                       child: RepaintBoundary(
                         child: GestureDetector(
                           onTap: isCurrent && vaultId != null ? () => widget.onVaultTap(vaultId) : null,

@@ -4,6 +4,7 @@ import '../../../../core/theme/app_constants.dart';
 import '../../../../core/utils/currency_utils.dart';
 import '../../../../shared/widgets/fluid_container.dart';
 import '../../../../shared/widgets/fluid_sheet.dart';
+import '../../../../shared/widgets/fluid_switch.dart';
 import '../vaults_providers.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -238,6 +239,9 @@ void showTransactionActionMenu(BuildContext context, {
   final l10n = AppLocalizations.of(context)!;
   bool currentShowOnDashboard = showOnDashboard ?? false;
 
+  final screenHeight = MediaQuery.of(context).size.height;
+  final scalingFactor = (screenHeight / 812.0).clamp(0.85, 1.0);
+
   FluidSheet.show(
     context: context,
     title: name,
@@ -251,13 +255,14 @@ void showTransactionActionMenu(BuildContext context, {
               icon: Icons.edit_note_rounded,
               label: l10n.edit,
               color: AppColors.getPrimary(context),
+              scalingFactor: scalingFactor,
               onTap: () {
                 Navigator.pop(context);
                 onEdit();
               },
             ),
 
-            const SizedBox(height: 12),
+            SizedBox(height: 12 * scalingFactor),
 
             if (onToggleDashboard != null)
               _buildActionItem(
@@ -265,13 +270,17 @@ void showTransactionActionMenu(BuildContext context, {
                 icon: currentShowOnDashboard ? Icons.visibility_rounded : Icons.visibility_off_rounded,
                 label: currentShowOnDashboard ? 'Ana Sayfadan Kaldır' : 'Ana Sayfada Göster',
                 color: currentShowOnDashboard ? Colors.blue : Colors.grey,
-                trailing: Switch(
+                scalingFactor: scalingFactor,
+                trailing: FluidSwitch(
                   value: currentShowOnDashboard,
+                  activeColor: Colors.blue,
+                  activeIcon: Icons.visibility_rounded,
+                  inactiveIcon: Icons.visibility_off_rounded,
+                  scalingFactor: 0.8 * scalingFactor,
                   onChanged: (val) {
                     setState(() => currentShowOnDashboard = val);
                     onToggleDashboard(val);
                   },
-                  activeThumbColor: Colors.blue,
                 ),
                 onTap: () {
                   final newVal = !currentShowOnDashboard;
@@ -281,12 +290,13 @@ void showTransactionActionMenu(BuildContext context, {
               ),
             
             if (isInVault && onRemoveFromVault != null) ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12 * scalingFactor),
               _buildActionItem(
                 context: context,
                 icon: Icons.outbox_rounded,
                 label: l10n.removeFromVault,
                 color: Colors.orange,
+                scalingFactor: scalingFactor,
                 onTap: () {
                   Navigator.pop(context);
                   onRemoveFromVault();
@@ -294,19 +304,20 @@ void showTransactionActionMenu(BuildContext context, {
               ),
             ],
 
-            const SizedBox(height: 12),
+            SizedBox(height: 12 * scalingFactor),
             
             _buildActionItem(
               context: context,
               icon: Icons.delete_sweep_rounded,
               label: l10n.permanentDelete,
               color: AppColors.error,
+              scalingFactor: scalingFactor,
               onTap: () {
                 Navigator.pop(context);
                 onDelete();
               },
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16 * scalingFactor),
           ],
         );
       }
@@ -320,31 +331,32 @@ Widget _buildActionItem({
   required String label,
   required Color color,
   required VoidCallback onTap,
+  double scalingFactor = 1.0,
   Widget? trailing,
 }) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
   return GestureDetector(
     onTap: onTap,
     child: FluidContainer(
-      padding: const EdgeInsets.all(16),
-      borderRadius: 24,
+      padding: EdgeInsets.all(16 * scalingFactor),
+      borderRadius: 24 * scalingFactor,
       isGlass: true,
       color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.01),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(10 * scalingFactor),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(16 * scalingFactor),
             ),
-            child: Icon(icon, color: color, size: 22),
+            child: Icon(icon, color: color, size: 22 * scalingFactor),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16 * scalingFactor),
           Text(
             label, 
             style: TextStyle(
-              fontSize: 16, 
+              fontSize: 16 * scalingFactor, 
               fontWeight: FontWeight.w800, 
               color: AppColors.getTextPrimary(context)
             )
@@ -353,7 +365,7 @@ Widget _buildActionItem({
           if (trailing != null) 
             trailing
           else
-            Icon(Icons.chevron_right_rounded, color: Colors.grey.withValues(alpha: 0.5), size: 20),
+            Icon(Icons.chevron_right_rounded, color: Colors.grey.withValues(alpha: 0.5), size: 20 * scalingFactor),
         ],
       ),
     ),

@@ -51,7 +51,12 @@ class _WavePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (progress == 0 || progress == 1) return;
+    if (progress <= 0 || progress >= 1) return;
+    
+    // Safety check for invalid, empty or NaN sizes (prevents black screen on sudden layout shifts)
+    if (size.isEmpty || 
+        size.width.isInfinite || size.height.isInfinite || 
+        size.width.isNaN || size.height.isNaN) return;
 
     final paint = Paint()
       ..color = color.withValues(alpha: 0.6 * (1 - progress))

@@ -120,27 +120,37 @@ class FluidContainer extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: isGlass ? blur : 0, sigmaY: isGlass ? blur : 0),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: isConvex ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.2),
-                  Colors.transparent,
-                  isDark ? Colors.black.withValues(alpha: 0.05) : (color ?? AppColors.lightDarkShadow).withValues(alpha: 0.03),
-                ],
-              ) : null,
-            ),
-            child: Padding(
-              padding: padding ?? const EdgeInsets.all(AppSizes.paddingMedium),
-              child: child,
-            ),
-          ),
-        ),
+        // BackdropFilter SADECE isGlass aktifken kullanılır.
+        // sigma=0 bile olsa BackdropFilter GPU maliyeti taşır ve
+        // klavye animasyonu sırasında çoklu BackdropFilter'lar GPU'yu kilitler.
+        child: isGlass && blur > 0
+            ? BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+                child: _buildInnerContent(isDark),
+              )
+            : _buildInnerContent(isDark),
       ),
     );
   }
+
+  Widget _buildInnerContent(bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: isConvex ? LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.2),
+            Colors.transparent,
+            isDark ? Colors.black.withValues(alpha: 0.05) : (color ?? AppColors.lightDarkShadow).withValues(alpha: 0.03),
+          ],
+        ) : null,
+      ),
+      child: Padding(
+        padding: padding ?? const EdgeInsets.all(AppSizes.paddingMedium),
+        child: child,
+      ),
+    );
+  }
+
 }

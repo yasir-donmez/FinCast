@@ -13,6 +13,7 @@ import '../../shared/widgets/fluid_dialog.dart';
 import '../../core/providers/settings_provider.dart';
 import '../dashboard/dashboard_providers.dart';
 import '../../shared/widgets/theme_reveal_button.dart';
+import '../../shared/widgets/fluid_switch.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -145,6 +146,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           .read(settingsProvider.notifier)
                           .toggleAiNotifications(val),
                       activeColor: activeColor,
+                      activeIcon: Icons.notifications_active_rounded,
+                      inactiveIcon: Icons.notifications_off_rounded,
                     ),
 
                     const SizedBox(height: 40),
@@ -424,6 +427,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     required bool value,
     required ValueChanged<bool> onChanged,
     required Color activeColor,
+    IconData? activeIcon,
+    IconData? inactiveIcon,
   }) {
     return Container(
       margin: const EdgeInsets.only(top: 8),
@@ -455,10 +460,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
           ),
-          CupertinoSwitch(
+          FluidSwitch(
             value: value,
-            activeTrackColor: activeColor,
+            activeColor: activeColor,
             onChanged: onChanged,
+            activeIcon: activeIcon,
+            inactiveIcon: inactiveIcon,
           ),
         ],
       ),

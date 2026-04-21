@@ -18,7 +18,7 @@ import '../dashboard/dashboard_providers.dart';
 import 'widgets/liquid_blob.dart';
 import 'widgets/header_delegate.dart';
 import 'widgets/filter_chip.dart';
-import '../../shared/widgets/sliver_animation_spacer.dart';
+// Removed unused: import '../../shared/widgets/sliver_animation_spacer.dart';
 
 class VaultsScreen extends ConsumerStatefulWidget {
   const VaultsScreen({super.key});
@@ -71,16 +71,15 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
           .toList();
     }
 
+    final screenHeight = MediaQuery.of(context).size.height;
+    final scalingFactor = (screenHeight / 812.0).clamp(0.85, 1.0);
+
     // Header limitleri (header_delegate.dart ile uyumlu)
     const maxHeaderHeight = 420.0;
     const minHeaderHeight = 100.0;
-    final viewportHeight = MediaQuery.of(context).size.height;
 
-    // Header'ın tam kapanması (320px kayması) için gereken ekstra mesafe:
-    // Kaydırma bittiğinde (offset=320) header 100px yer kaplar.
-    // Altındaki içeriğin ekranı tam doldurması için boyu (viewport - 100) olmalıdır.
-    // Bu durumda toplam içerik boyu = (viewport - 100) olmalı.
-    final requiredContentHeight = viewportHeight - minHeaderHeight;
+    // (requiredContentHeight was unused and removed)
+
 
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
@@ -122,6 +121,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                   onAddVault: () => _showAddVaultSheet(context),
                   l10n: l10n,
                   onVaultTap: (id) => _showVaultDetail(context, id),
+                  topPadding: MediaQuery.of(context).padding.top,
                 ),
               ),
 
@@ -145,7 +145,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                           letterSpacing: 2,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: AppSizes.paddingLarge * scalingFactor),
                       Row(
                         children: [
                           VaultFilterChip(
@@ -368,6 +368,8 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
   void _showTransactionDetail(BuildContext context, TransactionUI tx) {
     final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final scalingFactor = (screenHeight / 812.0).clamp(0.75, 1.0);
 
     FluidSheet.show(
       context: context,
@@ -389,8 +391,8 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                 alignment: Alignment.center,
                 children: [
                   Container(
-                    width: 140,
-                    height: 140,
+                    width: 140 * scalingFactor,
+                    height: 140 * scalingFactor,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
@@ -402,24 +404,24 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                     ),
                   ),
                   Container(
-                    width: 100,
-                    height: 100,
+                    width: 100 * scalingFactor,
+                    height: 100 * scalingFactor,
                     decoration: BoxDecoration(
                       color: tx.color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(36),
+                      borderRadius: BorderRadius.circular(36 * scalingFactor),
                       border: Border.all(
                         color: tx.color.withValues(alpha: 0.3),
                         width: 2,
                       ),
                     ),
-                    child: Icon(tx.icon, size: 48, color: tx.color),
+                    child: Icon(tx.icon, size: 48 * scalingFactor, color: tx.color),
                   ),
                 ],
               ),
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 16), // Reduced from 24
 
           TweenAnimationBuilder<double>(
             duration: const Duration(milliseconds: 700),
@@ -459,7 +461,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                   child: Text(
                     '₺${CurrencyUtils.formatFullAmount(tx.amount)}',
                     style: TextStyle(
-                      fontSize: 56,
+                      fontSize: 56 * scalingFactor, // Scaled font size
                       fontWeight: FontWeight.w900,
                       color: tx.isIncome
                           ? AppColors.getIncome(context)
@@ -471,9 +473,9 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                 ),
               ],
             ),
-          ),
-
-          const SizedBox(height: 40),
+            ),
+  
+            SizedBox(height: 32 * scalingFactor), // Reduced from 40
 
           ...List.generate(3, (index) {
             final values = [
@@ -505,9 +507,9 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                 );
               },
               child: Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: EdgeInsets.only(bottom: 8 * scalingFactor), // Reduced from 12
                 child: FluidContainer(
-                  padding: const EdgeInsets.all(18),
+                  padding: EdgeInsets.all(16 * scalingFactor), // Reduced from 18
                   borderRadius: 24,
                   isGlass: true,
                   color: isDark
@@ -516,19 +518,19 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                   child: Row(
                     children: [
                       Container(
-                        width: 40,
-                        height: 40,
+                        width: 36 * scalingFactor, // Reduced from 40
+                        height: 36 * scalingFactor, // Reduced from 40
                         decoration: BoxDecoration(
                           color: tx.color.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(12 * scalingFactor), // Reduced from 14
                         ),
-                        child: Icon(icons[index], size: 20, color: tx.color),
+                        child: Icon(icons[index], size: 18 * scalingFactor, color: tx.color), // Reduced from 20
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 14 * scalingFactor),
                       Text(
                         displayLabels[index],
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 13, // Reduced from 14
                           fontWeight: FontWeight.w600,
                           color: AppColors.getTextSecondary(context),
                         ),
@@ -537,7 +539,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                       Text(
                         values[index],
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 15, // Reduced from 16
                           fontWeight: FontWeight.w800,
                           color: AppColors.getTextPrimary(context),
                         ),
@@ -549,7 +551,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
             );
           }),
 
-          const SizedBox(height: 32),
+          SizedBox(height: 24 * scalingFactor), // Reduced from 32
 
           TweenAnimationBuilder<double>(
             duration: const Duration(milliseconds: 600),
@@ -567,7 +569,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                       _handleTransactionLongPress(context, ref, tx);
                     },
                     child: FluidContainer(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.symmetric(vertical: 14 * scalingFactor), // Reduced from 16
                       borderRadius: 20,
                       color: AppColors.getPrimary(
                         context,
@@ -626,13 +628,14 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                     }
                   },
                   child: FluidContainer(
-                    width: 56,
-                    height: 56,
+                    width: 50 * scalingFactor, // Reduced from 56
+                    height: 50 * scalingFactor, // Reduced from 56
                     borderRadius: 20,
                     color: AppColors.error.withValues(alpha: 0.1),
-                    child: const Icon(
+                    child: Icon(
                       Icons.delete_sweep_rounded,
                       color: AppColors.error,
+                      size: 24 * scalingFactor,
                     ),
                   ),
                 ),
