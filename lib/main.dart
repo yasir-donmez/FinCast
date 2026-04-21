@@ -107,41 +107,44 @@ class FinCastApp extends ConsumerWidget {
     } catch (_) {}
     appLocale ??= const Locale('tr');
 
-    return MaterialApp(
-      title: 'FinCast',
-      debugShowCheckedModeBanner: false,
-
-      // Tema Yapılandırması (Karanlık Neumorphism)
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode,
-      
-      // Dil Yapılandırması
-      locale: appLocale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-
-      home: Consumer(
-        builder: (context, ref, child) {
-          final authState = ref.watch(authStateProvider);
-          
-          return authState.when(
-            data: (state) {
-              if (state.session != null) {
-                return const MainScaffold();
-              }
-              return const AuthScreen();
-            },
-            loading: () => Scaffold(
-              backgroundColor: AppColors.getBackground(context),
-              body: const Center(child: CircularProgressIndicator()),
-            ),
-            error: (e, st) => Scaffold(
-              backgroundColor: AppColors.getBackground(context),
-              body: Center(child: Text('Hata: $e')),
-            ),
-          );
-        },
+    return RepaintBoundary(
+      key: rootRepaintBoundaryKey,
+      child: MaterialApp(
+        title: 'FinCast',
+        debugShowCheckedModeBanner: false,
+  
+        // Tema Yapılandırması (Karanlık Neumorphism)
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeMode,
+        
+        // Dil Yapılandırması
+        locale: appLocale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+  
+        home: Consumer(
+          builder: (context, ref, child) {
+            final authState = ref.watch(authStateProvider);
+            
+            return authState.when(
+              data: (state) {
+                if (state.session != null) {
+                  return const MainScaffold();
+                }
+                return const AuthScreen();
+              },
+              loading: () => Scaffold(
+                backgroundColor: AppColors.getBackground(context),
+                body: const Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, st) => Scaffold(
+                backgroundColor: AppColors.getBackground(context),
+                body: Center(child: Text('Hata: $e')),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

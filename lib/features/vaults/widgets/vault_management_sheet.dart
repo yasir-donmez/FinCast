@@ -27,6 +27,7 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
   late bool _isAdding;
   ManagementTab _activeTab = ManagementTab.vaults;
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _balanceController = TextEditingController();
   late AnimationController _waveController;
 
   @override
@@ -42,6 +43,7 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
   @override
   void dispose() {
     _nameController.dispose();
+    _balanceController.dispose();
     _waveController.dispose();
     super.dispose();
   }
@@ -354,52 +356,73 @@ class _VaultManagementSheetState extends ConsumerState<VaultManagementSheet> wit
       children: [
         const SizedBox(height: 12),
         FluidContainer(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
           borderRadius: 24,
           isGlass: true,
           color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.04),
           child: TextField(
             controller: _nameController,
             autofocus: true,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.5),
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
             decoration: InputDecoration(
-              hintText: 'Kasa Adı (örn. Birikim, Tatil)',
-              hintStyle: TextStyle(fontWeight: FontWeight.w600, color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.3), fontSize: 16),
+              icon: Icon(Icons.drive_file_rename_outline_rounded, color: activeColor.withValues(alpha: 0.5), size: 22),
+              hintText: 'Kasa Adı (örn. Birikim)',
+              hintStyle: TextStyle(fontWeight: FontWeight.w500, color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.2), fontSize: 15),
               border: InputBorder.none,
             ),
           ),
         ),
-        const SizedBox(height: 40),
-        Row(
-          children: [
-            Expanded(
-              child: FluidButton(
-                onTap: () => Navigator.pop(context),
-                isSecondary: true,
-                child: const Text('İptal', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
+        const SizedBox(height: 16), // Boşluk eklendi
+        FluidContainer(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+          borderRadius: 24,
+          isGlass: true,
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.04),
+          child: TextField(
+            controller: _balanceController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+            ],
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+            decoration: InputDecoration(
+              icon: Icon(Icons.payments_rounded, color: activeColor.withValues(alpha: 0.5), size: 22),
+              hintText: 'Başlangıç Bakiyesi',
+              suffixText: '₺',
+              suffixStyle: TextStyle(fontWeight: FontWeight.w900, color: activeColor),
+              hintStyle: TextStyle(fontWeight: FontWeight.w500, color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.2), fontSize: 15),
+              border: InputBorder.none,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              flex: 2,
-              child: FluidButton(
-                onTap: () async {
-                  if (_nameController.text.isNotEmpty) {
-                    final newVault = Vault()
-                      ..name = _nameController.text
-                      ..currency = 'TRY'
-                      ..showOnDashboard = true;
-                    await DatabaseService.addVault(newVault);
-                    _nameController.clear();
-                    if (context.mounted) Navigator.pop(context);
-                  }
-                },
-                color: activeColor,
-                child: const Text('Kasa Oluştur', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
-              ),
-            ),
-          ],
+          ),
+        ),
+        const SizedBox(height: 32),
+        FluidButton(
+          onTap: () async {
+            if (_nameController.text.isNotEmpty) {
+              final double? initialBalance = double.tryParse(_balanceController.text.replaceAll(',', '.'));
+              
+              final newVault = Vault()
+                ..name = _nameController.text
+                ..currency = 'TRY'
+                ..balance = initialBalance ?? 0.0
+                ..showOnDashboard = true;
+              
+              await DatabaseService.addVault(newVault);
+              _nameController.clear();
+              _balanceController.clear();
+              if (context.mounted) Navigator.pop(context);
+            }
+          },
+          color: activeColor,
+          width: double.infinity,
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add_task_rounded, color: Colors.white, size: 20),
+              SizedBox(width: 8),
+              Text('Kasa Oluştur', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+            ],
+          ),
         ),
         const SizedBox(height: 24),
       ],

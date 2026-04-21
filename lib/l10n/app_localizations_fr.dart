@@ -892,4 +892,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get upgrade => 'Yükselt';
+
+  @override
+  String get auto => 'OTOMATİK';
+
+  @override
+  String get max => 'MAX';
+
+  @override
+  String get zero => '0';
 }

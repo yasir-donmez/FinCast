@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import '../../core/theme/app_constants.dart';
 import 'fluid_container.dart';
 
@@ -125,7 +124,6 @@ class FluidDialog extends StatelessWidget {
                 if (actions != null) ...[
                   Row(
                     children: actions!.map((action) {
-                      final isLast = action == actions!.last;
                       return Expanded(
                         child: Padding(
                           padding: EdgeInsets.only(left: action == actions!.first ? 0 : 8),

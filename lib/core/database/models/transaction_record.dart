@@ -7,9 +7,9 @@ class TransactionRecord {
   Id id = Isar.autoIncrement;
 
   /// İşlem Tipi: true -> Gelir, false -> Gider
-  late bool isIncome;
+  bool isIncome = false;
 
-  late String title;
+  String title = '';
   
   /// Kategori ID (Multi-language desteği için benzersiz anahtar)
   String? categoryId;
@@ -19,7 +19,7 @@ class TransactionRecord {
 
   /// İşlemin tutarı. Eğer bir aralık (Range) seçildiyse bu değer ortalama (Veya maks) alınabilir
   /// Şimdilik net bir değer olarak tutuyoruz
-  late double amount;
+  double amount = 0.0;
 
   /// --- Esnek Bütçeleme (Min-Max Aralık) ---
   /// Kullanıcı esnek bütçe (Range) belirlediyse buraya yazılır
@@ -38,7 +38,7 @@ class TransactionRecord {
   int periodType = 0;
 
   /// Kaydın oluştuğu veya gerçekleşeceği tarih
-  late DateTime date;
+  DateTime date = DateTime.now();
 
   /// Hangi Kasalar (Vault) ile ilişkili? (Çoklu Kasa Desteği)
   /// İşlem tektir ancak birden fazla kasada listelenebilir.

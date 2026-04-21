@@ -27,48 +27,53 @@ const FinancialGoalSchema = CollectionSchema(
       name: r'aiStrategyText',
       type: IsarType.string,
     ),
-    r'createdAt': PropertySchema(
+    r'analysisRawData': PropertySchema(
       id: 2,
+      name: r'analysisRawData',
+      type: IsarType.string,
+    ),
+    r'createdAt': PropertySchema(
+      id: 3,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'rejectedCategories': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'rejectedCategories',
       type: IsarType.stringList,
     ),
     r'remoteId': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'remoteId',
       type: IsarType.string,
     ),
     r'syncStatus': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'syncStatus',
       type: IsarType.long,
     ),
     r'targetAmount': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'targetAmount',
       type: IsarType.double,
     ),
     r'targetDate': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'targetDate',
       type: IsarType.dateTime,
     ),
     r'updatedAt': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'userApproved': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'userApproved',
       type: IsarType.bool,
     ),
     r'vaultId': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'vaultId',
       type: IsarType.long,
     )
@@ -145,6 +150,12 @@ int _financialGoalEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.analysisRawData;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.rejectedCategories.length * 3;
   {
     for (var i = 0; i < object.rejectedCategories.length; i++) {
@@ -169,15 +180,16 @@ void _financialGoalSerialize(
 ) {
   writer.writeString(offsets[0], object.aiPersonaText);
   writer.writeString(offsets[1], object.aiStrategyText);
-  writer.writeDateTime(offsets[2], object.createdAt);
-  writer.writeStringList(offsets[3], object.rejectedCategories);
-  writer.writeString(offsets[4], object.remoteId);
-  writer.writeLong(offsets[5], object.syncStatus);
-  writer.writeDouble(offsets[6], object.targetAmount);
-  writer.writeDateTime(offsets[7], object.targetDate);
-  writer.writeDateTime(offsets[8], object.updatedAt);
-  writer.writeBool(offsets[9], object.userApproved);
-  writer.writeLong(offsets[10], object.vaultId);
+  writer.writeString(offsets[2], object.analysisRawData);
+  writer.writeDateTime(offsets[3], object.createdAt);
+  writer.writeStringList(offsets[4], object.rejectedCategories);
+  writer.writeString(offsets[5], object.remoteId);
+  writer.writeLong(offsets[6], object.syncStatus);
+  writer.writeDouble(offsets[7], object.targetAmount);
+  writer.writeDateTime(offsets[8], object.targetDate);
+  writer.writeDateTime(offsets[9], object.updatedAt);
+  writer.writeBool(offsets[10], object.userApproved);
+  writer.writeLong(offsets[11], object.vaultId);
 }
 
 FinancialGoal _financialGoalDeserialize(
@@ -189,16 +201,17 @@ FinancialGoal _financialGoalDeserialize(
   final object = FinancialGoal();
   object.aiPersonaText = reader.readStringOrNull(offsets[0]);
   object.aiStrategyText = reader.readStringOrNull(offsets[1]);
-  object.createdAt = reader.readDateTime(offsets[2]);
+  object.analysisRawData = reader.readStringOrNull(offsets[2]);
+  object.createdAt = reader.readDateTime(offsets[3]);
   object.id = id;
-  object.rejectedCategories = reader.readStringList(offsets[3]) ?? [];
-  object.remoteId = reader.readStringOrNull(offsets[4]);
-  object.syncStatus = reader.readLong(offsets[5]);
-  object.targetAmount = reader.readDouble(offsets[6]);
-  object.targetDate = reader.readDateTimeOrNull(offsets[7]);
-  object.updatedAt = reader.readDateTime(offsets[8]);
-  object.userApproved = reader.readBoolOrNull(offsets[9]);
-  object.vaultId = reader.readLongOrNull(offsets[10]);
+  object.rejectedCategories = reader.readStringList(offsets[4]) ?? [];
+  object.remoteId = reader.readStringOrNull(offsets[5]);
+  object.syncStatus = reader.readLong(offsets[6]);
+  object.targetAmount = reader.readDouble(offsets[7]);
+  object.targetDate = reader.readDateTimeOrNull(offsets[8]);
+  object.updatedAt = reader.readDateTime(offsets[9]);
+  object.userApproved = reader.readBoolOrNull(offsets[10]);
+  object.vaultId = reader.readLongOrNull(offsets[11]);
   return object;
 }
 
@@ -214,22 +227,24 @@ P _financialGoalDeserializeProp<P>(
     case 1:
       return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readDateTime(offset)) as P;
-    case 3:
-      return (reader.readStringList(offset) ?? []) as P;
-    case 4:
       return (reader.readStringOrNull(offset)) as P;
-    case 5:
-      return (reader.readLong(offset)) as P;
-    case 6:
-      return (reader.readDouble(offset)) as P;
-    case 7:
-      return (reader.readDateTimeOrNull(offset)) as P;
-    case 8:
+    case 3:
       return (reader.readDateTime(offset)) as P;
+    case 4:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 5:
+      return (reader.readStringOrNull(offset)) as P;
+    case 6:
+      return (reader.readLong(offset)) as P;
+    case 7:
+      return (reader.readDouble(offset)) as P;
+    case 8:
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 9:
-      return (reader.readBoolOrNull(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 10:
+      return (reader.readBoolOrNull(offset)) as P;
+    case 11:
       return (reader.readLongOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -904,6 +919,160 @@ extension FinancialGoalQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'aiStrategyText',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      analysisRawDataIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'analysisRawData',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      analysisRawDataIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'analysisRawData',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      analysisRawDataEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'analysisRawData',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      analysisRawDataGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'analysisRawData',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      analysisRawDataLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'analysisRawData',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      analysisRawDataBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'analysisRawData',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      analysisRawDataStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'analysisRawData',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      analysisRawDataEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'analysisRawData',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      analysisRawDataContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'analysisRawData',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      analysisRawDataMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'analysisRawData',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      analysisRawDataIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'analysisRawData',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterFilterCondition>
+      analysisRawDataIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'analysisRawData',
         value: '',
       ));
     });
@@ -1791,6 +1960,20 @@ extension FinancialGoalQuerySortBy
     });
   }
 
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      sortByAnalysisRawData() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'analysisRawData', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      sortByAnalysisRawDataDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'analysisRawData', Sort.desc);
+    });
+  }
+
   QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy> sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1924,6 +2107,20 @@ extension FinancialGoalQuerySortThenBy
       thenByAiStrategyTextDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'aiStrategyText', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      thenByAnalysisRawData() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'analysisRawData', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FinancialGoal, FinancialGoal, QAfterSortBy>
+      thenByAnalysisRawDataDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'analysisRawData', Sort.desc);
     });
   }
 
@@ -2063,6 +2260,14 @@ extension FinancialGoalQueryWhereDistinct
     });
   }
 
+  QueryBuilder<FinancialGoal, FinancialGoal, QDistinct>
+      distinctByAnalysisRawData({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'analysisRawData',
+          caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<FinancialGoal, FinancialGoal, QDistinct> distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'createdAt');
@@ -2141,6 +2346,13 @@ extension FinancialGoalQueryProperty
       aiStrategyTextProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'aiStrategyText');
+    });
+  }
+
+  QueryBuilder<FinancialGoal, String?, QQueryOperations>
+      analysisRawDataProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'analysisRawData');
     });
   }
 

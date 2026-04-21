@@ -9,7 +9,7 @@ class FinancialGoal {
   Id id = Isar.autoIncrement;
 
   /// Hedef tutar (örn: 10000.0)
-  late double targetAmount;
+  double targetAmount = 0.0;
 
   /// Hedef tarih (opsiyonel — girilmezse sistem alternatif tarihler önerir)
   DateTime? targetDate;
@@ -18,7 +18,7 @@ class FinancialGoal {
   int? vaultId;
 
   /// Analiz oluşturulma tarihi
-  late DateTime createdAt;
+  DateTime createdAt = DateTime.now();
 
   /// O analiz anında üretilen AI Persona metni (~2-3 cümle)
   String? aiPersonaText;
@@ -34,6 +34,9 @@ class FinancialGoal {
   /// true = beğendi (persona kaydedildi)
   /// false = beğenmedi (persona kaydedilmedi, kategoriler veto listesine eklendi)
   bool? userApproved;
+
+  /// Analizin tam detaylarını (skor, kesintiler vb.) saklayan JSON verisi
+  String? analysisRawData;
 
   /// --- Senkronizasyon Alanları ---
   @Index()

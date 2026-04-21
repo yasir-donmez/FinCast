@@ -284,5 +284,8 @@
   "moveBackward": "Move Backward",
   "selectCurrency": "Select Currency",
   "membershipPlan": "Membership Plan",
-  "upgrade": "Upgrade"
+  "upgrade": "Upgrade",
+  "auto": "AUTO",
+  "max": "MAX",
+  "zero": "0"
 }

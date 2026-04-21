@@ -890,4 +890,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get upgrade => 'Upgrade';
+
+  @override
+  String get auto => 'AUTO';
+
+  @override
+  String get max => 'MAX';
+
+  @override
+  String get zero => '0';
 }

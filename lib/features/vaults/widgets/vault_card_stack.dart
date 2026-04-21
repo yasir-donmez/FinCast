@@ -80,7 +80,7 @@ class _VaultCardStackState extends State<VaultCardStack> {
       child: PageView.builder(
         controller: _pageController,
         physics: isInteractingDisabled ? const NeverScrollableScrollPhysics() : const PageScrollPhysics(),
-        clipBehavior: Clip.none,
+        clipBehavior: Clip.hardEdge,
         itemCount: widget.deckItems.length,
         itemBuilder: (context, index) {
           final vaultId = widget.deckItems[index];

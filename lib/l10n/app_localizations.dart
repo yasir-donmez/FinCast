@@ -1825,6 +1825,24 @@ abstract class AppLocalizations {
   /// In tr, this message translates to:
   /// **'Yükselt'**
   String get upgrade;
+
+  /// No description provided for @auto.
+  ///
+  /// In tr, this message translates to:
+  /// **'OTOMATİK'**
+  String get auto;
+
+  /// No description provided for @max.
+  ///
+  /// In tr, this message translates to:
+  /// **'MAX'**
+  String get max;
+
+  /// No description provided for @zero.
+  ///
+  /// In tr, this message translates to:
+  /// **'0'**
+  String get zero;
 }
 
 class _AppLocalizationsDelegate

@@ -35,44 +35,42 @@ class IntegratedVaultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    // --- Sizes ---
-    final double widthT = Curves.easeOutQuad.transform(morphProgress);
+    // --- Curves for different effects ---
+    final double widthT = Curves.easeOutQuart.transform(morphProgress);
+    
     final double cardWidth = lerpDouble(screenWidth * 0.70, screenWidth, widthT)!;
     final double cardHeight = lerpDouble(280, 56, morphProgress)!;
     
-    // --- FluidContainer dekorasyon opaklığı — tüm container fade olur ---
-    final double decorationOpacity = (1 - morphProgress * 3).clamp(0.0, 1.0); 
-    final double cardRadius = lerpDouble(32, 0, Curves.easeInQuad.transform((morphProgress * 2.5).clamp(0.0, 1.0)))!;
-    
-    // --- İçerik fazları ---
-    final double secondaryOpacity = (1 - morphProgress * 5).clamp(0.0, 1.0); 
-    final double primaryMorph = Curves.easeInOutCubic.transform((morphProgress * 1.4).clamp(0.0, 1.0));
+    // --- Glass Morphing Spread (2. Madde) ---
+    final double decorationOpacity = (1 - morphProgress * 2.2).clamp(0.0, 1.0); 
+    final double cardRadius = lerpDouble(32, 0, Curves.easeInOutCubic.transform((morphProgress * 1.8).clamp(0.0, 1.0)))!;
     
     final double hPad = lerpDouble(24, 20, morphProgress)!;
-    
-    // Effective width — OverflowBox ile PageView'ın %70 sınırını aşıyoruz
     final double effectiveWidth = isCurrent ? cardWidth : screenWidth * 0.70;
     
     return OverflowBox(
       maxWidth: effectiveWidth,
       maxHeight: cardHeight,
-      child: SizedBox(
+      child: Container(
         width: effectiveWidth,
         height: cardHeight,
+        // Dış gölgeyi (boxShadow) tamamen kaldırdık, yandakilerle aynı oldu
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // === DEKORASYON KATMANI ===
+            // === DEKORASYON KATMANI (Cam Etkisi Transferi) ===
             if (decorationOpacity > 0.01)
               Positioned.fill(
                 child: Opacity(
                   opacity: decorationOpacity,
                   child: FluidContainer(
-                    isGlass: morphProgress < 0.15,
-                    isConvex: morphProgress < 0.15,
+                    isGlass: false,
+                    isConvex: true, 
                     borderRadius: cardRadius,
-                    color: isCurrent ? null : AppColors.getSurface(context).withValues(alpha: 0.5),
+                    borderColor: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+                    color: AppColors.getSurface(context).withValues(alpha: isCurrent ? 1.0 : 0.5),
                     child: const SizedBox.expand(),
                   ),
                 ),
@@ -82,7 +80,7 @@ class IntegratedVaultCard extends StatelessWidget {
             Positioned(
               left: hPad, right: hPad,
               top: 0, bottom: 0,
-              child: _buildMorphContent(context, primaryMorph, secondaryOpacity),
+              child: _buildMorphContent(context, isDark),
             ),
           ],
         ),
@@ -90,52 +88,57 @@ class IntegratedVaultCard extends StatelessWidget {
     );
   }
 
-  Widget _buildMorphContent(BuildContext context, double primaryMorph, double secondaryOpacity) {
+  Widget _buildMorphContent(BuildContext context, bool isDark) {
     final hasFlexibleTx = txs.any((t) => t.minAmount != null || t.maxAmount != null);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    final double titleFontSize = lerpDouble(11, 18, primaryMorph)!;
-    final double balanceFontSize = lerpDouble(42, 16, primaryMorph)!;
-    final double titleLetterSpacing = lerpDouble(2, -0.5, primaryMorph)!;
+    // Animasyon progressleri
+    final double contentT = Curves.easeInOutCubic.transform((morphProgress * 1.2).clamp(0.0, 1.0));
+    final double magneticT = Curves.easeOutBack.transform(morphProgress);
     
-    final double badgePadH = lerpDouble(0, 12, primaryMorph)!;
-    final double badgePadV = lerpDouble(0, 6, primaryMorph)!;
-    final double badgeBgAlpha = primaryMorph * 0.12;
+    final double titleFontSize = lerpDouble(11, 17, contentT)!;
+    final double balanceFontSize = lerpDouble(42, 16, contentT)!;
+    final double titleLetterSpacing = lerpDouble(1.8, -0.4, contentT)!;
+    final double balanceLetterSpacing = lerpDouble(-2.5, 0.2, contentT)!;
     
-    final Color? titleColor = primaryMorph < 0.6
-        ? activeColor.withValues(alpha: lerpDouble(0.7, 1.0, primaryMorph)!)
-        : null;
+    final double badgePadH = lerpDouble(0, 14, contentT)!;
+    final double badgePadV = lerpDouble(0, 6, contentT)!;
+    final double badgeBgAlpha = contentT * (isDark ? 0.15 : 0.08);
     
     return LayoutBuilder(
       builder: (context, constraints) {
         final h = constraints.maxHeight;
         
-        final double titleExpandedTop = h * 0.15;
-        final double titleCompactTop = (h - titleFontSize) / 2 - 2;
-        final double titleTop = lerpDouble(titleExpandedTop, titleCompactTop, primaryMorph)!;
+        // --- Geniş Mod (Expanded) Pozisyonları ---
+        final double titleExpandedTop = h * 0.12;
+        final double balanceExpandedTop = titleExpandedTop + 30;
+        final double secondaryExpandedTop = balanceExpandedTop + 60;
         
-        final double balanceExpandedTop = titleExpandedTop + titleFontSize + 8;
-        final double balanceCompactTop = (h - balanceFontSize) / 2 - 2;
-        final double balanceTop = lerpDouble(balanceExpandedTop, balanceCompactTop, primaryMorph)!;
+        // --- Dar Mod (Compact) Pozisyonları ---
+        final double titleCompactTop = (h - titleFontSize) / 2;
+        final double balanceCompactTop = (h - balanceFontSize) / 2;
+
+        final double titleTop = lerpDouble(titleExpandedTop, titleCompactTop, magneticT)!;
+        final double balanceTop = lerpDouble(balanceExpandedTop, balanceCompactTop, magneticT)!;
         
-        final double secondaryTop = balanceExpandedTop + balanceFontSize + 24;
+        final double secondaryOpacity = (1 - morphProgress * 4.5).clamp(0.0, 1.0);
         
         return Stack(
-          clipBehavior: Clip.hardEdge,
+          clipBehavior: Clip.none,
           children: [
             // === TITLE ===
             Positioned(
               left: 0, right: 0,
               top: titleTop,
               child: Align(
-                alignment: Alignment.lerp(Alignment.center, Alignment.centerLeft, primaryMorph)!,
+                alignment: Alignment.lerp(Alignment.center, Alignment.centerLeft, magneticT)!,
                 child: Text(
                   vaultName,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: titleFontSize,
                     fontWeight: FontWeight.w900,
                     letterSpacing: titleLetterSpacing,
-                    color: titleColor,
+                    color: contentT > 0.8 ? null : activeColor.withValues(alpha: lerpDouble(0.8, 1.0, contentT)!),
                   ),
                 ),
               ),
@@ -146,33 +149,33 @@ class IntegratedVaultCard extends StatelessWidget {
               left: 0, right: 0,
               top: balanceTop,
               child: Align(
-                alignment: Alignment.lerp(Alignment.center, Alignment.centerRight, primaryMorph)!,
+                alignment: Alignment.lerp(Alignment.center, Alignment.centerRight, magneticT)!,
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: badgePadH, vertical: badgePadV),
                   decoration: BoxDecoration(
                     color: activeColor.withValues(alpha: badgeBgAlpha),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   child: Text(
-                    primaryMorph > 0.5
+                    contentT > 0.6
                       ? '₺${CurrencyUtils.formatAmount(balance)}'
                       : '₺${CurrencyUtils.formatFullAmount(balance)}',
                     style: TextStyle(
                       fontSize: balanceFontSize,
                       fontWeight: FontWeight.w900,
                       color: activeColor,
-                      letterSpacing: lerpDouble(-2, 0, primaryMorph)!,
+                      letterSpacing: balanceLetterSpacing,
                     ),
                   ),
                 ),
               ),
             ),
             
-            // === SECONDARY STATS ===
+            // === SECONDARY STATS (ORİJİNAL DİKEY DÜZEN) ===
             if (secondaryOpacity > 0.01)
               Positioned(
                 left: 0, right: 0,
-                top: secondaryTop,
+                top: secondaryExpandedTop,
                 child: Opacity(
                   opacity: secondaryOpacity,
                   child: Column(
@@ -181,7 +184,7 @@ class IntegratedVaultCard extends StatelessWidget {
                       Row(
                         children: [
                           Expanded(child: _buildMiniStat(l10n.income, income, AppColors.getIncome(context))),
-                          Container(width: 1, height: 30, color: activeColor.withValues(alpha: 0.1)),
+                          Container(width: 1, height: 30, color: activeColor.withValues(alpha: 0.15)),
                           Expanded(child: _buildMiniStat(l10n.expense, expense, AppColors.getExpense(context))),
                         ],
                       ),
@@ -191,19 +194,16 @@ class IntegratedVaultCard extends StatelessWidget {
                         child: Divider(
                           height: 1, 
                           thickness: 0.5, 
-                          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08)
+                          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1)
                         ),
                       ),
 
-                      SizedBox(
-                        height: 40,
-                        child: hasFlexibleTx 
-                          ? _buildRangeStats(txs)
-                          : const SizedBox.shrink(),
-                      ),
+                      if (hasFlexibleTx) ...[
+                        _buildRangeStats(txs),
+                        const SizedBox(height: 16),
+                      ],
 
-                      const SizedBox(height: 12),
-                      const Icon(Icons.swap_horiz_rounded, size: 16, color: Colors.grey),
+                      const Icon(Icons.swap_horiz_rounded, size: 20, color: Colors.grey),
                     ],
                   ),
                 ),

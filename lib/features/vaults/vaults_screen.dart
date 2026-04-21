@@ -11,7 +11,7 @@ import '../../shared/widgets/fluid_dialog.dart';
 import '../../shared/widgets/carved_container.dart';
 import 'vaults_providers.dart';
 import 'widgets/transaction_card.dart';
-import '../transactions/add_transaction_sheet.dart'; 
+import '../transactions/add_transaction_sheet.dart';
 import 'widgets/vault_management_sheet.dart';
 import 'widgets/vault_detail_sheet.dart';
 import '../dashboard/dashboard_providers.dart';
@@ -55,7 +55,9 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
 
     final vaultTransactions = selectedVaultId == null
         ? allTransactions
-        : allTransactions.where((t) => t.groupIds.contains(selectedVaultId)).toList();
+        : allTransactions
+              .where((t) => t.groupIds.contains(selectedVaultId))
+              .toList();
 
     var filteredTransactions = vaultTransactions.where((t) {
       if (filter == TransactionFilter.income) return t.isIncome;
@@ -64,16 +66,18 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
     }).toList();
 
     if (selectedPeriod != null) {
-      filteredTransactions = filteredTransactions.where((t) => t.periodType == selectedPeriod).toList();
+      filteredTransactions = filteredTransactions
+          .where((t) => t.periodType == selectedPeriod)
+          .toList();
     }
 
     // Header limitleri (header_delegate.dart ile uyumlu)
     const maxHeaderHeight = 420.0;
     const minHeaderHeight = 100.0;
     final viewportHeight = MediaQuery.of(context).size.height;
-    
+
     // Header'ın tam kapanması (320px kayması) için gereken ekstra mesafe:
-    // Kaydırma bittiğinde (offset=320) header 100px yer kaplar. 
+    // Kaydırma bittiğinde (offset=320) header 100px yer kaplar.
     // Altındaki içeriğin ekranı tam doldurması için boyu (viewport - 100) olmalıdır.
     // Bu durumda toplam içerik boyu = (viewport - 100) olmalı.
     final requiredContentHeight = viewportHeight - minHeaderHeight;
@@ -83,8 +87,22 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
       body: Stack(
         children: [
           if (isDark) ...[
-            Positioned(top: -50, left: -50, child: LiquidBlob(color: activeColor.withValues(alpha: 0.15), size: 400)),
-            Positioned(bottom: 100, right: -100, child: LiquidBlob(color: AppColors.getSecondary(context).withValues(alpha: 0.1), size: 500)),
+            Positioned(
+              top: -50,
+              left: -50,
+              child: LiquidBlob(
+                color: activeColor.withValues(alpha: 0.15),
+                size: 400,
+              ),
+            ),
+            Positioned(
+              bottom: 100,
+              right: -100,
+              child: LiquidBlob(
+                color: AppColors.getSecondary(context).withValues(alpha: 0.1),
+                size: 500,
+              ),
+            ),
           ],
 
           CustomScrollView(
@@ -97,7 +115,8 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                   groups: groups,
                   allTransactions: allTransactions,
                   selectedVaultId: selectedVaultId,
-                  onVaultSelect: (id) => ref.read(selectedVaultProvider.notifier).state = id,
+                  onVaultSelect: (id) =>
+                      ref.read(selectedVaultProvider.notifier).state = id,
                   activeColor: activeColor,
                   onManageVaults: () => _showVaultManagementSheet(context),
                   onAddVault: () => _showAddVaultSheet(context),
@@ -108,19 +127,59 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
 
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(AppSizes.paddingMedium, 24, AppSizes.paddingMedium, 24),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSizes.paddingMedium,
+                    24,
+                    AppSizes.paddingMedium,
+                    24,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("FİLTRELEME", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.withValues(alpha: 0.5), letterSpacing: 2)),
+                      Text(
+                        "FİLTRELEME",
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.grey.withValues(alpha: 0.5),
+                          letterSpacing: 2,
+                        ),
+                      ),
                       const SizedBox(height: 16),
                       Row(
                         children: [
-                          VaultFilterChip(label: l10n.all, isActive: filter == TransactionFilter.all, onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.all, activeColor: activeColor),
+                          VaultFilterChip(
+                            label: l10n.all,
+                            isActive: filter == TransactionFilter.all,
+                            onTap: () =>
+                                ref
+                                    .read(transactionFilterProvider.notifier)
+                                    .state = TransactionFilter
+                                    .all,
+                            activeColor: activeColor,
+                          ),
                           const SizedBox(width: 8),
-                          VaultFilterChip(label: l10n.income, isActive: filter == TransactionFilter.income, onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.income, activeColor: AppColors.getIncome(context)),
+                          VaultFilterChip(
+                            label: l10n.income,
+                            isActive: filter == TransactionFilter.income,
+                            onTap: () =>
+                                ref
+                                    .read(transactionFilterProvider.notifier)
+                                    .state = TransactionFilter
+                                    .income,
+                            activeColor: AppColors.getIncome(context),
+                          ),
                           const SizedBox(width: 8),
-                          VaultFilterChip(label: l10n.expense, isActive: filter == TransactionFilter.expense, onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.expense, activeColor: AppColors.getExpense(context)),
+                          VaultFilterChip(
+                            label: l10n.expense,
+                            isActive: filter == TransactionFilter.expense,
+                            onTap: () =>
+                                ref
+                                    .read(transactionFilterProvider.notifier)
+                                    .state = TransactionFilter
+                                    .expense,
+                            activeColor: AppColors.getExpense(context),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -130,17 +189,34 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                         clipBehavior: Clip.none,
                         child: Row(
                           children: [
-                            VaultFilterChip(label: l10n.allTime, isActive: selectedPeriod == null, onTap: () => ref.read(selectedPeriodProvider.notifier).state = null, activeColor: activeColor),
+                            VaultFilterChip(
+                              label: l10n.allTime,
+                              isActive: selectedPeriod == null,
+                              onTap: () =>
+                                  ref
+                                          .read(selectedPeriodProvider.notifier)
+                                          .state =
+                                      null,
+                              activeColor: activeColor,
+                            ),
                             const SizedBox(width: 8),
-                            ...[1, 2, 3].map((p) => Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: VaultFilterChip(
-                                label: _getPeriodLabel(p, l10n),
-                                isActive: selectedPeriod == p,
-                                onTap: () => ref.read(selectedPeriodProvider.notifier).state = p,
-                                activeColor: activeColor,
+                            ...[1, 2, 3].map(
+                              (p) => Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: VaultFilterChip(
+                                  label: _getPeriodLabel(p, l10n),
+                                  isActive: selectedPeriod == p,
+                                  onTap: () =>
+                                      ref
+                                              .read(
+                                                selectedPeriodProvider.notifier,
+                                              )
+                                              .state =
+                                          p,
+                                  activeColor: activeColor,
+                                ),
                               ),
-                            )),
+                            ),
                           ],
                         ),
                       ),
@@ -153,7 +229,10 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: Align(
-                    alignment: const Alignment(0, -0.4), // İçeriği yukarı çektik
+                    alignment: const Alignment(
+                      0,
+                      -0.4,
+                    ), // İçeriği yukarı çektik
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 40),
                       child: Column(
@@ -165,7 +244,8 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                             curve: Curves.elasticOut,
                             builder: (context, value, child) {
                               return CarvedContainer(
-                                size: 100, // Biraz küçülttük ki daha rahat sığsın
+                                size:
+                                    100, // Biraz küçülttük ki daha rahat sığsın
                                 child: Transform.scale(
                                   scale: 0.4 + (0.6 * value),
                                   child: Opacity(
@@ -175,18 +255,26 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                                 ),
                               );
                             },
-                            child: Icon(Icons.auto_graph_rounded, size: 40, color: activeColor.withValues(alpha: isDark ? 0.3 : 0.1)),
+                            child: Icon(
+                              Icons.auto_graph_rounded,
+                              size: 40,
+                              color: activeColor.withValues(
+                                alpha: isDark ? 0.3 : 0.1,
+                              ),
+                            ),
                           ),
                           const SizedBox(height: 24),
                           Text(
-                            l10n.noTransactions.toUpperCase(), 
+                            l10n.noTransactions.toUpperCase(),
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: isDark ? Colors.white.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.3), 
-                              fontSize: 13, 
-                              fontWeight: FontWeight.w900, 
-                              letterSpacing: 2
-                            )
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.15)
+                                  : Colors.grey.withValues(alpha: 0.3),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 2,
+                            ),
                           ),
                         ],
                       ),
@@ -195,36 +283,53 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(AppSizes.paddingMedium, 0, AppSizes.paddingMedium, 20),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSizes.paddingMedium,
+                    0,
+                    AppSizes.paddingMedium,
+                    20,
+                  ),
                   sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 0.85,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                          childAspectRatio: 0.85,
+                        ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => TransactionCard(
                         transaction: filteredTransactions[index],
-                        onTap: () => _showTransactionDetail(context, filteredTransactions[index]),
-                        onLongPress: () => _handleTransactionLongPress(context, ref, filteredTransactions[index]),
+                        onTap: () => _showTransactionDetail(
+                          context,
+                          filteredTransactions[index],
+                        ),
+                        onLongPress: () => _handleTransactionLongPress(
+                          context,
+                          ref,
+                          filteredTransactions[index],
+                        ),
                       ),
                       childCount: filteredTransactions.length,
                     ),
                   ),
                 ),
 
-              // AKILLI BOŞLUK: 
+              // AKILLI BOŞLUK:
               // Eğer içerik zaten yeterince uzunsa (animasyonu tamamlatabiliyorsa) boşluk eklemez.
               // Eğer içerik kısaysa, tam animasyonun kapanacağı mesafe (320px) kadar alanı garanti eder.
               SliverLayoutBuilder(
                 builder: (context, constraints) {
                   // precedingScrollExtent o anki toplam layout boyutunu verir.
                   // scrollOffset ile toplayarak scroll=0 anındaki hayali tam boyutu buluyoruz.
-                  final totalHeightAtStart = constraints.precedingScrollExtent + constraints.scrollOffset;
-                  final targetHeight = constraints.viewportMainAxisExtent + (maxHeaderHeight - minHeaderHeight);
+                  final totalHeightAtStart =
+                      constraints.precedingScrollExtent +
+                      constraints.scrollOffset;
+                  final targetHeight =
+                      constraints.viewportMainAxisExtent +
+                      (maxHeaderHeight - minHeaderHeight);
                   final gap = targetHeight - totalHeightAtStart;
-                  
+
                   return SliverToBoxAdapter(
                     child: SizedBox(height: gap > 0 ? gap : 0),
                   );
@@ -239,22 +344,31 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
 
   String _getPeriodLabel(int period, AppLocalizations l10n) {
     switch (period) {
-      case 0: return l10n.oneTime;
-      case 1: return l10n.weekly;
-      case 4: return l10n.every2Weeks;
-      case 5: return l10n.every3Weeks;
-      case 2: return l10n.monthly;
-      case 6: return l10n.every3Months;
-      case 7: return l10n.every6Months;
-      case 3: return l10n.yearly;
-      default: return '';
+      case 0:
+        return l10n.oneTime;
+      case 1:
+        return l10n.weekly;
+      case 4:
+        return l10n.every2Weeks;
+      case 5:
+        return l10n.every3Weeks;
+      case 2:
+        return l10n.monthly;
+      case 6:
+        return l10n.every3Months;
+      case 7:
+        return l10n.every6Months;
+      case 3:
+        return l10n.yearly;
+      default:
+        return '';
     }
   }
 
   void _showTransactionDetail(BuildContext context, TransactionUI tx) {
     final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     FluidSheet.show(
       context: context,
       title: tx.name,
@@ -267,10 +381,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
             builder: (context, value, child) {
               return Transform.scale(
                 scale: 0.5 + (0.5 * value),
-                child: Opacity(
-                  opacity: value.clamp(0.0, 1.0),
-                  child: child,
-                ),
+                child: Opacity(opacity: value.clamp(0.0, 1.0), child: child),
               );
             },
             child: Center(
@@ -278,7 +389,8 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                 alignment: Alignment.center,
                 children: [
                   Container(
-                    width: 140, height: 140,
+                    width: 140,
+                    height: 140,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
@@ -290,7 +402,8 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                     ),
                   ),
                   Container(
-                    width: 100, height: 100,
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
                       color: tx.color.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(36),
@@ -305,9 +418,9 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           TweenAnimationBuilder<double>(
             duration: const Duration(milliseconds: 700),
             tween: Tween(begin: 0.0, end: 1.0),
@@ -321,18 +434,22 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
             child: Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: tx.color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    (localizedCategoryName(tx.categoryId, l10n) ?? l10n.all).toUpperCase(),
+                    (localizedCategoryName(tx.categoryId, l10n) ?? l10n.all)
+                        .toUpperCase(),
                     style: TextStyle(
-                      fontSize: 10, 
-                      fontWeight: FontWeight.w900, 
-                      color: tx.color, 
-                      letterSpacing: 2.0
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: tx.color,
+                      letterSpacing: 2.0,
                     ),
                   ),
                 ),
@@ -342,9 +459,11 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                   child: Text(
                     '₺${CurrencyUtils.formatFullAmount(tx.amount)}',
                     style: TextStyle(
-                      fontSize: 56, 
-                      fontWeight: FontWeight.w900, 
-                      color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context),
+                      fontSize: 56,
+                      fontWeight: FontWeight.w900,
+                      color: tx.isIncome
+                          ? AppColors.getIncome(context)
+                          : AppColors.getExpense(context),
                       letterSpacing: -3,
                       height: 1,
                     ),
@@ -353,22 +472,32 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 40),
-          
+
           ...List.generate(3, (index) {
             final values = [
-              tx.groupIds.isNotEmpty ? tx.groupIds.first.replaceFirst('v_', '') : l10n.mainVault, 
-              localizedCategoryName(tx.categoryId, l10n) ?? "-", 
-              _getPeriodLabel(tx.periodType, l10n)
+              tx.groupIds.isNotEmpty
+                  ? tx.groupIds.first.replaceFirst('v_', '')
+                  : l10n.mainVault,
+              localizedCategoryName(tx.categoryId, l10n) ?? "-",
+              _getPeriodLabel(tx.periodType, l10n),
             ];
-            final icons = [Icons.account_balance_wallet_rounded, Icons.category_rounded, Icons.replay_rounded];
+            final icons = [
+              Icons.account_balance_wallet_rounded,
+              Icons.category_rounded,
+              Icons.replay_rounded,
+            ];
             final displayLabels = [l10n.vaults, l10n.category, l10n.period];
-            
+
             return TweenAnimationBuilder<double>(
               duration: const Duration(milliseconds: 600),
               tween: Tween(begin: 0.0, end: 1.0),
-              curve: Interval(0.4 + (index * 0.1), 1.0, curve: Curves.easeOutCubic),
+              curve: Interval(
+                0.4 + (index * 0.1),
+                1.0,
+                curve: Curves.easeOutCubic,
+              ),
               builder: (context, value, child) {
                 return Transform.translate(
                   offset: Offset(0, 20 * (1 - value)),
@@ -381,11 +510,14 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                   padding: const EdgeInsets.all(18),
                   borderRadius: 24,
                   isGlass: true,
-                  color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.015),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.03)
+                      : Colors.black.withValues(alpha: 0.015),
                   child: Row(
                     children: [
                       Container(
-                        width: 40, height: 40,
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
                           color: tx.color.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(14),
@@ -393,16 +525,30 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                         child: Icon(icons[index], size: 20, color: tx.color),
                       ),
                       const SizedBox(width: 16),
-                      Text(displayLabels[index], style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.getTextSecondary(context))),
+                      Text(
+                        displayLabels[index],
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.getTextSecondary(context),
+                        ),
+                      ),
                       const Spacer(),
-                      Text(values[index], style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.getTextPrimary(context))),
+                      Text(
+                        values[index],
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.getTextPrimary(context),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
             );
           }),
-          
+
           const SizedBox(height: 32),
 
           TweenAnimationBuilder<double>(
@@ -423,13 +569,25 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                     child: FluidContainer(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       borderRadius: 20,
-                      color: AppColors.getPrimary(context).withValues(alpha: 0.1),
+                      color: AppColors.getPrimary(
+                        context,
+                      ).withValues(alpha: 0.1),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.edit_note_rounded, size: 20, color: AppColors.getPrimary(context)),
+                          Icon(
+                            Icons.edit_note_rounded,
+                            size: 20,
+                            color: AppColors.getPrimary(context),
+                          ),
                           const SizedBox(width: 8),
-                          Text(l10n.edit, style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.getPrimary(context))),
+                          Text(
+                            l10n.edit,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.getPrimary(context),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -447,42 +605,55 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                       content: Text(l10n.permanentDeleteDesc),
                       actions: [
                         TextButton(
-                          onPressed: () => Navigator.pop(context, false), 
-                          child: Text(l10n.cancel, style: TextStyle(color: AppColors.getTextSecondary(context))),
+                          onPressed: () => Navigator.pop(context, false),
+                          child: Text(
+                            l10n.cancel,
+                            style: TextStyle(
+                              color: AppColors.getTextSecondary(context),
+                            ),
+                          ),
                         ),
                         FluidDialogButton(
                           label: l10n.ok,
                           onTap: () => Navigator.pop(context, true),
                           color: AppColors.error,
                         ),
-                      ]
+                      ],
                     );
-                    if (confirm == true) { 
-                      await DatabaseService.deleteTransaction(tx.dbId!); 
-                      HapticFeedback.mediumImpact(); 
+                    if (confirm == true) {
+                      await DatabaseService.deleteTransaction(tx.dbId!);
+                      HapticFeedback.mediumImpact();
                     }
                   },
                   child: FluidContainer(
-                    width: 56, height: 56,
+                    width: 56,
+                    height: 56,
                     borderRadius: 20,
                     color: AppColors.error.withValues(alpha: 0.1),
-                    child: const Icon(Icons.delete_sweep_rounded, color: AppColors.error),
+                    child: const Icon(
+                      Icons.delete_sweep_rounded,
+                      color: AppColors.error,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          
+
           const SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  void _handleTransactionLongPress(BuildContext context, WidgetRef ref, TransactionUI tx) {
+  void _handleTransactionLongPress(
+    BuildContext context,
+    WidgetRef ref,
+    TransactionUI tx,
+  ) {
     if (tx.dbId == null) return;
     HapticFeedback.heavyImpact();
-    
+
     final selectedVaultId = ref.read(selectedVaultProvider);
 
     showTransactionActionMenu(
@@ -509,7 +680,9 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
             initialMinAmount: tx.minAmount,
             initialMaxAmount: tx.maxAmount,
             initialIsIncome: tx.isIncome,
-            initialVaultIds: tx.groupIds.map((vId) => int.parse(vId.replaceFirst('v_', ''))).toList(),
+            initialVaultIds: tx.groupIds
+                .map((vId) => int.parse(vId.replaceFirst('v_', '')))
+                .toList(),
             initialCategoryId: tx.categoryId,
           ),
         );
@@ -524,26 +697,29 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
       },
       onDelete: () async {
         final confirm = await showFluidDialog<bool>(
-          context: context, 
+          context: context,
           accentColor: AppColors.error,
           icon: const Icon(Icons.delete_forever_rounded),
-          title: Text(AppLocalizations.of(context)!.permanentDelete), 
-          content: Text(AppLocalizations.of(context)!.permanentDeleteDesc), 
+          title: Text(AppLocalizations.of(context)!.permanentDelete),
+          content: Text(AppLocalizations.of(context)!.permanentDeleteDesc),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, false), 
-              child: Text(AppLocalizations.of(context)!.cancel, style: TextStyle(color: AppColors.getTextSecondary(context))),
-            ), 
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(
+                AppLocalizations.of(context)!.cancel,
+                style: TextStyle(color: AppColors.getTextSecondary(context)),
+              ),
+            ),
             FluidDialogButton(
               label: AppLocalizations.of(context)!.ok,
               onTap: () => Navigator.pop(context, true),
               color: AppColors.error,
             ),
-          ]
+          ],
         );
-        if (confirm == true) { 
-          await DatabaseService.deleteTransaction(tx.dbId!); 
-          HapticFeedback.mediumImpact(); 
+        if (confirm == true) {
+          await DatabaseService.deleteTransaction(tx.dbId!);
+          HapticFeedback.mediumImpact();
         }
       },
     );

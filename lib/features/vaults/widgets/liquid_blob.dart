@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'dart:math' as math;
 
 class LiquidBlob extends StatefulWidget {
@@ -48,10 +47,6 @@ class _LiquidBlobState extends State<LiquidBlob> with SingleTickerProviderStateM
               gradient: RadialGradient(
                 colors: [widget.color, widget.color.withValues(alpha: 0)],
               ),
-            ),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-              child: Container(color: Colors.transparent),
             ),
           ),
         );

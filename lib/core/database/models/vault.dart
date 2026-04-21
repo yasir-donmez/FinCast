@@ -7,13 +7,13 @@ class Vault {
   Id id = Isar.autoIncrement;
 
   /// Kasanın Adı (Örn: "Maaş Hesabı", "Yastık Altı Altın", "Dolar Zulası")
-  late String name;
+  String name = '';
 
   /// Kasanın Ana Birimi (Örn: "TRY", "USD", "GRAM")
-  late String currency;
+  String currency = 'TRY';
 
   /// Kasadaki Toplam Miktar (Örn: 25000.0)
-  late double balance;
+  double balance = 0.0;
 
   /// Kasaya özel İkon veya renk kodu (Arayüzde şık Neumorphic buton için)
   String? iconCode;

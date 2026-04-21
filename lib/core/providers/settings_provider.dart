@@ -1,7 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import '../database/database_service.dart';
 import '../database/models/app_settings.dart';
+
+final rootRepaintBoundaryKey = GlobalKey();
 
 class SettingsNotifier extends StateNotifier<AppSettings> {
   SettingsNotifier() : super(AppSettings()) {

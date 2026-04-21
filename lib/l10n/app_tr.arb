@@ -284,5 +284,8 @@
   "moveBackward": "Arkaya Taşı",
   "selectCurrency": "Para Birimi Seçin",
   "membershipPlan": "Üyelik Planı",
-  "upgrade": "Yükselt"
+  "upgrade": "Yükselt",
+  "auto": "OTOMATİK",
+  "max": "MAX",
+  "zero": "0"
 }

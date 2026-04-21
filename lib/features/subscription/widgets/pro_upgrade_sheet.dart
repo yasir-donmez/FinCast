@@ -5,7 +5,6 @@ import '../../../core/services/subscription_service.dart';
 import '../../../shared/widgets/fluid_button.dart';
 import '../../../shared/widgets/fluid_sheet.dart';
 import '../../../shared/widgets/membership_orb.dart';
-import '../../auth/widgets/liquid_background.dart';
 
 /// FinCast "Pro Üyelik" (Paywall) Sayfası.
 class ProUpgradeSheet extends ConsumerWidget {
@@ -21,167 +20,156 @@ class ProUpgradeSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final primaryColor = AppColors.getPrimary(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secondaryTextColor = AppColors.getTextSecondary(context);
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        // 🌊 Arka Plan Efekti
-        Positioned(
-          left: -AppSizes.paddingLarge,
-          right: -AppSizes.paddingLarge,
-          top: -AppSizes.paddingLarge,
-          bottom: -AppSizes.paddingLarge,
-          child: Opacity(
-            opacity: isDark ? 0.2 : 0.1,
-            child: const LiquidBackground(),
-          ),
-        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Ekran yüksekliğine göre boşlukları ve boyutları ayarla
+        final screenHeight = MediaQuery.of(context).size.height;
+        final isSmallScreen = screenHeight < 700;
         
-        Column(
+        final verticalSpacing = isSmallScreen ? 8.0 : 16.0;
+        final headerSpacing = isSmallScreen ? 12.0 : 20.0;
+
+        return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 🔹 Üst Bar
-            _buildHeader(context, primaryColor),
+            // 🔹 Üst Bar (Küre ve Başlık)
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 24.0, 
+                vertical: isSmallScreen ? 12.0 : 20.0
+              ),
+              child: Column(
+                children: [
+                  Hero(
+                    tag: 'pro_orb',
+                    child: MembershipOrb(
+                      color: primaryColor,
+                      size: isSmallScreen ? 36 : 44,
+                    ),
+                  ),
+                  SizedBox(height: headerSpacing),
+                  Text(
+                    'FinCast Pro\'ya Geçin',
+                    style: TextStyle(
+                      fontSize: isSmallScreen ? 22 : 26, 
+                      fontWeight: FontWeight.w900, 
+                      letterSpacing: -0.5
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (!isSmallScreen) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Finansal potansiyelinizi %100 açığa çıkarın.',
+                      style: TextStyle(
+                        fontSize: 14, 
+                        color: secondaryTextColor.withValues(alpha: 0.6)
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ],
+              ),
+            ),
 
-            const SizedBox(height: 12),
+            // 🚀 Avantajlar Listesi (Daha kompakt)
+            _buildFeatureItem(context, Icons.analytics_rounded, 'AI Analizleri', 'Günlük 3 derin analiz.', isSmallScreen),
+            _buildFeatureItem(context, Icons.account_balance_wallet_rounded, 'Sınırsız Kasa', 'Dilediğiniz kadar kasa.', isSmallScreen),
+            _buildFeatureItem(context, Icons.block_rounded, 'Sıfır Reklam', 'Kesintisiz deneyim.', isSmallScreen),
             
-            // 🚀 Avantajlar Listesi
-            _buildFeatureItem(context, Icons.analytics_rounded, 'AI Analizleri', 'Günlük 3 derin finansal analiz ve tahmin.'),
-            _buildFeatureItem(context, Icons.account_balance_wallet_rounded, 'Sınırsız Kasa', 'Dilediğiniz kadar kasa ve özel renkler.'),
-            _buildFeatureItem(context, Icons.block_rounded, 'Sıfır Reklam', 'Kesintisiz ve akışkan deneyim.'),
+            SizedBox(height: verticalSpacing * 1.5),
             
-            const SizedBox(height: 32),
+            // PLANLAR Başlığı
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 'PLANLAR', 
                 style: TextStyle(
-                  fontSize: 11, 
+                  fontSize: 10, 
                   fontWeight: FontWeight.w900, 
                   letterSpacing: 1.2,
-                  color: AppColors.getTextSecondary(context).withValues(alpha: 0.5),
+                  color: secondaryTextColor.withValues(alpha: 0.4),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: verticalSpacing),
             
-            // PRO SEÇENEKLERİ (Upgrade Options)
+            // PRO SEÇENEKLERİ
             _buildPlanCard(
               context: context,
               title: 'Yıllık Pro',
               price: '₺199.99 / yıl',
-              subtitle: 'Aylık ₺16.66\'ya gelir',
-              badge: 'EN AVANTAJLI',
-              savings: '%33 TASARRUF',
+              subtitle: 'Aylık ₺16.66',
+              badge: 'AVANTAJLI',
               ref: ref,
               isPopular: true,
-              backgroundColor: Colors.pinkAccent.withValues(alpha: 0.12),
-              borderColor: primaryColor,
-              accentGradient: LinearGradient(
-                colors: [
-                  Colors.pinkAccent.withValues(alpha: 0.3), 
-                  Colors.transparent
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              isSmall: isSmallScreen,
+              backgroundColor: Colors.pinkAccent.withValues(alpha: 0.08),
+              borderColor: primaryColor.withValues(alpha: 0.5),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: isSmallScreen ? 8 : 12),
             _buildPlanCard(
               context: context,
               title: 'Aylık Pro',
               price: '₺24.99 / ay',
               subtitle: 'İstediğin zaman iptal et',
               ref: ref,
-              accentGradient: LinearGradient(
-                colors: [
-                  Colors.pinkAccent.withValues(alpha: 0.06), 
-                  Colors.transparent
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              isSmall: isSmallScreen,
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: isSmallScreen ? 8 : 12),
             
-            // MEVCUT PLAN (Current Plan) - Ghostly
+            // MEVCUT PLAN (Daha küçük)
             _buildPlanCard(
               context: context,
               title: 'Ücretsiz Plan',
-              subtitle: 'Temel özellikler ile sınırlı kullanım.',
+              subtitle: 'Temel özellikler.',
               isCurrent: true,
-              borderColor: Colors.white.withValues(alpha: 0.02),
+              isSmall: isSmallScreen,
+              borderColor: Colors.transparent,
               backgroundColor: Colors.transparent,
-              contentOpacity: 0.4,
             ),
 
-            const SizedBox(height: 24),
+            SizedBox(height: verticalSpacing),
             
             // 🔘 Alt Bilgi
-            Center(
-              child: Text(
-                'Tüm planlar 7 gün ücretsiz deneme içerir.',
-                style: TextStyle(fontSize: 12, color: AppColors.getTextSecondary(context).withValues(alpha: 0.4)),
+            Text(
+              '7 gün ücretsiz deneme içerir.',
+              style: TextStyle(
+                fontSize: 11, 
+                color: secondaryTextColor.withValues(alpha: 0.3)
               ),
             ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 
-  Widget _buildHeader(BuildContext context, Color primaryColor) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        children: [
-          Hero(
-            tag: 'pro_orb',
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              child: MembershipOrb(
-                color: primaryColor,
-                size: 44,
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'FinCast Pro\'ya Geçin',
-            style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.5),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Finansal potansiyelinizi %100 açığa çıkarın.',
-            style: TextStyle(fontSize: 15, color: AppColors.getTextSecondary(context).withValues(alpha: 0.6)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeatureItem(BuildContext context, IconData icon, String title, String subtitle) {
+  Widget _buildFeatureItem(BuildContext context, IconData icon, String title, String subtitle, bool isSmall) {
     final primaryColor = AppColors.getPrimary(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: EdgeInsets.symmetric(vertical: isSmall ? 4 : 8),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: primaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: primaryColor, size: 20),
-          ),
-          const SizedBox(width: 16),
+          Icon(icon, color: primaryColor, size: isSmall ? 18 : 20),
+          const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text(subtitle, style: TextStyle(fontSize: 13, color: AppColors.getTextSecondary(context).withValues(alpha: 0.5))),
+                Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: isSmall ? 14 : 15)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    subtitle, 
+                    style: TextStyle(
+                      fontSize: isSmall ? 11 : 12, 
+                      color: AppColors.getTextSecondary(context).withValues(alpha: 0.5)
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
           ),
@@ -202,7 +190,7 @@ class ProUpgradeSheet extends ConsumerWidget {
     Gradient? accentGradient,
     Color? borderColor,
     Color? backgroundColor,
-    double contentOpacity = 1.0,
+    bool isSmall = false,
     WidgetRef? ref,
   }) {
     final primaryColor = AppColors.getPrimary(context);
@@ -221,7 +209,7 @@ class ProUpgradeSheet extends ConsumerWidget {
         clipBehavior: Clip.none,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: isSmall ? 10 : 14),
             decoration: BoxDecoration(
               color: backgroundColor ?? (isCurrent 
                   ? Colors.white.withValues(alpha: 0.002) 
@@ -245,25 +233,25 @@ class ProUpgradeSheet extends ConsumerWidget {
               ],
             ),
             child: Opacity(
-              opacity: contentOpacity,
+              opacity: isCurrent ? 0.4 : 1.0,
               child: Row(
                 children: [
                   // 🔘 SOL İKON (Hizalı Radyo/Check)
                   Container(
-                    width: 24,
-                    height: 24,
+                    width: 20,
+                    height: 20,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isCurrent ? Colors.grey : (isPopular ? primaryColor : Colors.white.withValues(alpha: 0.1)),
-                        width: 2,
+                        color: isCurrent ? Colors.grey : (isPopular ? primaryColor : Colors.white.withValues(alpha: 0.2)),
+                        width: 1.5,
                       ),
                     ),
                     child: isCurrent ? const Center(
-                      child: Icon(Icons.check_rounded, size: 14, color: Colors.grey),
+                      child: Icon(Icons.check_rounded, size: 12, color: Colors.grey),
                     ) : null,
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   
                   // 📝 ORTA BİLGİ ALANI
                   Expanded(
@@ -277,7 +265,7 @@ class ProUpgradeSheet extends ConsumerWidget {
                             Flexible(
                               child: Text(
                                 title, 
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: isSmall ? 14 : 16),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -310,31 +298,43 @@ class ProUpgradeSheet extends ConsumerWidget {
                   
                   // 💰 SAĞ FİYAT VEYA ETİKET
                   if (isCurrent)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text('MEVCUT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                    Text(
+                      'MEVCUT', 
+                      style: TextStyle(
+                        fontSize: isSmall ? 8 : 10, 
+                        fontWeight: FontWeight.w900, 
+                        color: Colors.grey.withValues(alpha: 0.5),
+                        letterSpacing: 0.5
+                      )
                     )
                   else if (price != null)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 12), // Çakışmayı engelle
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            price.split(' ').first, 
-                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: price.split(' ').first,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w900, 
+                                  fontSize: isSmall ? 15 : 18,
+                                  color: AppColors.getTextPrimary(context)
+                                ),
+                              ),
+                              TextSpan(
+                                text: ' ${price.split(' ').skip(1).join(' ')}',
+                                style: TextStyle(
+                                  fontSize: isSmall ? 9 : 11, 
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.getTextSecondary(context).withValues(alpha: 0.4)
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(
-                            price.split(' ').skip(1).join(' '), 
-                            style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context).withValues(alpha: 0.5)),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                 ],
               ),
@@ -343,38 +343,28 @@ class ProUpgradeSheet extends ConsumerWidget {
           
           if (badge != null)
             Positioned(
-              top: 15,
-              bottom: 15,
-              right: -18, // Kartın dışına çıkarıldı
+              top: 0,
+              right: 20,
               child: Container(
-                width: 22,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [primaryColor, primaryColor.withValues(alpha: 0.8)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(10)),
+                  color: primaryColor,
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
                   boxShadow: [
                     BoxShadow(
-                      color: primaryColor.withValues(alpha: 0.4), 
-                      blurRadius: 10, 
-                      offset: const Offset(4, 0),
+                      color: primaryColor.withValues(alpha: 0.3), 
+                      blurRadius: 8, 
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: Center(
-                  child: RotatedBox(
-                    quarterTurns: 1,
-                    child: Text(
-                      badge,
-                      style: const TextStyle(
-                        color: Colors.white, 
-                        fontSize: 8.5, 
-                        fontWeight: FontWeight.w900, 
-                        letterSpacing: 0.8,
-                      ),
-                    ),
+                child: Text(
+                  badge,
+                  style: const TextStyle(
+                    color: Colors.white, 
+                    fontSize: 8, 
+                    fontWeight: FontWeight.w900, 
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),
