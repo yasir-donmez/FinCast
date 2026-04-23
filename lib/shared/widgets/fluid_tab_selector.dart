@@ -1,0 +1,85 @@
+import 'package:flutter/material.dart';
+import 'dart:math' as math;
+
+class FluidTabSelector extends StatelessWidget {
+  final List<String> tabs;
+  final int selectedIndex;
+  final Function(int) onTabChanged;
+  final double scalingFactor;
+
+  const FluidTabSelector({
+    super.key,
+    required this.tabs,
+    required this.selectedIndex,
+    required this.onTabChanged,
+    this.scalingFactor = 1.0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final activeColor = Theme.of(context).primaryColor;
+    
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8 * scalingFactor),
+      height: 50 * scalingFactor,
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(25 * scalingFactor),
+      ),
+      child: Stack(
+        children: [
+          // Hareketli Arka Plan (Indicator)
+          AnimatedAlign(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOutBack,
+            alignment: selectedIndex == 0 ? Alignment.centerLeft : Alignment.centerRight,
+            child: FractionallySizedBox(
+              widthFactor: 1 / tabs.length,
+              child: Container(
+                height: 42 * scalingFactor,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
+                  borderRadius: BorderRadius.circular(21 * scalingFactor),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Tab Yazıları
+          Row(
+            children: List.generate(tabs.length, (index) {
+              final isActive = selectedIndex == index;
+              return Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onTabChanged(index),
+                  child: Center(
+                    child: AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 200),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14 * scalingFactor,
+                        color: isActive 
+                          ? (isDark ? Colors.white : Colors.black87) 
+                          : Colors.grey.withValues(alpha: 0.6),
+                      ),
+                      child: Text(tabs[index]),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+}

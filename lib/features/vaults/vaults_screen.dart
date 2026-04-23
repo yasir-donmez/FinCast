@@ -12,7 +12,7 @@ import '../../shared/widgets/carved_container.dart';
 import 'vaults_providers.dart';
 import 'widgets/transaction_card.dart';
 import '../transactions/add_transaction_sheet.dart';
-import 'widgets/vault_management_sheet.dart';
+import 'widgets/visibility_management_sheet.dart';
 import 'widgets/vault_detail_sheet.dart';
 import '../dashboard/dashboard_providers.dart';
 import 'widgets/liquid_blob.dart';
@@ -731,8 +731,8 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
   void _showVaultManagementSheet(BuildContext context) {
     FluidSheet.show(
       context: context,
-      title: AppLocalizations.of(context)!.vaultsAndGroups,
-      child: const VaultManagementSheet(),
+      title: AppLocalizations.of(context)!.visibilityManagement,
+      child: const VisibilityManagementSheet(),
     );
   }
 
@@ -741,7 +741,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
     FluidSheet.show(
       context: context,
       title: 'Yeni Kasa',
-      child: const VaultManagementSheet(startInAddMode: true),
+      child: const VisibilityManagementSheet(startInAddMode: true),
     );
   }
 

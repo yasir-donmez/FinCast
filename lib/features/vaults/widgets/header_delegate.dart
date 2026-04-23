@@ -103,7 +103,7 @@ class TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
                     opacity: (1 - progress * 1.8).clamp(0.0, 1.0),
                     child: Row(
                       children: [
-                        HeaderIconButton(icon: Icons.account_balance_wallet_rounded, onTap: onManageVaults),
+                        HeaderIconButton(icon: Icons.visibility_rounded, onTap: onManageVaults),
                         const SizedBox(width: 8),
                         HeaderIconButton(icon: Icons.add_rounded, onTap: onAddVault),
                       ],

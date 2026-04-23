@@ -74,6 +74,7 @@ class _FluidSwitchState extends State<FluidSwitch> with SingleTickerProviderStat
   @override
   Widget build(BuildContext context) {
     final activeColor = widget.activeColor ?? AppColors.getPrimary(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final s = widget.scalingFactor;
 
     return GestureDetector(
@@ -115,7 +116,7 @@ class _FluidSwitchState extends State<FluidSwitch> with SingleTickerProviderStat
             ),
             child: Stack(
               children: [
-                // Track Glow
+                // Track Indicator (No glow)
                 Positioned(
                   left: leftPos,
                   top: 5 * s,
@@ -124,17 +125,11 @@ class _FluidSwitchState extends State<FluidSwitch> with SingleTickerProviderStat
                     height: thumbSize,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(thumbSize / 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: activeColor.withValues(alpha: 0.3 * t.clamp(0.0, 1.0)),
-                          blurRadius: 12,
-                          spreadRadius: 2,
-                        ),
-                      ],
+                      // Glow kaldırıldı
                     ),
                   ),
                 ),
-                // The Jelly Thumb
+                // The Jelly Thumb (Sadeleştirilmiş)
                 Positioned(
                   left: leftPos,
                   top: 5 * s,
@@ -143,12 +138,16 @@ class _FluidSwitchState extends State<FluidSwitch> with SingleTickerProviderStat
                     height: thumbSize,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(thumbSize / 2),
-                      color: Color.lerp(Colors.white, activeColor, t),
+                      color: Color.lerp(
+                        isDark ? Colors.white24 : Colors.black12, 
+                        activeColor, 
+                        t
+                      ),
+                      // Büyük gölgeler kaldırıldı, sadece çok hafif bir derinlik bırakıldı
                       boxShadow: [
                         BoxShadow(
-                          color: Color.lerp(Colors.black, activeColor, t)!
-                              .withValues(alpha: 0.3),
-                          blurRadius: 8,
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
                       ],
@@ -158,7 +157,7 @@ class _FluidSwitchState extends State<FluidSwitch> with SingleTickerProviderStat
                         isActive: widget.value,
                         activeIcon: widget.activeIcon ?? Icons.check_rounded,
                         inactiveIcon: widget.inactiveIcon ?? Icons.close_rounded,
-                        color: widget.value ? Colors.black : Colors.grey[700],
+                        color: widget.value ? Colors.white : (isDark ? Colors.white38 : Colors.black38),
                         size: 16 * s,
                         duration: const Duration(milliseconds: 300),
                       ),

@@ -9,6 +9,7 @@ import '../../../core/utils/currency_utils.dart';
 import '../../../shared/widgets/fluid_container.dart';
 import '../../../shared/widgets/fluid_switch.dart';
 import '../../../shared/widgets/fluid_animated_icon.dart';
+import '../../../shared/widgets/fluid_tab_selector.dart';
 import '../vaults_providers.dart';
 
 enum VaultDetailTab { transactions, manage }
@@ -68,7 +69,12 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildTabSelector(activeColor, isDark, scalingFactor),
+        FluidTabSelector(
+          tabs: const ['İşlemler', 'Yönet'],
+          selectedIndex: _activeTab == VaultDetailTab.transactions ? 0 : 1,
+          onTabChanged: (index) => _switchTab(index == 0 ? VaultDetailTab.transactions : VaultDetailTab.manage),
+          scalingFactor: scalingFactor,
+        ),
         SizedBox(height: 12 * scalingFactor),
         AnimatedSize(
           duration: const Duration(milliseconds: 400),
@@ -99,79 +105,6 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
     );
   }
 
-  Widget _buildTabSelector(Color activeColor, bool isDark, double scalingFactor) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8 * scalingFactor),
-      height: 48 * scalingFactor,
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Stack(
-        children: [
-          AnimatedAlign(
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeOutBack,
-            alignment: _activeTab == VaultDetailTab.transactions ? Alignment.centerLeft : Alignment.centerRight,
-            child: FractionallySizedBox(
-              widthFactor: 0.5,
-              child: Container(
-                height: 40 * scalingFactor,
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => _switchTab(VaultDetailTab.transactions),
-                  child: Center(
-                    child: Text(
-                      'İşlemler',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 13 * scalingFactor,
-                        color: _activeTab == VaultDetailTab.transactions ? Colors.white : Colors.grey,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => _switchTab(VaultDetailTab.manage),
-                  child: Center(
-                    child: Text(
-                      'Yönet',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 13 * scalingFactor,
-                        color: _activeTab == VaultDetailTab.manage ? Colors.white : Colors.grey,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildMainView(BuildContext context, Vault vault, List<TransactionUI> vaultTransactions, Color activeColor, bool isDark) {
     final screenHeight = MediaQuery.of(context).size.height;
