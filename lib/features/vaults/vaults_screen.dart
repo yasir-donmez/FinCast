@@ -14,6 +14,7 @@ import 'widgets/transaction_card.dart';
 import '../transactions/add_transaction_sheet.dart';
 import 'widgets/visibility_management_sheet.dart';
 import 'widgets/vault_detail_sheet.dart';
+import 'widgets/transaction_detail_sheet.dart';
 import '../dashboard/dashboard_providers.dart';
 import 'widgets/liquid_blob.dart';
 import 'widgets/header_delegate.dart';
@@ -367,284 +368,76 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
 
   void _showTransactionDetail(BuildContext context, TransactionUI tx) {
     final l10n = AppLocalizations.of(context)!;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final screenHeight = MediaQuery.of(context).size.height;
-    final scalingFactor = (screenHeight / 812.0).clamp(0.75, 1.0);
+    final categoryName = localizedCategoryName(tx.categoryId, l10n) ?? l10n.all;
+    final parentId = tx.categoryId?.split('_').take(2).join('_');
+    final parentName = parentId != null ? localizedCategoryName(parentId, l10n) : null;
+    final fullTitle = parentName != null && parentName != categoryName 
+        ? '$parentName > $categoryName' 
+        : categoryName;
 
+    final selectedVaultId = ref.read(selectedVaultProvider);
     FluidSheet.show(
       context: context,
-      title: tx.name,
-      child: Column(
-        children: [
-          TweenAnimationBuilder<double>(
-            duration: const Duration(milliseconds: 1000),
-            tween: Tween(begin: 0.0, end: 1.0),
-            curve: Curves.elasticOut,
-            builder: (context, value, child) {
-              return Transform.scale(
-                scale: 0.5 + (0.5 * value),
-                child: Opacity(opacity: value.clamp(0.0, 1.0), child: child),
-              );
-            },
-            child: Center(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 140 * scalingFactor,
-                    height: 140 * scalingFactor,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          tx.color.withValues(alpha: 0.3),
-                          tx.color.withValues(alpha: 0.0),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: 100 * scalingFactor,
-                    height: 100 * scalingFactor,
-                    decoration: BoxDecoration(
-                      color: tx.color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(36 * scalingFactor),
-                      border: Border.all(
-                        color: tx.color.withValues(alpha: 0.3),
-                        width: 2,
-                      ),
-                    ),
-                    child: Icon(tx.icon, size: 48 * scalingFactor, color: tx.color),
-                  ),
-                ],
-              ),
+      title: fullTitle,
+      child: TransactionDetailSheet(
+        transaction: tx,
+        onEdit: () {
+          FluidSheet.show(
+            context: context,
+            title: AppLocalizations.of(context)!.edit,
+            child: AddTransactionSheet(
+              initialId: tx.dbId,
+              initialName: tx.name,
+              initialAmount: tx.amount,
+              initialMinAmount: tx.minAmount,
+              initialMaxAmount: tx.maxAmount,
+              initialIsIncome: tx.isIncome,
+              initialVaultIds: tx.groupIds
+                  .map((vId) => int.parse(vId.replaceFirst('v_', '')))
+                  .toList(),
+              initialCategoryId: tx.categoryId,
             ),
-          ),
-
-          const SizedBox(height: 16), // Reduced from 24
-
-          TweenAnimationBuilder<double>(
-            duration: const Duration(milliseconds: 700),
-            tween: Tween(begin: 0.0, end: 1.0),
-            curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
-            builder: (context, value, child) {
-              return Transform.translate(
-                offset: Offset(0, 30 * (1 - value)),
-                child: Opacity(opacity: value, child: child),
-              );
-            },
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: tx.color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    (localizedCategoryName(tx.categoryId, l10n) ?? l10n.all)
-                        .toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: tx.color,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    '₺${CurrencyUtils.formatFullAmount(tx.amount)}',
-                    style: TextStyle(
-                      fontSize: 56 * scalingFactor, // Scaled font size
-                      fontWeight: FontWeight.w900,
-                      color: tx.isIncome
-                          ? AppColors.getIncome(context)
-                          : AppColors.getExpense(context),
-                      letterSpacing: -3,
-                      height: 1,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            ),
-  
-            SizedBox(height: 32 * scalingFactor), // Reduced from 40
-
-          ...List.generate(3, (index) {
-            final values = [
-              tx.groupIds.isNotEmpty
-                  ? tx.groupIds.first.replaceFirst('v_', '')
-                  : l10n.mainVault,
-              localizedCategoryName(tx.categoryId, l10n) ?? "-",
-              _getPeriodLabel(tx.periodType, l10n),
-            ];
-            final icons = [
-              Icons.account_balance_wallet_rounded,
-              Icons.category_rounded,
-              Icons.replay_rounded,
-            ];
-            final displayLabels = [l10n.vaults, l10n.category, l10n.period];
-
-            return TweenAnimationBuilder<double>(
-              duration: const Duration(milliseconds: 600),
-              tween: Tween(begin: 0.0, end: 1.0),
-              curve: Interval(
-                0.4 + (index * 0.1),
-                1.0,
-                curve: Curves.easeOutCubic,
-              ),
-              builder: (context, value, child) {
-                return Transform.translate(
-                  offset: Offset(0, 20 * (1 - value)),
-                  child: Opacity(opacity: value, child: child),
-                );
-              },
-              child: Padding(
-                padding: EdgeInsets.only(bottom: 8 * scalingFactor), // Reduced from 12
-                child: FluidContainer(
-                  padding: EdgeInsets.all(16 * scalingFactor), // Reduced from 18
-                  borderRadius: 24,
-                  isGlass: true,
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.03)
-                      : Colors.black.withValues(alpha: 0.015),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36 * scalingFactor, // Reduced from 40
-                        height: 36 * scalingFactor, // Reduced from 40
-                        decoration: BoxDecoration(
-                          color: tx.color.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12 * scalingFactor), // Reduced from 14
-                        ),
-                        child: Icon(icons[index], size: 18 * scalingFactor, color: tx.color), // Reduced from 20
-                      ),
-                      SizedBox(width: 14 * scalingFactor),
-                      Text(
-                        displayLabels[index],
-                        style: TextStyle(
-                          fontSize: 13, // Reduced from 14
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.getTextSecondary(context),
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        values[index],
-                        style: TextStyle(
-                          fontSize: 15, // Reduced from 16
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.getTextPrimary(context),
-                        ),
-                      ),
-                    ],
-                  ),
+          );
+        },
+        onDelete: () async {
+          final confirm = await showFluidDialog<bool>(
+            context: context,
+            accentColor: AppColors.error,
+            icon: const Icon(Icons.delete_forever_rounded),
+            title: Text(AppLocalizations.of(context)!.permanentDelete),
+            content: Text(AppLocalizations.of(context)!.permanentDeleteDesc),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(
+                  AppLocalizations.of(context)!.cancel,
+                  style: TextStyle(color: AppColors.getTextSecondary(context)),
                 ),
               ),
-            );
-          }),
-
-          SizedBox(height: 24 * scalingFactor), // Reduced from 32
-
-          TweenAnimationBuilder<double>(
-            duration: const Duration(milliseconds: 600),
-            tween: Tween(begin: 0.0, end: 1.0),
-            curve: const Interval(0.8, 1.0, curve: Curves.easeOutCubic),
-            builder: (context, value, child) {
-              return Opacity(opacity: value, child: child);
-            },
-            child: Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                      _handleTransactionLongPress(context, ref, tx);
-                    },
-                    child: FluidContainer(
-                      padding: EdgeInsets.symmetric(vertical: 14 * scalingFactor), // Reduced from 16
-                      borderRadius: 20,
-                      color: AppColors.getPrimary(
-                        context,
-                      ).withValues(alpha: 0.1),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.edit_note_rounded,
-                            size: 20,
-                            color: AppColors.getPrimary(context),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            l10n.edit,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.getPrimary(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                GestureDetector(
-                  onTap: () async {
-                    Navigator.pop(context);
-                    final confirm = await showFluidDialog<bool>(
-                      context: context,
-                      accentColor: AppColors.error,
-                      icon: const Icon(Icons.delete_forever_rounded),
-                      title: Text(l10n.permanentDelete),
-                      content: Text(l10n.permanentDeleteDesc),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: Text(
-                            l10n.cancel,
-                            style: TextStyle(
-                              color: AppColors.getTextSecondary(context),
-                            ),
-                          ),
-                        ),
-                        FluidDialogButton(
-                          label: l10n.ok,
-                          onTap: () => Navigator.pop(context, true),
-                          color: AppColors.error,
-                        ),
-                      ],
-                    );
-                    if (confirm == true) {
-                      await DatabaseService.deleteTransaction(tx.dbId!);
-                      HapticFeedback.mediumImpact();
-                    }
-                  },
-                  child: FluidContainer(
-                    width: 50 * scalingFactor, // Reduced from 56
-                    height: 50 * scalingFactor, // Reduced from 56
-                    borderRadius: 20,
-                    color: AppColors.error.withValues(alpha: 0.1),
-                    child: Icon(
-                      Icons.delete_sweep_rounded,
-                      color: AppColors.error,
-                      size: 24 * scalingFactor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-        ],
+              FluidDialogButton(
+                label: AppLocalizations.of(context)!.ok,
+                onTap: () => Navigator.pop(context, true),
+                color: AppColors.error,
+              ),
+            ],
+          );
+          if (confirm == true) {
+            await DatabaseService.deleteTransaction(tx.dbId!);
+            HapticFeedback.mediumImpact();
+          }
+        },
+        onRemoveFromVault: selectedVaultId != null ? () async {
+          final record = await DatabaseService.getTransaction(tx.dbId!);
+          if (record != null) {
+            final vId = int.tryParse(selectedVaultId.replaceFirst('v_', ''));
+            if (vId != null) {
+              record.vaultIds = List<int>.from(record.vaultIds)..remove(vId);
+              await DatabaseService.updateTransaction(record);
+              HapticFeedback.mediumImpact();
+            }
+          }
+        } : null,
+        isInVault: tx.groupIds.isNotEmpty,
       ),
     );
   }
@@ -659,72 +452,69 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
 
     final selectedVaultId = ref.read(selectedVaultProvider);
 
-    showTransactionActionMenu(
-      context,
-      name: tx.name,
-      isInVault: tx.groupIds.isNotEmpty,
-      showOnDashboard: tx.showOnDashboard,
-      onToggleDashboard: (val) async {
-        final record = await DatabaseService.getTransaction(tx.dbId!);
-        if (record != null) {
-          record.showOnDashboard = val;
-          await DatabaseService.updateTransaction(record);
-          HapticFeedback.mediumImpact();
-        }
-      },
-      onEdit: () {
-        FluidSheet.show(
-          context: context,
-          title: AppLocalizations.of(context)!.edit,
-          child: AddTransactionSheet(
-            initialId: tx.dbId,
-            initialName: tx.name,
-            initialAmount: tx.amount,
-            initialMinAmount: tx.minAmount,
-            initialMaxAmount: tx.maxAmount,
-            initialIsIncome: tx.isIncome,
-            initialVaultIds: tx.groupIds
-                .map((vId) => int.parse(vId.replaceFirst('v_', '')))
-                .toList(),
-            initialCategoryId: tx.categoryId,
-          ),
-        );
-      },
-      onRemoveFromVault: () async {
-        final groupingHelper = ref.read(transactionGroupingProvider);
-        if (tx.groupIds.isNotEmpty) {
-          final vaultToRemove = selectedVaultId ?? tx.groupIds.first;
-          await groupingHelper.removeFromVault(tx.id, vaultToRemove);
-          HapticFeedback.mediumImpact();
-        }
-      },
-      onDelete: () async {
-        final confirm = await showFluidDialog<bool>(
-          context: context,
-          accentColor: AppColors.error,
-          icon: const Icon(Icons.delete_forever_rounded),
-          title: Text(AppLocalizations.of(context)!.permanentDelete),
-          content: Text(AppLocalizations.of(context)!.permanentDeleteDesc),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(
-                AppLocalizations.of(context)!.cancel,
-                style: TextStyle(color: AppColors.getTextSecondary(context)),
+    FluidSheet.show(
+      context: context,
+      title: tx.name,
+      child: TransactionDetailSheet(
+        transaction: tx,
+        onEdit: () {
+          FluidSheet.show(
+            context: context,
+            title: AppLocalizations.of(context)!.edit,
+            child: AddTransactionSheet(
+              initialId: tx.dbId,
+              initialName: tx.name,
+              initialAmount: tx.amount,
+              initialMinAmount: tx.minAmount,
+              initialMaxAmount: tx.maxAmount,
+              initialIsIncome: tx.isIncome,
+              initialVaultIds: tx.groupIds
+                  .map((vId) => int.parse(vId.replaceFirst('v_', '')))
+                  .toList(),
+              initialCategoryId: tx.categoryId,
+            ),
+          );
+        },
+        onDelete: () async {
+          final confirm = await showFluidDialog<bool>(
+            context: context,
+            accentColor: AppColors.error,
+            icon: const Icon(Icons.delete_forever_rounded),
+            title: Text(AppLocalizations.of(context)!.permanentDelete),
+            content: Text(AppLocalizations.of(context)!.permanentDeleteDesc),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(
+                  AppLocalizations.of(context)!.cancel,
+                  style: TextStyle(color: AppColors.getTextSecondary(context)),
+                ),
               ),
-            ),
-            FluidDialogButton(
-              label: AppLocalizations.of(context)!.ok,
-              onTap: () => Navigator.pop(context, true),
-              color: AppColors.error,
-            ),
-          ],
-        );
-        if (confirm == true) {
-          await DatabaseService.deleteTransaction(tx.dbId!);
-          HapticFeedback.mediumImpact();
-        }
-      },
+              FluidDialogButton(
+                label: AppLocalizations.of(context)!.ok,
+                onTap: () => Navigator.pop(context, true),
+                color: AppColors.error,
+              ),
+            ],
+          );
+          if (confirm == true) {
+            await DatabaseService.deleteTransaction(tx.dbId!);
+            HapticFeedback.mediumImpact();
+          }
+        },
+        onRemoveFromVault: selectedVaultId != null ? () async {
+          final record = await DatabaseService.getTransaction(tx.dbId!);
+          if (record != null) {
+            final vId = int.tryParse(selectedVaultId.replaceFirst('v_', ''));
+            if (vId != null) {
+              record.vaultIds = List<int>.from(record.vaultIds)..remove(vId);
+              await DatabaseService.updateTransaction(record);
+              HapticFeedback.mediumImpact();
+            }
+          }
+        } : null,
+        isInVault: tx.groupIds.isNotEmpty,
+      ),
     );
   }
 

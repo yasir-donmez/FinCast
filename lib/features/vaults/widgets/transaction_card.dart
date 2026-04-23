@@ -6,6 +6,7 @@ import '../../../../shared/widgets/fluid_sheet.dart';
 import '../../../../shared/widgets/fluid_switch.dart';
 import '../vaults_providers.dart';
 import '../../../../l10n/app_localizations.dart';
+import 'transaction_detail_sheet.dart';
 
 String? localizedCategoryName(String? categoryId, AppLocalizations l10n) {
   if (categoryId == null) return null;
@@ -247,94 +248,21 @@ class TransactionCard extends StatelessWidget {
 
 void showTransactionActionMenu(
   BuildContext context, {
-  required String name,
+  required TransactionUI transaction,
   required VoidCallback onEdit,
   required VoidCallback onDelete,
   VoidCallback? onRemoveFromVault,
   required bool isInVault,
-  bool? showOnDashboard,
-  Function(bool)? onToggleDashboard,
 }) {
-  final l10n = AppLocalizations.of(context)!;
-  bool currentShowOnDashboard = showOnDashboard ?? false;
-
-  final screenHeight = MediaQuery.of(context).size.height;
-  final scalingFactor = (screenHeight / 812.0).clamp(0.85, 1.0);
-
   FluidSheet.show(
     context: context,
-    title: name,
-    child: StatefulBuilder(
-      builder: (context, setState) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildActionItem(
-              context: context,
-              icon: Icons.edit_note_rounded,
-              label: l10n.edit,
-              color: AppColors.getPrimary(context),
-              scalingFactor: scalingFactor,
-              onTap: () {
-                Navigator.pop(context);
-                onEdit();
-              },
-            ),
-            SizedBox(height: 12 * scalingFactor),
-            if (onToggleDashboard != null)
-              _buildActionItem(
-                context: context,
-                icon: currentShowOnDashboard ? Icons.visibility_rounded : Icons.visibility_off_rounded,
-                label: currentShowOnDashboard ? 'Ana Sayfadan Kaldır' : 'Ana Sayfada Göster',
-                color: currentShowOnDashboard ? Colors.blue : Colors.grey,
-                scalingFactor: scalingFactor,
-                trailing: FluidSwitch(
-                  value: currentShowOnDashboard,
-                  activeColor: Colors.blue,
-                  activeIcon: Icons.visibility_rounded,
-                  inactiveIcon: Icons.visibility_off_rounded,
-                  scalingFactor: 0.8 * scalingFactor,
-                  onChanged: (val) {
-                    setState(() => currentShowOnDashboard = val);
-                    onToggleDashboard(val);
-                  },
-                ),
-                onTap: () {
-                  final newVal = !currentShowOnDashboard;
-                  setState(() => currentShowOnDashboard = newVal);
-                  onToggleDashboard(newVal);
-                },
-              ),
-            if (isInVault && onRemoveFromVault != null) ...[
-              SizedBox(height: 12 * scalingFactor),
-              _buildActionItem(
-                context: context,
-                icon: Icons.outbox_rounded,
-                label: l10n.removeFromVault,
-                color: Colors.orange,
-                scalingFactor: scalingFactor,
-                onTap: () {
-                  Navigator.pop(context);
-                  onRemoveFromVault();
-                },
-              ),
-            ],
-            SizedBox(height: 12 * scalingFactor),
-            _buildActionItem(
-              context: context,
-              icon: Icons.delete_sweep_rounded,
-              label: l10n.permanentDelete,
-              color: AppColors.error,
-              scalingFactor: scalingFactor,
-              onTap: () {
-                Navigator.pop(context);
-                onDelete();
-              },
-            ),
-            SizedBox(height: 16 * scalingFactor),
-          ],
-        );
-      },
+    title: transaction.name,
+    child: TransactionDetailSheet(
+      transaction: transaction,
+      onEdit: onEdit,
+      onDelete: onDelete,
+      onRemoveFromVault: onRemoveFromVault,
+      isInVault: isInVault,
     ),
   );
 }

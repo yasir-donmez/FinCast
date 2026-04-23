@@ -7,6 +7,7 @@ import '../../core/database/database_service.dart';
 import '../../core/database/models/financial_goal.dart';
 import 'ai_service.dart';
 import '../../shared/widgets/premium_glass_card.dart';
+import '../../shared/widgets/precision_clickable.dart';
 import '../../l10n/app_localizations.dart';
 import 'optimization_providers.dart';
 
@@ -842,76 +843,49 @@ class _AnalysisDetailScreenState extends State<AnalysisDetailScreen> {
           const SizedBox(height: 24),
           Row(
             children: [
-              // Negative - Left, borderless, very subtle
+              // Hayır Butonu
               Expanded(
-                child: _elegantTactileButton(
-                  label: l10n.no,
-                  isPrimary: false,
+                child: PrecisionClickable(
                   onTap: () => _submitFeedback(false),
-                  color: AppColors.getTextSecondary(context),
+                  color: Colors.transparent,
+                  pressedColor: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(100),
+                  height: 48,
+                  child: Text(
+                    l10n.no,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.getTextSecondary(context).withValues(alpha: 0.6),
+                      letterSpacing: 1.0,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
-              // Positive - Right, soft glass look
+              // Evet Butonu
               Expanded(
-                child: _elegantTactileButton(
-                  label: l10n.yes,
-                  isPrimary: true,
+                child: PrecisionClickable(
                   onTap: () => _submitFeedback(true),
-                  color: AppColors.getPrimary(context),
+                  color: Colors.transparent,
+                  pressedColor: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(100),
+                  height: 48,
+                  child: Text(
+                    l10n.yes,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.getPrimary(context),
+                      letterSpacing: 1.0,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ],
       ),
-    );
-  }
-
-  Widget _elegantTactileButton({
-    required String label,
-    required VoidCallback onTap,
-    required Color color,
-    required bool isPrimary,
-  }) {
-    bool isPressed = false;
-    return StatefulBuilder(
-      builder: (context, setBtnState) {
-        return GestureDetector(
-          onTapDown: (_) => setBtnState(() => isPressed = true),
-          onTapUp: (_) => setBtnState(() => isPressed = false),
-          onTapCancel: () => setBtnState(() => isPressed = false),
-          onTap: onTap,
-          child: AnimatedScale(
-            scale: isPressed ? 0.96 : 1.0,
-            duration: const Duration(milliseconds: 100),
-            curve: Curves.easeOutCubic,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              decoration: BoxDecoration(
-                color: isPressed 
-                    ? (isPrimary ? color : Colors.white).withValues(alpha: 0.1) 
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(100),
-              ),
-              child: Center(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: isPrimary 
-                        ? color.withValues(alpha: 0.9) 
-                        : AppColors.getTextSecondary(context).withValues(alpha: 0.6),
-                    letterSpacing: 1.0,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 

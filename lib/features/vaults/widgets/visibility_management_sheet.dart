@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,10 +12,12 @@ import '../../../shared/widgets/fluid_container.dart';
 import '../../../shared/widgets/fluid_button.dart';
 import '../../../shared/widgets/fluid_dialog.dart';
 import '../../../core/providers/db_providers.dart';
+import '../../../l10n/app_localizations.dart';
 import '../vaults_providers.dart';
 import '../../auth/widgets/liquid_wave.dart';
 import '../../../shared/widgets/fluid_switch.dart';
 import '../../../shared/widgets/fluid_tab_selector.dart';
+import '../../../shared/widgets/precision_card.dart';
 
 enum ManagementTab { vaults, transactions }
 
@@ -61,7 +64,8 @@ class _VisibilityManagementSheetState extends ConsumerState<VisibilityManagement
   Widget build(BuildContext context) {
     final vaults = ref.watch(allVaultsProvider);
     final transactions = ref.watch(vaultTransactionsProvider);
-    final standaloneTransactions = transactions.where((t) => t.groupIds.isEmpty).toList();
+    final l10n = AppLocalizations.of(context)!;
+    final allTransactions = transactions.toList();
     
     final activeColor = AppColors.getPrimary(context);
     final secondaryColor = AppColors.getSecondary(context);
@@ -119,7 +123,7 @@ class _VisibilityManagementSheetState extends ConsumerState<VisibilityManagement
                   ? _buildAddVaultView(context, activeColor, isDark, scalingFactor)
                   : (_activeTab == ManagementTab.vaults 
                       ? _buildVaultListView(context, vaults, activeColor, isDark, scalingFactor)
-                      : _buildTransactionListView(context, standaloneTransactions, activeColor, isDark, scalingFactor)),
+                      : _buildTransactionListView(context, allTransactions, activeColor, isDark, scalingFactor, l10n)),
               ),
             ],
           ),
@@ -152,7 +156,7 @@ class _VisibilityManagementSheetState extends ConsumerState<VisibilityManagement
     );
   }
 
-  Widget _buildTransactionListView(BuildContext context, List<TransactionUI> txs, Color activeColor, bool isDark, double scalingFactor) {
+  Widget _buildTransactionListView(BuildContext context, List<TransactionUI> txs, Color activeColor, bool isDark, double scalingFactor, AppLocalizations l10n) {
     return Column(
       key: const ValueKey('tx_list'),
       mainAxisSize: MainAxisSize.min,
@@ -166,7 +170,7 @@ class _VisibilityManagementSheetState extends ConsumerState<VisibilityManagement
               physics: const BouncingScrollPhysics(),
               itemCount: txs.length,
               separatorBuilder: (_, __) => SizedBox(height: 10 * scalingFactor),
-              itemBuilder: (context, index) => _buildTransactionItem(context, txs[index], activeColor, isDark, scalingFactor),
+              itemBuilder: (context, index) => _buildTransactionItem(context, txs[index], activeColor, isDark, scalingFactor, l10n),
             ),
           )
         else
@@ -194,25 +198,43 @@ class _VisibilityManagementSheetState extends ConsumerState<VisibilityManagement
   }
 
   Widget _buildVaultItem(BuildContext context, Vault vault, Color activeColor, bool isDark, double scalingFactor) {
-    return FluidContainer(
-      padding: EdgeInsets.all(12 * scalingFactor),
-      isGlass: true,
-      borderRadius: 24 * scalingFactor,
-      color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.01),
+    return PrecisionCard(
+      scalingFactor: scalingFactor,
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(10 * scalingFactor),
-            decoration: BoxDecoration(color: activeColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16 * scalingFactor)),
-            child: Icon(IconUtils.getIcon(vault.iconCode ?? vault.name), color: activeColor, size: 22 * scalingFactor),
+            padding: EdgeInsets.all(8 * scalingFactor),
+            decoration: BoxDecoration(
+              color: activeColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12 * scalingFactor),
+            ),
+            child: Icon(
+              IconUtils.getIcon(vault.iconCode ?? vault.name),
+              color: activeColor,
+              size: 20 * scalingFactor,
+            ),
           ),
           SizedBox(width: 12 * scalingFactor),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(vault.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16 * scalingFactor, letterSpacing: -0.5)),
-                Text(vault.currency, style: TextStyle(fontSize: 11 * scalingFactor, fontWeight: FontWeight.w600, color: Colors.grey.withValues(alpha: 0.6))),
+                Text(
+                  vault.name,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15 * scalingFactor,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                Text(
+                  vault.currency,
+                  style: TextStyle(
+                    fontSize: 10 * scalingFactor,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.withValues(alpha: 0.6),
+                  ),
+                ),
               ],
             ),
           ),
@@ -221,7 +243,7 @@ class _VisibilityManagementSheetState extends ConsumerState<VisibilityManagement
             activeColor: activeColor,
             activeIcon: Icons.visibility_rounded,
             inactiveIcon: Icons.visibility_off_rounded,
-            scalingFactor: 0.8 * scalingFactor,
+            scalingFactor: 0.75 * scalingFactor,
             onChanged: (val) async {
               vault.showOnDashboard = val;
               await DatabaseService.updateVault(vault);
@@ -233,26 +255,46 @@ class _VisibilityManagementSheetState extends ConsumerState<VisibilityManagement
     );
   }
 
-  Widget _buildTransactionItem(BuildContext context, TransactionUI tx, Color activeColor, bool isDark, double scalingFactor) {
-    return FluidContainer(
-      padding: EdgeInsets.all(12 * scalingFactor),
-      isGlass: true,
-      borderRadius: 24 * scalingFactor,
-      color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.01),
+  Widget _buildTransactionItem(BuildContext context, TransactionUI tx, Color activeColor, bool isDark, double scalingFactor, AppLocalizations l10n) {
+    return PrecisionCard(
+      scalingFactor: scalingFactor,
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(10 * scalingFactor),
-            decoration: BoxDecoration(color: tx.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16 * scalingFactor)),
-            child: Icon(tx.icon, color: tx.color, size: 22 * scalingFactor),
+            padding: EdgeInsets.all(8 * scalingFactor),
+            decoration: BoxDecoration(
+              color: tx.color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12 * scalingFactor),
+            ),
+            child: Icon(
+              tx.icon,
+              color: tx.color,
+              size: 20 * scalingFactor,
+            ),
           ),
           SizedBox(width: 12 * scalingFactor),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(tx.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15 * scalingFactor, letterSpacing: -0.5)),
-                Text('₺${CurrencyUtils.formatAmount(tx.amount)}', style: TextStyle(fontSize: 12 * scalingFactor, fontWeight: FontWeight.w800, color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context))),
+                Text(
+                  tx.categoryId != null
+                      ? "${(tx.isIncome ? l10n.income : l10n.expense)} / ${tx.name}"
+                      : tx.name,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14 * scalingFactor,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                Text(
+                  '₺${CurrencyUtils.formatAmount(tx.amount)}',
+                  style: TextStyle(
+                    fontSize: 11 * scalingFactor,
+                    fontWeight: FontWeight.w800,
+                    color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context),
+                  ),
+                ),
               ],
             ),
           ),
@@ -261,7 +303,7 @@ class _VisibilityManagementSheetState extends ConsumerState<VisibilityManagement
             activeColor: activeColor,
             activeIcon: Icons.visibility_rounded,
             inactiveIcon: Icons.visibility_off_rounded,
-            scalingFactor: 0.8 * scalingFactor,
+            scalingFactor: 0.75 * scalingFactor,
             onChanged: (val) async {
               if (tx.dbId == null) return;
               final record = await DatabaseService.getTransaction(tx.dbId!);
