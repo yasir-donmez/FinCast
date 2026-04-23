@@ -217,13 +217,20 @@ class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet>
                   Navigator.pop(context);
                   widget.onEdit();
                 },
-                height: 56 * sf,
                 color: Colors.transparent,
-                pressedColor: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(28 * sf),
-                child: Text(
-                  l10n.edit.toUpperCase(),
-                  style: TextStyle(fontWeight: FontWeight.w900, color: AppColors.getPrimary(context), letterSpacing: 1.2, fontSize: 14),
+                pressedColor: AppColors.getPrimary(context).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(100),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text(
+                    l10n.edit.toUpperCase(),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900, 
+                      color: AppColors.getPrimary(context), 
+                      letterSpacing: 1.5, 
+                      fontSize: 14
+                    ),
+                  ),
                 ),
               ),
             ),
