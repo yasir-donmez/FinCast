@@ -293,9 +293,9 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                          childAspectRatio: 0.85,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 1.35,
                         ),
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => TransactionCard(

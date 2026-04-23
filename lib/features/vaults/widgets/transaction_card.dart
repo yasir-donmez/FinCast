@@ -59,7 +59,7 @@ class TransactionCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final screenHeight = MediaQuery.of(context).size.height;
     final sf = (screenHeight / 812.0).clamp(0.85, 1.0);
-    
+
     String? periodLabel;
     if (tx.periodType != 0) {
       switch (tx.periodType) {
@@ -74,11 +74,10 @@ class TransactionCard extends StatelessWidget {
     }
 
     final categoryName = localizedCategoryName(tx.categoryId, l10n) ?? l10n.all;
-    // Alt kategori: categoryId'nin son kısmı ana kategoriden farklıysa göster
     final parentId = tx.categoryId?.split('_').take(2).join('_');
     final parentName = parentId != null ? localizedCategoryName(parentId, l10n) : null;
     final hasSubCategory = parentName != null && parentName != categoryName;
-    
+
     final amountColor = tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context);
     final vaultCount = tx.groupIds.length;
 
@@ -86,214 +85,171 @@ class TransactionCard extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       child: FluidContainer(
-        padding: EdgeInsets.all(10 * sf),
+        padding: EdgeInsets.all(10 * sf), // Senin istediğin padding'e geri döndü
         borderRadius: 18 * sf,
         isGlass: true,
         color: tx.color.withValues(alpha: isDark ? 0.08 : 0.04),
         child: Stack(
           children: [
-            // Arka plan simgesi (büyük, silik)
             Positioned(
-              right: -8 * sf,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: Icon(
-                  tx.icon,
-                  size: 80 * sf,
-                  color: tx.color.withValues(alpha: isDark ? 0.06 : 0.04),
-                ),
+              right: -15 * sf,
+              top: -10 * sf,
+              child: Opacity(
+                opacity: isDark ? 0.05 : 0.03,
+                child: Icon(tx.icon, size: 95 * sf, color: tx.color),
               ),
             ),
-            // Ana içerik
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-            // ━━━ 1. SATIR: İKON + KATEGORİ/ALT KATEGORİ (SAĞDA) ━━━
-            Row(
-              children: [
-                // Kategori İkonu
-                Container(
-                  width: 38 * sf, height: 38 * sf,
-                  decoration: BoxDecoration(
-                    color: tx.color.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12 * sf),
-                  ),
-                  child: Icon(tx.icon, color: tx.color, size: 20 * sf),
-                ),
-                const Spacer(),
-                // Kategori + Alt Kategori (Sağa Hizalı)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      hasSubCategory ? parentName ?? categoryName : categoryName,
-                      style: TextStyle(
-                        fontSize: 15 * sf,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.getTextPrimary(context),
-                        height: 1.1,
+                    Container(
+                      width: 28 * sf, height: 28 * sf,
+                      decoration: BoxDecoration(
+                        color: tx.color.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8 * sf),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      child: Icon(tx.icon, color: tx.color, size: 15 * sf),
                     ),
-                    if (hasSubCategory) ...[
-                      SizedBox(height: 1 * sf),
-                      Text(
-                        categoryName.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 10 * sf,
-                          fontWeight: FontWeight.w800,
-                          color: tx.color.withValues(alpha: 0.5),
-                          letterSpacing: 0.4,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-
-            // ━━━ 2. SATIR: TUTARLAR (Genişletilmiş) ━━━
-            Expanded(
-              child: Center(
-                child: tx.minAmount != null && tx.maxAmount != null
-                  // Min/Max VARSA: İkiye bölünmüş görünüm
-                  ? Column(
+                    const Spacer(),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Üst: Ortalama Tutar
-                        FittedBox(
+                        Text(
+                          hasSubCategory ? parentName ?? categoryName : categoryName,
+                          style: TextStyle(
+                            fontSize: 15 * sf,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.getTextPrimary(context),
+                            letterSpacing: -0.5,
+                            height: 1.0,
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                        if (hasSubCategory)
+                          Text(
+                            categoryName.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 9 * sf,
+                              fontWeight: FontWeight.w800,
+                              color: tx.color.withValues(alpha: 0.5),
+                              letterSpacing: 0.5,
+                            ),
+                            textAlign: TextAlign.right,
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: Center(
+                    child: tx.minAmount != null && tx.maxAmount != null
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                '₺${CurrencyUtils.formatAmount(tx.amount)}',
+                                style: TextStyle(
+                                  fontSize: 36 * sf,
+                                  fontWeight: FontWeight.w900,
+                                  color: amountColor,
+                                  letterSpacing: -1.2,
+                                ),
+                              ),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '₺${CurrencyUtils.formatAmount(tx.minAmount!)}',
+                                  style: TextStyle(
+                                    fontSize: 10.5 * sf,
+                                    fontWeight: FontWeight.w800,
+                                    color: isDark ? Colors.white30 : Colors.black26,
+                                  ),
+                                ),
+                                Text(' – ', style: TextStyle(fontSize: 10 * sf, color: isDark ? Colors.white24 : Colors.black12)),
+                                Text(
+                                  '₺${CurrencyUtils.formatAmount(tx.maxAmount!)}',
+                                  style: TextStyle(
+                                    fontSize: 10.5 * sf,
+                                    fontWeight: FontWeight.w800,
+                                    color: isDark ? Colors.white30 : Colors.black26,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        )
+                      : FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
                             '₺${CurrencyUtils.formatAmount(tx.amount)}',
                             style: TextStyle(
-                              fontSize: 32 * sf,
+                              fontSize: 44 * sf,
                               fontWeight: FontWeight.w900,
                               color: amountColor,
-                              letterSpacing: -0.5,
+                              letterSpacing: -1.8,
                             ),
                           ),
                         ),
-                        SizedBox(height: 4 * sf),
-                        // Alt: Min – Max Aralığı
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '₺${CurrencyUtils.formatAmount(tx.minAmount!)}',
-                              style: TextStyle(
-                                fontSize: 12 * sf,
-                                fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white54 : Colors.black38,
-                              ),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 4 * sf),
-                              child: Text(
-                                '–',
-                                style: TextStyle(
-                                  fontSize: 12 * sf,
-                                  fontWeight: FontWeight.w500,
-                                  color: isDark ? Colors.white30 : Colors.black26,
-                                ),
-                              ),
-                            ),
-                            Text(
-                              '₺${CurrencyUtils.formatAmount(tx.maxAmount!)}',
-                              style: TextStyle(
-                                fontSize: 12 * sf,
-                                fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white54 : Colors.black38,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    )
-                  // Min/Max YOKSA: Tek büyük tutar, tam ortada
-                  : FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        '₺${CurrencyUtils.formatAmount(tx.amount)}',
-                        style: TextStyle(
-                          fontSize: 36 * sf,
-                          fontWeight: FontWeight.w900,
-                          color: amountColor,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ),
-              ),
-            ),
-
-            // ━━━ 3. SATIR: DASHBOARD + KASA + PERİYOT ━━━
-            Row(
-              children: [
-                // Dashboard görünürlük ikonu (göz)
-                Icon(
-                  tx.showOnDashboard ? Icons.visibility_rounded : Icons.visibility_off_rounded,
-                  color: tx.showOnDashboard 
-                      ? AppColors.getPrimary(context) 
-                      : Colors.grey.withValues(alpha: 0.3),
-                  size: 18 * sf,
+                  ),
                 ),
-                SizedBox(width: 6 * sf),
-                // Kasa noktaları
-                if (vaultCount > 0) ...[
-                  ...List.generate(vaultCount.clamp(0, 5), (_) => Padding(
-                    padding: const EdgeInsets.only(right: 3),
-                    child: Container(
-                      width: 5 * sf, height: 5 * sf,
-                      decoration: BoxDecoration(
-                        color: AppColors.getPrimary(context).withValues(alpha: 0.6),
-                        shape: BoxShape.circle,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          tx.showOnDashboard ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                          color: tx.showOnDashboard ? AppColors.getPrimary(context) : Colors.grey.withValues(alpha: 0.3),
+                          size: 13 * sf,
+                        ),
+                        if (vaultCount > 0) ...[
+                          SizedBox(width: 4 * sf),
+                          Text(
+                            '$vaultCount',
+                            style: TextStyle(fontSize: 10 * sf, fontWeight: FontWeight.w900, color: Colors.grey.withValues(alpha: 0.6)),
+                          ),
+                          Icon(Icons.account_balance_wallet_rounded, size: 9 * sf, color: Colors.grey.withValues(alpha: 0.4)),
+                        ],
+                      ],
+                    ),
+                    if (periodLabel != null)
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 5 * sf, vertical: 2 * sf),
+                        decoration: BoxDecoration(
+                          color: amountColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(5 * sf),
+                        ),
+                        child: Text(
+                          periodLabel.toUpperCase(),
+                          style: TextStyle(fontSize: 8 * sf, fontWeight: FontWeight.w900, color: amountColor, letterSpacing: 0.4),
+                        ),
                       ),
-                    ),
-                  )),
-                  SizedBox(width: 2 * sf),
-                  Text(
-                    '$vaultCount ${l10n.vaults.toLowerCase()}',
-                    style: TextStyle(
-                      fontSize: 11 * sf,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.grey.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ],
-                const Spacer(),
-                // Periyot Badge (Sağa Hizalı)
-                if (periodLabel != null)
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 5 * sf, vertical: 2 * sf),
-                    decoration: BoxDecoration(
-                      color: amountColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4 * sf),
-                    ),
-                    child: Text(
-                      periodLabel.toUpperCase(),
-                      style: TextStyle(fontSize: 9 * sf, fontWeight: FontWeight.w900, color: amountColor),
-                    ),
-                  ),
+                  ],
+                ),
               ],
             ),
-          ],  // Column children
-        ),  // Column
-          ],  // Stack children
-        ),  // Stack
-      ),  // FluidContainer
-    );  // GestureDetector
+          ],
+        ),
+      ),
+    );
   }
 }
 
-void showTransactionActionMenu(BuildContext context, {
-  required String name, 
-  required VoidCallback onEdit, 
-  required VoidCallback onDelete, 
+void showTransactionActionMenu(
+  BuildContext context, {
+  required String name,
+  required VoidCallback onEdit,
+  required VoidCallback onDelete,
   VoidCallback? onRemoveFromVault,
   required bool isInVault,
   bool? showOnDashboard,
@@ -324,9 +280,7 @@ void showTransactionActionMenu(BuildContext context, {
                 onEdit();
               },
             ),
-
             SizedBox(height: 12 * scalingFactor),
-
             if (onToggleDashboard != null)
               _buildActionItem(
                 context: context,
@@ -351,7 +305,6 @@ void showTransactionActionMenu(BuildContext context, {
                   onToggleDashboard(newVal);
                 },
               ),
-            
             if (isInVault && onRemoveFromVault != null) ...[
               SizedBox(height: 12 * scalingFactor),
               _buildActionItem(
@@ -366,9 +319,7 @@ void showTransactionActionMenu(BuildContext context, {
                 },
               ),
             ],
-
             SizedBox(height: 12 * scalingFactor),
-            
             _buildActionItem(
               context: context,
               icon: Icons.delete_sweep_rounded,
@@ -383,7 +334,7 @@ void showTransactionActionMenu(BuildContext context, {
             SizedBox(height: 16 * scalingFactor),
           ],
         );
-      }
+      },
     ),
   );
 }
@@ -417,18 +368,22 @@ Widget _buildActionItem({
           ),
           SizedBox(width: 16 * scalingFactor),
           Text(
-            label, 
+            label,
             style: TextStyle(
-              fontSize: 16 * scalingFactor, 
-              fontWeight: FontWeight.w800, 
-              color: AppColors.getTextPrimary(context)
-            )
+              fontSize: 16 * scalingFactor,
+              fontWeight: FontWeight.w800,
+              color: AppColors.getTextPrimary(context),
+            ),
           ),
           const Spacer(),
-          if (trailing != null) 
+          if (trailing != null)
             trailing
           else
-            Icon(Icons.chevron_right_rounded, color: Colors.grey.withValues(alpha: 0.5), size: 20 * scalingFactor),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.grey.withValues(alpha: 0.5),
+              size: 20 * scalingFactor,
+            ),
         ],
       ),
     ),
