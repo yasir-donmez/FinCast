@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/app_constants.dart';
+import 'fluid_animated_icon.dart';
 
 class FluidSwitch extends StatefulWidget {
   final bool value;
@@ -26,7 +27,50 @@ class FluidSwitch extends StatefulWidget {
   State<FluidSwitch> createState() => _FluidSwitchState();
 }
 
-class _FluidSwitchState extends State<FluidSwitch> {
+class _FluidSwitchState extends State<FluidSwitch> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _moveAnimation;
+  late Animation<double> _stretchAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _moveAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutQuart),
+    );
+
+    // Hareketin ortasında maksimum uzama, başında ve sonunda yuvarlak form
+    _stretchAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween<double>(begin: 30, end: 44).chain(CurveTween(curve: Curves.easeInQuart)), weight: 50),
+      TweenSequenceItem(tween: Tween<double>(begin: 44, end: 30).chain(CurveTween(curve: Curves.easeOutQuart)), weight: 50),
+    ]).animate(_controller);
+
+    if (widget.value) _controller.value = 1.0;
+  }
+
+  @override
+  void didUpdateWidget(FluidSwitch oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != oldWidget.value) {
+      if (widget.value) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeColor = widget.activeColor ?? AppColors.getPrimary(context);
@@ -34,83 +78,97 @@ class _FluidSwitchState extends State<FluidSwitch> {
 
     return GestureDetector(
       onTap: () {
-        HapticFeedback.mediumImpact();
+        HapticFeedback.heavyImpact();
         widget.onChanged(!widget.value);
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 400),
-        width: 72 * s,
-        height: 40 * s,
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20 * s),
-          color: AppColors.getInnerSurface(context),
-          border: Border.all(
-            color: widget.value ? activeColor.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.1),
-            width: 1.5,
-          ),
-          gradient: widget.value
-              ? LinearGradient(
-                  colors: [
-                    activeColor.withValues(alpha: 0.2),
-                    activeColor.withValues(alpha: 0.05),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 4,
-              offset: Offset(0, 2 * s),
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final t = _moveAnimation.value;
+          final currentWidth = _stretchAnimation.value * s;
+          final totalWidth = 72 * s;
+          final thumbSize = 30 * s;
+          final padding = 4 * s;
+          
+          // Uzama yönüne göre pozisyonu ayarla (sağa giderken sola yaslı, sola giderken sağa yaslı uzar)
+          double leftPos = padding + (t * (totalWidth - thumbSize - (padding * 2)));
+          if (_controller.status == AnimationStatus.forward) {
+            leftPos = padding + (t * (totalWidth - thumbSize - (padding * 2)));
+          } else if (_controller.status == AnimationStatus.reverse) {
+             leftPos = padding + (t * (totalWidth - thumbSize - (padding * 2)));
+          }
+
+          return Container(
+            width: totalWidth,
+            height: 40 * s,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20 * s),
+              color: AppColors.getInnerSurface(context),
+              border: Border.all(
+                color: Color.lerp(
+                  Colors.white.withValues(alpha: 0.05),
+                  activeColor.withValues(alpha: 0.2),
+                  t,
+                )!,
+                width: 1.5,
+              ),
             ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            // Thumb
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 600),
-              curve: Curves.elasticOut,
-              left: widget.value ? 38 * s : 4 * s,
-              top: 5 * s, // (40 - 30) / 2 = 5
-              child: Container(
-                width: 30 * s,
-                height: 30 * s,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: widget.value ? activeColor : Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: (widget.value ? activeColor : Colors.black).withValues(alpha: 0.4),
-                      blurRadius: 8,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    transitionBuilder: (child, animation) {
-                      return ScaleTransition(
-                        scale: animation,
-                        child: FadeTransition(opacity: animation, child: child),
-                      );
-                    },
-                    child: Icon(
-                      (widget.value ? widget.activeIcon : widget.inactiveIcon) ??
-                          (widget.value ? Icons.check_rounded : Icons.close_rounded),
-                      key: ValueKey(widget.value),
-                      color: widget.value ? Colors.black : Colors.grey[700],
-                      size: 16 * s,
+            child: Stack(
+              children: [
+                // Track Glow
+                Positioned(
+                  left: leftPos,
+                  top: 5 * s,
+                  child: Container(
+                    width: currentWidth,
+                    height: thumbSize,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(thumbSize / 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: activeColor.withValues(alpha: 0.3 * t.clamp(0.0, 1.0)),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
+                // The Jelly Thumb
+                Positioned(
+                  left: leftPos,
+                  top: 5 * s,
+                  child: Container(
+                    width: currentWidth,
+                    height: thumbSize,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(thumbSize / 2),
+                      color: Color.lerp(Colors.white, activeColor, t),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color.lerp(Colors.black, activeColor, t)!
+                              .withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: FluidAnimatedIcon(
+                        isActive: widget.value,
+                        activeIcon: widget.activeIcon ?? Icons.check_rounded,
+                        inactiveIcon: widget.inactiveIcon ?? Icons.close_rounded,
+                        color: widget.value ? Colors.black : Colors.grey[700],
+                        size: 16 * s,
+                        duration: const Duration(milliseconds: 300),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

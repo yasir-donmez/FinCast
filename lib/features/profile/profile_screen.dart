@@ -14,6 +14,7 @@ import '../../core/providers/settings_provider.dart';
 import '../dashboard/dashboard_providers.dart';
 import '../../shared/widgets/theme_reveal_button.dart';
 import '../../shared/widgets/fluid_switch.dart';
+import '../../shared/widgets/fluid_animated_icon.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -238,8 +239,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.getSurface(context).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: activeColor.withValues(alpha: isPro ? 0.3 : 0.05),
                   width: 1.0,
@@ -366,7 +365,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   context,
                 ).withValues(alpha: isAction ? 0.08 : 0.03),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  width: 0.8,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
@@ -375,9 +384,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     height: 44,
                     decoration: BoxDecoration(
                       color: activeColor.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(16), // Squirclish
+                      border: Border.all(
+                        color: activeColor.withValues(alpha: 0.15),
+                        width: 1,
+                      ),
                     ),
-                    child: Icon(icon, color: activeColor, size: 22),
+                    child: FluidAnimatedIcon(
+                      isActive: true, // Sabit ikonlar için giriş animasyonu tetiklesin
+                      activeIcon: icon,
+                      inactiveIcon: icon,
+                      color: activeColor,
+                      size: 22,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -432,42 +451,72 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }) {
     return Container(
       margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.getSurface(context).withValues(alpha: 0.03),
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: activeColor.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: activeColor, size: 22),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              title,
-              style: TextStyle(
-                color: AppColors.getTextPrimary(context),
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+              color: AppColors.getSurface(context).withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.05),
+                width: 0.8,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: activeColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16), // Squirclish
+                    border: Border.all(
+                      color: activeColor.withValues(alpha: 0.15),
+                      width: 1,
+                    ),
+                  ),
+                  child: activeIcon != null && inactiveIcon != null
+                      ? FluidAnimatedIcon(
+                          isActive: value,
+                          activeIcon: activeIcon,
+                          inactiveIcon: inactiveIcon,
+                          color: activeColor,
+                          size: 22,
+                        )
+                      : Icon(icon, color: activeColor, size: 22),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      color: AppColors.getTextPrimary(context),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                FluidSwitch(
+                  value: value,
+                  activeColor: activeColor,
+                  onChanged: onChanged,
+                  activeIcon: activeIcon,
+                  inactiveIcon: inactiveIcon,
+                ),
+              ],
             ),
           ),
-          FluidSwitch(
-            value: value,
-            activeColor: activeColor,
-            onChanged: onChanged,
-            activeIcon: activeIcon,
-            inactiveIcon: inactiveIcon,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -610,10 +659,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       path: 'destek@fincast.app',
     );
     if (!await launchUrl(emailLaunchUri)) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('E-posta uygulaması bulunamadı.')),
         );
+      }
     }
   }
 
@@ -663,18 +713,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  String _getThemeModeName(int index, AppLocalizations l10n) {
-    switch (index) {
-      case 0:
-        return l10n.themeSystem;
-      case 1:
-        return l10n.themeLight;
-      case 2:
-        return l10n.themeDark;
-      default:
-        return l10n.themeSystem;
-    }
-  }
 
   void _showLanguagePicker(String currentCode, AppLocalizations l10n) {
     final List<String> languages = [
@@ -743,62 +781,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  void _showThemePicker(int currentIndex, AppLocalizations l10n) {
-    final List<String> options = [
-      l10n.themeSystem,
-      l10n.themeLight,
-      l10n.themeDark,
-    ];
-    final activeColor = ref.read(rotaryColorProvider);
-
-    FluidSheet.show(
-      context: context,
-      title: l10n.themeMode,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 4),
-          ...List.generate(
-            options.length,
-            (i) => ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              title: Text(
-                options[i],
-                style: TextStyle(
-                  color: AppColors.getTextPrimary(context),
-                  fontWeight: currentIndex == i
-                      ? FontWeight.w900
-                      : FontWeight.w600,
-                  fontSize: 16,
-                ),
-              ),
-              trailing: currentIndex == i
-                  ? Icon(
-                      Icons.check_circle_rounded,
-                      color: activeColor,
-                      size: 24,
-                    )
-                  : Icon(
-                      Icons.circle_outlined,
-                      color: AppColors.getTextSecondary(
-                        context,
-                      ).withValues(alpha: 0.2),
-                      size: 24,
-                    ),
-              onTap: () {
-                ref.read(settingsProvider.notifier).setThemeMode(i);
-                Navigator.pop(context);
-              },
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
-      ),
-    );
-  }
 }
 
 // --- CREATIVE ETCHED LIQUID TEXT ---

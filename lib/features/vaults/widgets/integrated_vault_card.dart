@@ -3,7 +3,7 @@ import 'dart:ui';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/theme/app_constants.dart';
 import '../../../core/utils/currency_utils.dart';
-import '../../../shared/widgets/fluid_container.dart';
+import '../../../shared/widgets/premium_glass_card.dart';
 import '../vaults_providers.dart';
 
 class IntegratedVaultCard extends StatelessWidget {
@@ -53,30 +53,26 @@ class IntegratedVaultCard extends StatelessWidget {
     return OverflowBox(
       maxWidth: effectiveWidth,
       maxHeight: cardHeight,
-      child: Container(
+      child: SizedBox(
         width: effectiveWidth,
         height: cardHeight,
-        // Dış gölgeyi (boxShadow) tamamen kaldırdık, yandakilerle aynı oldu
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // === DEKORASYON KATMANI (Cam Etkisi Transferi) ===
+            // === ARKA PLAN: Premium Glass (morph sırasında kaybolur) ===
             if (decorationOpacity > 0.01)
               Positioned.fill(
                 child: Opacity(
                   opacity: decorationOpacity,
-                  child: FluidContainer(
-                    isGlass: false,
-                    isConvex: true, 
+                  child: PremiumGlassCard(
                     borderRadius: cardRadius,
-                    borderColor: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
-                    color: AppColors.getSurface(context).withValues(alpha: isCurrent ? 1.0 : 0.5),
+                    isGlass: true,
                     child: const SizedBox.expand(),
                   ),
                 ),
               ),
-            
-            // === İÇERİK KATMANI ===
+
+            // === İÇERİK: Başlık, bakiye vs. (her zaman görünür) ===
             Positioned(
               left: hPad, right: hPad,
               top: 0, bottom: 0,
@@ -193,9 +189,7 @@ class IntegratedVaultCard extends StatelessWidget {
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.lerp(Alignment.center, Alignment.centerRight, magneticT)!,
                     child: Text(
-                      contentT > 0.7
-                        ? '₺${CurrencyUtils.formatAmount(balance)}'
-                        : '₺${CurrencyUtils.formatFullAmount(balance)}',
+                      '₺${CurrencyUtils.formatFullAmount(balance)}',
                       style: TextStyle(
                         fontSize: balanceFontSize,
                         fontWeight: FontWeight.w900,

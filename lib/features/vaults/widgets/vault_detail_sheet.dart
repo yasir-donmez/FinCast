@@ -8,6 +8,7 @@ import '../../../core/providers/db_providers.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../shared/widgets/fluid_container.dart';
 import '../../../shared/widgets/fluid_switch.dart';
+import '../../../shared/widgets/fluid_animated_icon.dart';
 import '../vaults_providers.dart';
 
 enum VaultDetailTab { transactions, manage }
@@ -109,23 +110,25 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
       child: Stack(
         children: [
           AnimatedAlign(
-            duration: const Duration(milliseconds: 350),
-            curve: Curves.easeInOutBack,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeOutBack,
             alignment: _activeTab == VaultDetailTab.transactions ? Alignment.centerLeft : Alignment.centerRight,
-            child: Container(
-              width: (MediaQuery.of(context).size.width - 64) / 2,
-              height: 40 * scalingFactor,
-              margin: EdgeInsets.symmetric(horizontal: 4, vertical: 4 * scalingFactor),
-              decoration: BoxDecoration(
-                color: activeColor,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: activeColor.withValues(alpha: 0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  )
-                ],
+            child: FractionallySizedBox(
+              widthFactor: 0.5,
+              child: Container(
+                height: 40 * scalingFactor,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -217,7 +220,13 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
                             style: TextStyle(fontSize: 22 * scalingFactor, fontWeight: FontWeight.w900, letterSpacing: -0.5),
                           ),
                           const SizedBox(width: 8),
-                          Icon(Icons.edit_rounded, size: 16, color: activeColor.withValues(alpha: 0.5)),
+                          FluidAnimatedIcon(
+                            isActive: _isEditingName,
+                            activeIcon: Icons.check_circle_outline_rounded,
+                            inactiveIcon: Icons.edit_rounded,
+                            color: activeColor,
+                            size: 18,
+                          ),
                         ],
                       ),
                     ),

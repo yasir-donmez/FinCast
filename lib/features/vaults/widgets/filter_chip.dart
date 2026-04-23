@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../shared/widgets/fluid_container.dart';
+import '../../../shared/widgets/premium_glass_card.dart';
 
 class VaultFilterChip extends StatelessWidget {
   final String label;
@@ -19,12 +19,11 @@ class VaultFilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: FluidContainer(
+      child: PremiumGlassCard(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         borderRadius: 16,
         isGlass: true,
-        borderWidth: isActive ? 2 : 1,
-        color: isActive ? activeColor.withValues(alpha: 0.1) : null,
+        color: null, // Parlamayı kaldırdık
         child: Text(
           label,
           style: TextStyle(

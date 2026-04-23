@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/theme/app_constants.dart';
-import '../../../shared/widgets/fluid_container.dart';
 import '../vaults_providers.dart';
 import 'vault_card_stack.dart';
 
@@ -143,15 +142,54 @@ class HeaderIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: FluidContainer(
-        padding: const EdgeInsets.all(10), 
-        borderRadius: 14, 
-        isGlass: true, 
-        color: isSelected ? (activeColor ?? AppColors.getPrimary(context)).withValues(alpha: 0.1) : null, 
-        child: Icon(icon, size: 20, color: isSelected ? activeColor : Colors.grey),
-      ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    bool isPressed = false;
+    
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return GestureDetector(
+          onTapDown: (_) => setState(() => isPressed = true),
+          onTapUp: (_) => setState(() => isPressed = false),
+          onTapCancel: () => setState(() => isPressed = false),
+          onTap: onTap,
+          child: AnimatedScale(
+            scale: isPressed ? 0.95 : 1.0,
+            duration: const Duration(milliseconds: 100),
+            child: ClipOval(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isPressed
+                        ? (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05))
+                        : (isDark ? Colors.black.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.8)),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: (activeColor ?? AppColors.getPrimary(context)).withValues(alpha: 0.15),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isPressed ? 0.05 : 0.1),
+                        blurRadius: isPressed ? 4 : 8,
+                        offset: Offset(0, isPressed ? 1 : 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    icon, 
+                    size: 20, 
+                    color: isSelected 
+                        ? (activeColor ?? AppColors.getPrimary(context)) 
+                        : AppColors.getTextPrimary(context).withValues(alpha: 0.7),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

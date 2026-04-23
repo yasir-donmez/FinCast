@@ -504,10 +504,10 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
           height: 32,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isThisExpanded ? AppColors.getPrimary(context).withOpacity(0.1) : AppColors.getSurface(context).withOpacity(0.3),
+            color: isThisExpanded ? AppColors.getPrimary(context).withValues(alpha: 0.1) : AppColors.getSurface(context).withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
             border: Border.all(
-              color: isThisExpanded ? AppColors.getPrimary(context).withOpacity(0.6) : AppColors.getDarkShadow(context).withOpacity(0.15),
+              color: isThisExpanded ? AppColors.getPrimary(context).withValues(alpha: 0.6) : AppColors.getDarkShadow(context).withValues(alpha: 0.15),
               width: 0.8,
             ),
           ),
@@ -529,14 +529,14 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
                       style: TextStyle(
                         fontSize: (isAnyOtherExpanded) ? 12 : 9.5,
                         fontWeight: isThisExpanded ? FontWeight.bold : FontWeight.w600,
-                        color: isThisExpanded ? AppColors.getPrimary(context) : AppColors.getTextSecondary(context).withOpacity(0.7),
+                        color: isThisExpanded ? AppColors.getPrimary(context) : AppColors.getTextSecondary(context).withValues(alpha: 0.7),
                         letterSpacing: -0.3,
                       ),
                     ),
                   ),
                   if (isThisExpanded && category != null) ...[
                     const SizedBox(width: 8),
-                    Container(width: 1, height: 12, color: AppColors.getPrimary(context).withOpacity(0.15)),
+                    Container(width: 1, height: 12, color: AppColors.getPrimary(context).withValues(alpha: 0.15)),
                     const SizedBox(width: 4),
                     _buildSubPeriodInlineOptions(category, l10n),
                   ],
@@ -591,16 +591,16 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
         duration: const Duration(milliseconds: 250),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.getPrimary(context).withOpacity(0.08) : Colors.transparent,
+          color: isActive ? AppColors.getPrimary(context).withValues(alpha: 0.08) : Colors.transparent,
           borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-          border: Border.all(color: isActive ? AppColors.getPrimary(context).withOpacity(0.3) : Colors.transparent, width: 0.8),
+          border: Border.all(color: isActive ? AppColors.getPrimary(context).withValues(alpha: 0.3) : Colors.transparent, width: 0.8),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 9,
             fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
-            color: isActive ? AppColors.getPrimary(context) : AppColors.getTextSecondary(context).withOpacity(0.6),
+            color: isActive ? AppColors.getPrimary(context) : AppColors.getTextSecondary(context).withValues(alpha: 0.6),
           ),
         ),
       ),

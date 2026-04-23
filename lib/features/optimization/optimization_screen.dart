@@ -19,6 +19,8 @@ import '../../l10n/app_localizations.dart';
 import '../../core/services/subscription_service.dart';
 import '../subscription/widgets/pro_upgrade_sheet.dart';
 import '../../shared/widgets/membership_orb.dart';
+import '../../shared/widgets/fluid_animated_icon.dart';
+import '../../shared/widgets/premium_glass_card.dart';
 
 /// Hedef Odaklı Tasarruf Planlayıcı & AI Finansal Koç
 class OptimizationScreen extends ConsumerStatefulWidget {
@@ -38,8 +40,7 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
   bool _isAnalyzing = false;
   bool _showPreselect = false;
   String? _personaText;
-  // Final removed as it's not final
-  bool _personaLoading = false;
+  // Unused field _personaLoading removed
   final Set<int> _userLockedIds = {};
   final Set<int> _userFlexibleIds = {};
 
@@ -220,8 +221,9 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
             FluidButton(
               onTap: () {
                 final val = double.tryParse(controller.text);
-                if (val != null)
+                if (val != null) {
                   setState(() => _targetAmount = val.clamp(0, 2000000));
+                }
                 Navigator.pop(context);
               },
               child: Text(AppLocalizations.of(context)!.save),
@@ -279,7 +281,7 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
             physics: const AlwaysScrollableScrollPhysics(
               parent: BouncingScrollPhysics(),
             ),
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 260),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 350),
             children: [
               _buildPersonaHeader(goals, l10n),
               const SizedBox(height: 16),
@@ -345,15 +347,11 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
     final displayText = _personaText ?? savedPersona;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    return FluidContainer(
+    return PremiumGlassCard(
       padding: EdgeInsets.symmetric(
         horizontal: screenWidth * 0.05,
         vertical: 20,
       ),
-      isGlass: true,
-      isConvex: false,
-      blur: 25,
-      borderRadius: AppSizes.radiusLarge,
       child: Row(
         children: [
           MembershipOrb(color: AppColors.getPrimary(context), size: 56),
@@ -397,8 +395,7 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
         : txs.where((t) => t.vaultIds.contains(_scopeVaultId)).toList();
     final relevant = scopedTxs.where((t) => t.periodType != 0).toList();
 
-    return FluidContainer(
-      isConvex: false,
+    return PremiumGlassCard(
       padding: EdgeInsets.zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -413,22 +410,45 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Icon(
-                    _showPreselect
-                        ? Icons.auto_awesome_motion_rounded
-                        : Icons.tune_rounded,
+                  FluidAnimatedIcon(
+                    isActive: _showPreselect,
+                    activeIcon: Icons.layers_rounded,
+                    inactiveIcon: Icons.tune_rounded,
                     color: AppColors.getPrimary(context),
                     size: 20,
+                    duration: const Duration(milliseconds: 450),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      l10n.items.toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.0,
-                      ),
+                    child: Row(
+                      children: [
+                        Text(
+                          l10n.items.toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        if (relevant.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.getPrimary(context).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              relevant.length.toString(),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.getPrimary(context),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                   AnimatedRotation(
@@ -452,8 +472,22 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
             child: _showPreselect
                 ? Column(
                     children: [
-                      const Divider(height: 1),
-                      ...relevant.map((tx) => _preselectRowFluid(tx, l10n)),
+                      const Divider(height: 1, indent: 20, endIndent: 20),
+                      if (relevant.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+                          child: Text(
+                            l10n.noItemsToAnalyze,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColors.getTextSecondary(context).withValues(alpha: 0.5),
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        )
+                      else
+                        ...relevant.map((tx) => _preselectRowFluid(tx, l10n)),
                       const SizedBox(height: 16),
                     ],
                   )
@@ -509,128 +543,137 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
   Widget _preselectRowFluid(TransactionRecord tx, AppLocalizations l10n) {
     final isLocked = _userLockedIds.contains(tx.id);
     final isFlexible = _userFlexibleIds.contains(tx.id);
+    final int selectedIndex = isLocked ? 0 : (isFlexible ? 2 : 1);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isNarrow = constraints.maxWidth < 360;
-          return Wrap(
-            spacing: 8,
-            runSpacing: 12,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            alignment: WrapAlignment.spaceBetween,
-            children: [
-              SizedBox(
-                width: isNarrow
-                    ? constraints.maxWidth
-                    : constraints.maxWidth * 0.45,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      tx.title,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      '${_currencyFormat.format(tx.amount.toInt())} ₺',
-                      style: TextStyle(
-                        color: AppColors.getTextSecondary(context),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  tx.title,
+                  style: TextStyle(
+                    color: AppColors.getTextPrimary(context),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _chipButtonFluid(
-                    label: l10n.doNotTouch,
-                    icon: Icons.lock_rounded,
-                    active: isLocked,
-                    activeColor: AppColors.getError(context),
-                    onTap: () => setState(() {
-                      if (isLocked) {
-                        _userLockedIds.remove(tx.id);
-                      } else {
-                        _userLockedIds.add(tx.id);
-                        _userFlexibleIds.remove(tx.id);
-                      }
-                    }),
+                Text(
+                  '${_currencyFormat.format(tx.amount.toInt())} ₺',
+                  style: TextStyle(
+                    color: AppColors.getTextSecondary(context).withValues(alpha: 0.6),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
-                  const SizedBox(width: 8),
-                  _chipButtonFluid(
-                    label: l10n.changeable,
-                    icon: Icons.auto_fix_high_rounded,
-                    active: isFlexible,
-                    activeColor: AppColors.getPrimary(context),
-                    onTap: () => setState(() {
-                      if (isFlexible) {
-                        _userFlexibleIds.remove(tx.id);
-                      } else {
-                        _userFlexibleIds.add(tx.id);
-                        _userLockedIds.remove(tx.id);
-                      }
-                    }),
-                  ),
-                ],
-              ),
-            ],
-          );
-        },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          _fluidTripleToggle(
+            selectedIndex: selectedIndex,
+            onChanged: (index) {
+              setState(() {
+                if (index == 0) {
+                  _userLockedIds.add(tx.id);
+                  _userFlexibleIds.remove(tx.id);
+                } else if (index == 1) {
+                  _userLockedIds.remove(tx.id);
+                  _userFlexibleIds.remove(tx.id);
+                } else {
+                  _userLockedIds.remove(tx.id);
+                  _userFlexibleIds.add(tx.id);
+                }
+              });
+            },
+          ),
+        ],
       ),
     );
   }
 
-  Widget _chipButtonFluid({
-    required String label,
-    required IconData icon,
-    required bool active,
-    required Color activeColor,
-    required VoidCallback onTap,
+  Widget _fluidTripleToggle({
+    required int selectedIndex,
+    required ValueChanged<int> onChanged,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: active
-              ? activeColor.withValues(alpha: 0.2)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: active
-                ? activeColor
-                : AppColors.getTextSecondary(context).withValues(alpha: 0.3),
-            width: active ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 14,
-              color: active ? activeColor : AppColors.getTextSecondary(context),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: active
-                    ? activeColor
-                    : AppColors.getTextSecondary(context),
-                fontWeight: active ? FontWeight.w800 : FontWeight.w500,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final List<IconData> icons = [
+      Icons.lock_rounded,
+      Icons.drag_handle_rounded,
+      Icons.auto_fix_high_rounded,
+    ];
+
+    // Renkler: Kırmızı (Lock), Gri (Eşit), Cyan (Magic)
+    final Color activeColor = selectedIndex == 0
+        ? AppColors.error
+        : (selectedIndex == 2
+            ? const Color(0xFF00E5FF)
+            : AppColors.getTextSecondary(context).withValues(alpha: 0.6));
+
+    // Sabit Matematik: Toplam 116px (108 iç alan + 8 padding)
+    const double segmentWidth = 36.0;
+    const double padding = 4.0;
+
+    return Container(
+      width: (segmentWidth * 3) + (padding * 2),
+      height: 40,
+      padding: const EdgeInsets.all(padding),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Mükemmel Hizalanmış Daire Gösterge
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutBack,
+            left: (selectedIndex * segmentWidth),
+            child: Container(
+              width: segmentWidth,
+              height: 32,
+              decoration: BoxDecoration(
+                color: selectedIndex == 1 
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : activeColor.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
               ),
             ),
-          ],
-        ),
+          ),
+          // İkonlar (Daireyle Tam Senkron)
+          Row(
+            children: List.generate(3, (index) {
+              final isSelected = selectedIndex == index;
+              return GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  onChanged(index);
+                },
+                behavior: HitTestBehavior.opaque,
+                child: SizedBox(
+                  width: segmentWidth,
+                  height: 32,
+                  child: Center(
+                    child: Icon(
+                      icons[index],
+                      size: 18,
+                      color: isSelected
+                          ? activeColor
+                          : AppColors.getTextSecondary(context).withValues(alpha: 0.4),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
       ),
     );
   }
@@ -666,10 +709,8 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
   Widget _buildHistoryCardFluid(FinancialGoal g, AppLocalizations l10n) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      child: FluidContainer(
-        isGlass: true,
+      child: PremiumGlassCard(
         padding: EdgeInsets.zero,
-        borderRadius: AppSizes.radiusDefault,
         child: InkWell(
           onTap: () {
             HapticFeedback.mediumImpact();
@@ -767,7 +808,7 @@ class _AnalysisCockpit extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).padding.bottom + 10,
+        bottom: MediaQuery.of(context).padding.bottom + 100,
         top: 12,
         left: 20,
         right: 20,
@@ -795,17 +836,15 @@ class _AnalysisCockpit extends StatelessWidget {
                 Expanded(
                   child: GestureDetector(
                     onTap: onAmountTap,
-                    child: FluidContainer(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 16,
-                        horizontal: 20,
-                      ),
-                      isConvex: false,
-                      borderRadius: 20,
-                      color: isDark ? const Color(0xFF0F0F0F) : Colors.white,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                  child: PremiumGlassCard(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 20,
+                    ),
+                    color: isDark ? const Color(0xFF0F0F0F) : Colors.white,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                           Text(
                             l10n.targetAmountLabel('').trim().toUpperCase(),
                             style: TextStyle(
@@ -878,12 +917,8 @@ class _GlassChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: FluidContainer(
+      child: PremiumGlassCard(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        borderRadius: 20,
-        isGlass: true,
-        isConvex: false,
-        blur: 15,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -1045,9 +1080,9 @@ class _FinancialReactorButtonState
   void didUpdateWidget(_FinancialReactorButton oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isAnalyzing != oldWidget.isAnalyzing) {
-      if (widget.isAnalyzing)
+      if (widget.isAnalyzing) {
         _morphController.repeat(reverse: true);
-      else {
+      } else {
         _morphController.stop();
         _morphController.animateTo(
           0,
@@ -1162,10 +1197,11 @@ class _WaterDropPainterForButton extends CustomPainter {
           (math.sin(angle * (2 + morphValue * 3)) * (morphValue * 6.0));
       double x = center.dx + r * math.cos(angle);
       double y = center.dy + r * math.sin(angle);
-      if (i == 0)
+      if (i == 0) {
         path.moveTo(x, y);
-      else
+      } else {
         path.lineTo(x, y);
+      }
     }
     path.close();
     canvas.drawPath(
