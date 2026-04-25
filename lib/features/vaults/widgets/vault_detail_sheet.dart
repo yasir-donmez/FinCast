@@ -12,6 +12,9 @@ import '../../../shared/widgets/fluid_tab_selector.dart';
 import '../../../shared/widgets/precision_card.dart';
 import '../../../shared/widgets/precision_input.dart';
 import '../../../shared/widgets/precision_icon_button.dart';
+import '../../../shared/widgets/fluid_animated_icon.dart';
+import '../../../shared/widgets/precision_dialog.dart';
+import '../../../l10n/app_localizations.dart';
 import '../vaults_providers.dart';
 
 enum VaultDetailTab { transactions, manage }
@@ -107,126 +110,100 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
           Row(
             children: [
               Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: _isEditingName
-                      ? Row(
-                          key: const ValueKey('editing_row'),
-                          children: [
-                            Expanded(
-                              child: PrecisionInput(
-                                controller: _nameController,
-                                hintText: 'Kasa Adı',
-                                icon: Icons.drive_file_rename_outline_rounded,
-                                autofocus: true,
-                                scalingFactor: scalingFactor,
-                                onSubmitted: () async {
-                                  if (_nameController.text.trim().isNotEmpty) {
-                                    vault.name = _nameController.text.trim();
-                                    await DatabaseService.updateVault(vault);
-                                  }
-                                  setState(() => _isEditingName = false);
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            PrecisionIconButton(
-                              icon: Icons.check_rounded,
-                              onTap: () async {
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: _isEditingName
+                          ? PrecisionInput(
+                              key: const ValueKey('editing_input'),
+                              controller: _nameController,
+                              hintText: 'Kasa Adı',
+                              icon: IconUtils.getIcon(vault.iconCode ?? vault.name),
+                              autofocus: true,
+                              scalingFactor: scalingFactor,
+                              onSubmitted: () async {
                                 if (_nameController.text.trim().isNotEmpty) {
                                   vault.name = _nameController.text.trim();
                                   await DatabaseService.updateVault(vault);
                                 }
                                 setState(() => _isEditingName = false);
                               },
-                              color: Colors.green,
-                              padding: 12,
-                              size: 22,
-                              borderRadius: 14,
-                            ),
-                            const SizedBox(width: 12),
-                            PrecisionIconButton(
-                              icon: Icons.delete_sweep_rounded,
-                              onTap: () => _confirmDeleteVault(context, vault),
-                              color: AppColors.error,
-                              size: 22,
-                              padding: 12,
-                              borderRadius: 14,
-                            ),
-                          ],
-                        )
-                      : SizedBox(
-                          key: const ValueKey('viewing_row'),
-                          height: 50 * scalingFactor,
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: PrecisionCard(
-                                  key: const ValueKey('view_name_card'),
-                                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0 * scalingFactor),
-                                  backgroundColor: Colors.transparent,
-                                  borderColor: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () {
-                                      _nameController.text = vault.name;
-                                      setState(() => _isEditingName = true);
-                                      HapticFeedback.lightImpact();
-                                    },
-                                    child: Row(
-                                      children: [
-                                        AnimatedPadding(
-                                          duration: const Duration(milliseconds: 200),
-                                          padding: const EdgeInsets.only(left: 0),
-                                          curve: Curves.easeOutBack,
-                                          child: Icon(
-                                            IconUtils.getIcon(vault.iconCode ?? vault.name),
-                                            color: activeColor.withValues(alpha: 0.4),
-                                            size: 22 * scalingFactor,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: Text(
-                                            vault.name,
-                                            style: TextStyle(
-                                              fontSize: 17 * scalingFactor, 
-                                              fontWeight: FontWeight.w800, 
-                                              letterSpacing: -0.5,
-                                              color: AppColors.getTextPrimary(context),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              PrecisionIconButton(
-                                icon: Icons.edit_rounded,
+                            )
+                          : PrecisionCard(
+                              key: const ValueKey('view_name_card'),
+                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0 * scalingFactor),
+                              backgroundColor: Colors.transparent,
+                              borderColor: Colors.transparent,
+                              child: InkWell(
                                 onTap: () {
                                   _nameController.text = vault.name;
                                   setState(() => _isEditingName = true);
                                   HapticFeedback.lightImpact();
                                 },
-                                color: Colors.grey,
-                                backgroundColor: Colors.grey.withValues(alpha: 0.1),
-                                padding: 12,
-                                size: 22,
-                                borderRadius: 14,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      IconUtils.getIcon(vault.iconCode ?? vault.name),
+                                      color: activeColor.withValues(alpha: 0.4),
+                                      size: 22 * scalingFactor,
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Text(
+                                        vault.name,
+                                        style: TextStyle(
+                                          fontSize: 17 * scalingFactor, 
+                                          fontWeight: FontWeight.w800, 
+                                          letterSpacing: -0.5,
+                                          color: AppColors.getTextPrimary(context),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(width: 12),
-                              PrecisionIconButton(
-                                icon: Icons.delete_sweep_rounded,
-                                onTap: () => _confirmDeleteVault(context, vault),
-                                color: AppColors.error,
-                                size: 22,
-                                padding: 12,
-                                borderRadius: 14,
-                              ),
-                            ],
-                          ),
-                        ),
+                            ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    PrecisionIconButton(
+                      onTap: () async {
+                        if (_isEditingName) {
+                          if (_nameController.text.trim().isNotEmpty) {
+                            vault.name = _nameController.text.trim();
+                            await DatabaseService.updateVault(vault);
+                          }
+                          setState(() => _isEditingName = false);
+                        } else {
+                          _nameController.text = vault.name;
+                          setState(() => _isEditingName = true);
+                        }
+                        HapticFeedback.lightImpact();
+                      },
+                      color: _isEditingName ? Colors.green : Colors.grey,
+                      backgroundColor: (_isEditingName ? Colors.green : Colors.grey).withValues(alpha: 0.1),
+                      padding: 12,
+                      borderRadius: 14,
+                      child: FluidAnimatedIcon(
+                        activeIcon: Icons.check_rounded,
+                        inactiveIcon: Icons.edit_rounded,
+                        isActive: _isEditingName,
+                        color: _isEditingName ? Colors.green : Colors.grey,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    PrecisionIconButton(
+                      icon: Icons.delete_sweep_rounded,
+                      onTap: () => _confirmDeleteVault(context, vault),
+                      color: AppColors.error,
+                      size: 22,
+                      padding: 12,
+                      borderRadius: 14,
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -391,16 +368,24 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
   }
 
   Future<void> _confirmDeleteVault(BuildContext context, Vault vault) async {
-    final confirm = await showDialog<bool>(
+    final l10n = AppLocalizations.of(context)!;
+    final confirm = await showPrecisionDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Kasayı Sil'),
-        content: Text('${vault.name} kasasını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Vazgeç')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sil', style: TextStyle(color: Colors.redAccent))),
-        ],
-      ),
+      accentColor: AppColors.error,
+      title: 'Kasayı Sil',
+      content: '"${vault.name}" kasasını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
+      actions: [
+        PrecisionDialogAction(
+          label: l10n.cancel, 
+          onTap: () => Navigator.pop(context, false), 
+          isPrimary: false,
+        ),
+        PrecisionDialogAction(
+          label: l10n.ok, 
+          onTap: () => Navigator.pop(context, true), 
+          isPrimary: true,
+        ),
+      ],
     );
 
     if (confirm == true) {

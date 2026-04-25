@@ -5,6 +5,8 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/fluid_sheet.dart';
 import '../../../shared/widgets/precision_clickable.dart';
 import '../../../shared/widgets/precision_card.dart';
+import '../../../shared/widgets/precision_picker.dart';
+import '../../../shared/widgets/precision_button.dart';
 
 class TransactionPeriodData {
   final int periodType;
@@ -512,13 +514,21 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildWheelPicker(7, tempDayIndex, (idx) => tempDayIndex = idx, (idx) => _getWeekDays(l10n)[idx]),
-          const SizedBox(height: 8),
-          _buildSheetOkBtn(() {
-            setState(() => _selectedDay = tempDayIndex + 1);
-            _notifyChanges();
-            Navigator.pop(context);
-          }),
+          PrecisionPicker.strings(
+            items: List.generate(7, (i) => _getWeekDays(l10n)[i]),
+            initialItem: tempDayIndex,
+            onSelectedItemChanged: (idx) => tempDayIndex = idx,
+          ),
+          const SizedBox(height: 32),
+          PrecisionButton(
+            label: l10n.ok,
+            onTap: () {
+              setState(() => _selectedDay = tempDayIndex + 1);
+              _notifyChanges();
+              Navigator.pop(context);
+              HapticFeedback.mediumImpact();
+            },
+          ),
         ],
       ),
     );
@@ -533,54 +543,42 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            height: 200,
-            child: Row(
-              children: [
-                Expanded(child: _buildWheelPicker(31, tempDay - 1, (idx) => tempDay = idx + 1, (idx) => (idx + 1).toString(), fixedHeight: true)),
-                if (_periodType == 3)
-                  Expanded(flex: 2, child: _buildWheelPicker(12, tempMonth - 1, (idx) => tempMonth = idx + 1, (idx) => _getMonths(l10n)[idx], fixedHeight: true)),
-              ],
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: PrecisionPicker.strings(
+                  items: List.generate(31, (i) => (i + 1).toString()),
+                  initialItem: tempDay - 1,
+                  onSelectedItemChanged: (idx) => tempDay = idx + 1,
+                ),
+              ),
+              if (_periodType == 3)
+                Expanded(
+                  flex: 2,
+                  child: PrecisionPicker.strings(
+                    items: List.generate(12, (i) => _getMonths(l10n)[i]),
+                    initialItem: tempMonth - 1,
+                    onSelectedItemChanged: (idx) => tempMonth = idx + 1,
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(height: 8),
-          _buildSheetOkBtn(() {
-            setState(() {
-              _selectedDateForRecurrence = DateTime(_selectedDateForRecurrence.year, tempMonth, tempDay);
-              _selectedDay = tempDay;
-            });
-            _notifyChanges();
-            Navigator.pop(context);
-          }),
+          const SizedBox(height: 32),
+          PrecisionButton(
+            label: l10n.ok,
+            onTap: () {
+              setState(() {
+                _selectedDateForRecurrence = DateTime(_selectedDateForRecurrence.year, tempMonth, tempDay);
+                _selectedDay = tempDay;
+              });
+              _notifyChanges();
+              Navigator.pop(context);
+              HapticFeedback.mediumImpact();
+            },
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSheetOkBtn(VoidCallback onTap) {
-    return PrecisionClickable(
-      onTap: () { onTap(); HapticFeedback.mediumImpact(); },
-      width: double.infinity,
-      color: AppColors.getPrimary(context),
-      borderRadius: BorderRadius.circular(AppSizes.radiusDefault),
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: const Text("Tamam", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
-    );
-  }
-
-  Widget _buildWheelPicker(int count, int initial, ValueChanged<int> onSelect, String Function(int) labelMap, {bool fixedHeight = false}) {
-    final picker = ListWheelScrollView.useDelegate(
-      itemExtent: 50,
-      perspective: 0.005,
-      diameterRatio: 1.2,
-      physics: const FixedExtentScrollPhysics(),
-      onSelectedItemChanged: onSelect,
-      controller: FixedExtentScrollController(initialItem: initial),
-      childDelegate: ListWheelChildBuilderDelegate(
-        childCount: count,
-        builder: (context, index) => Center(child: Text(labelMap(index), style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.getPrimary(context)))),
-      ),
-    );
-    return fixedHeight ? picker : SizedBox(height: 200, child: picker);
-  }
 }

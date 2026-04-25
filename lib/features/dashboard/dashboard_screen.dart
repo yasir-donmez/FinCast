@@ -11,7 +11,8 @@ import 'dashboard_providers.dart';
 import 'widgets/rotary_time_dial.dart';
 import 'widgets/expandable_vault_grid.dart';
 import 'package:flutter/services.dart';
-// unused imports removed
+import '../../shared/widgets/precision_picker.dart';
+import '../../shared/widgets/precision_button.dart';
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -168,10 +169,6 @@ class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelec
   void _showCurrencyPicker(BuildContext context) {
     HapticFeedback.lightImpact();
     
-    final scrollController = FixedExtentScrollController(
-      initialItem: 500 * _currencies.length + _currentIndex,
-    );
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final rotaryColor = ref.read(rotaryColorProvider);
     final activeColor = isDark ? rotaryColor : AppColors.getAccentDeep(context, rotaryColor);
@@ -179,75 +176,44 @@ class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelec
     FluidSheet.show(
       context: context,
       title: AppLocalizations.of(context)!.selectCurrency,
-      child: Center(
-        child: SizedBox(
-          height: 250,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Seçim Belirteci (Highlight)
-              FluidContainer(
-                width: 80,
-                height: 50,
-                padding: EdgeInsets.zero,
-                borderRadius: 15,
-                isGlass: true,
-                color: ref.read(rotaryColorProvider).withValues(alpha: 0.1),
-                child: const SizedBox.shrink(),
-              ),
-              ListWheelScrollView.useDelegate(
-                controller: scrollController,
-                itemExtent: 60.0,
-                diameterRatio: 1.5,
-                physics: const FixedExtentScrollPhysics(),
-                onSelectedItemChanged: (int index) {
-                  HapticFeedback.selectionClick();
-                  setState(() {
-                    _currentIndex = index % _currencies.length;
-                  });
-                },
-                childDelegate: ListWheelChildBuilderDelegate(
-                  builder: (context, index) {
-                    final currency = _currencies[index % _currencies.length];
-                    return AnimatedBuilder(
-                      animation: scrollController,
-                      builder: (context, child) {
-                        double distance = 0.0;
-                        if (scrollController.hasClients) {
-                          final currentPosition = scrollController.offset / 60.0;
-                          distance = (currentPosition - index).abs();
-                        }
-                        final double clampedDistance = distance.clamp(0.0, 1.0);
-                        final double dynamicOpacity = (1.0 - (clampedDistance * 0.7)).clamp(0.2, 1.0);
-                        final double dynamicFontSize = 38.0 - (clampedDistance * 10.0);
-                        final bool isCenter = distance < 0.2;
-
-                        return Center(
-                          child: Opacity(
-                            opacity: dynamicOpacity,
-                            child: Text(
-                              currency,
-                              style: TextStyle(
-                                color: isCenter 
-                                  ? activeColor 
-                                  : activeColor.withValues(alpha: isDark ? 0.4 : 0.65), // Aydınlıkta opacity artırıldı (0.4 -> 0.65)
-                                fontSize: dynamicFontSize,
-                                fontWeight: FontWeight.w800,
-                                shadows: isCenter ? [
-                                  Shadow(color: activeColor.withValues(alpha: isDark ? 0.5 : 0.3), blurRadius: 15)
-                                ] : null,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          PrecisionPicker(
+            itemCount: _currencies.length,
+            initialItem: _currentIndex,
+            onSelectedItemChanged: (index) {
+              HapticFeedback.selectionClick();
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            itemBuilder: (context, index, isSelected) {
+              final currency = _currencies[index];
+              return Center(
+                child: Text(
+                  currency,
+                  style: TextStyle(
+                    color: isSelected 
+                      ? activeColor 
+                      : activeColor.withValues(alpha: isDark ? 0.2 : 0.35),
+                    fontSize: isSelected ? 34 : 26,
+                    fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                    shadows: isSelected ? [
+                      Shadow(color: activeColor.withValues(alpha: isDark ? 0.5 : 0.3), blurRadius: 15)
+                    ] : null,
+                  ),
                 ),
-              ),
-            ],
+              );
+            },
           ),
-        ),
+          const SizedBox(height: 32),
+          PrecisionButton(
+            label: AppLocalizations.of(context)!.ok,
+            onTap: () => Navigator.pop(context),
+            activeColor: rotaryColor,
+          ),
+        ],
       ),
     );
   }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +7,7 @@ import '../../core/services/subscription_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_constants.dart';
 import '../../shared/widgets/fluid_sheet.dart';
-import '../../shared/widgets/fluid_dialog.dart';
+import '../../shared/widgets/precision_dialog.dart';
 import '../../core/providers/settings_provider.dart';
 import '../dashboard/dashboard_providers.dart';
 import '../../shared/widgets/fluid_switch.dart';
@@ -16,6 +15,7 @@ import '../../shared/widgets/precision_card.dart';
 import '../../shared/widgets/precision_clickable.dart';
 import '../../shared/widgets/theme_reveal_button.dart';
 import '../../shared/widgets/precision_button.dart';
+import '../../shared/widgets/precision_picker.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -596,14 +596,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showComingSoon(String feature, AppLocalizations l10n) {
-    showFluidDialog(
+    showPrecisionDialog(
       context: context,
-      title: Text(feature),
-      content: Text("\n${l10n.comingSoon}"),
+      title: feature,
+      content: l10n.comingSoon,
       actions: [
-        TextButton(
-          child: Text(l10n.ok),
-          onPressed: () => Navigator.pop(context),
+        PrecisionDialogAction(
+          label: l10n.ok,
+          onTap: () => Navigator.pop(context),
         ),
       ],
     );
@@ -692,61 +692,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         children: [
           const SizedBox(height: 10),
           // SELECTOR (No outer box)
-          SizedBox(
-            height: 240,
-            child: Stack(
-              children: [
-                // Center Highlight (Glass Indicator)
-                Center(
-                  child: Container(
-                    height: 54,
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.12),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                CupertinoPicker(
-                  itemExtent: 54,
-                  backgroundColor: Colors.transparent,
-                  useMagnifier: true,
-                  magnification: 1.1,
-                  diameterRatio: 1.1,
-                  onSelectedItemChanged: (i) => tempIndex = i,
-                  scrollController: FixedExtentScrollController(
-                    initialItem: tempIndex,
-                  ),
-                  selectionOverlay: const SizedBox.shrink(),
-                  children: languages
-                      .map(
-                        (l) => Center(
-                          child: Text(
-                            l,
-                            style: TextStyle(
-                              color: AppColors.getTextPrimary(context),
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ],
-            ),
+          PrecisionPicker.strings(
+            items: languages,
+            initialItem: tempIndex,
+            onSelectedItemChanged: (i) => tempIndex = i,
           ),
           const SizedBox(height: 32),
           // PREMIUM ACTION BUTTON

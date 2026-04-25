@@ -8,8 +8,9 @@ import '../../../../core/database/models/vault.dart';
 import '../../../../core/database/models/transaction_record.dart';
 import '../../../../core/utils/currency_utils.dart';
 import '../../../../shared/widgets/precision_card.dart';
-import '../../../../shared/widgets/precision_clickable.dart';
-import '../../../../shared/widgets/fluid_dialog.dart';
+import '../../../../shared/widgets/precision_button.dart';
+import '../../../../shared/widgets/precision_icon_button.dart';
+import '../../../../shared/widgets/precision_dialog.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../vaults_providers.dart';
 
@@ -169,17 +170,24 @@ class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet>
                   const SizedBox(width: 10),
                   Text(vault.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                   const Spacer(),
-                  PrecisionClickable(
+                  PrecisionIconButton(
                     onTap: () async {
-                      final confirm = await showFluidDialog<bool>(
+                      final confirm = await showPrecisionDialog<bool>(
                         context: context,
                         accentColor: AppColors.error,
-                        icon: const Icon(Icons.outbox_rounded),
-                        title: const Text('Kasadan Çıkar'),
-                        content: Text('Bu işlemi "${vault.name}" kasasından çıkarmak istediğinize emin misiniz?'),
+                        title: 'Kasadan Çıkar',
+                        content: 'Bu işlemi "${vault.name}" kasasından çıkarmak istediğinize emin misiniz?',
                         actions: [
-                          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel, style: TextStyle(color: AppColors.getTextSecondary(context)))),
-                          FluidDialogButton(label: l10n.ok, onTap: () => Navigator.pop(context, true), color: AppColors.error),
+                          PrecisionDialogAction(
+                            label: l10n.cancel, 
+                            onTap: () => Navigator.pop(context, false), 
+                            isPrimary: false,
+                          ),
+                          PrecisionDialogAction(
+                            label: l10n.ok, 
+                            onTap: () => Navigator.pop(context, true), 
+                            isPrimary: true,
+                          ),
                         ],
                       );
                       if (confirm == true) {
@@ -192,12 +200,12 @@ class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet>
                         }
                       }
                     },
-                    color: AppColors.error.withValues(alpha: 0.1),
-                    pressedColor: Colors.white.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(10),
-                    padding: const EdgeInsets.all(8),
-                    scaleOnPress: 0.9,
-                    child: Icon(Icons.close_rounded, size: 16, color: AppColors.error),
+                    icon: Icons.close_rounded,
+                    color: AppColors.error,
+                    backgroundColor: AppColors.error.withValues(alpha: 0.1),
+                    borderRadius: 10,
+                    size: 16,
+                    padding: 8,
                   ),
                 ],
               ),
@@ -211,37 +219,26 @@ class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet>
         Row(
           children: [
             Expanded(
-              child: PrecisionClickable(
+              child: PrecisionButton(
+                label: l10n.edit,
                 onTap: () {
                   Navigator.pop(context);
                   widget.onEdit();
                 },
-                color: Colors.transparent,
-                pressedColor: AppColors.getPrimary(context).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(100),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text(
-                    l10n.edit.toUpperCase(),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900, 
-                      color: AppColors.getPrimary(context), 
-                      letterSpacing: 1.5, 
-                      fontSize: 14
-                    ),
-                  ),
-                ),
+                height: 56 * sf,
+                fontSize: 14,
+                letterSpacing: 1.5,
               ),
             ),
             const SizedBox(width: 12),
-            PrecisionClickable(
+            PrecisionIconButton(
               onTap: () => widget.onDelete(),
-              width: 56 * sf, height: 56 * sf,
-              color: AppColors.error.withValues(alpha: 0.1),
-              pressedColor: Colors.white.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(20 * sf),
-              scaleOnPress: 0.9,
-              child: Icon(Icons.delete_sweep_rounded, color: AppColors.error, size: 24),
+              icon: Icons.delete_sweep_rounded,
+              color: AppColors.error,
+              backgroundColor: AppColors.error.withValues(alpha: 0.1),
+              borderRadius: 20 * sf,
+              size: 24,
+              padding: 16,
             ),
           ],
         ),

@@ -5,7 +5,7 @@ import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_constants.dart';
 import '../../core/database/database_service.dart';
 import '../../shared/widgets/fluid_sheet.dart';
-import '../../shared/widgets/fluid_dialog.dart';
+import '../../shared/widgets/precision_dialog.dart';
 import '../../shared/widgets/carved_container.dart';
 import 'vaults_providers.dart';
 import 'widgets/transaction_card.dart';
@@ -399,24 +399,21 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
           );
         },
         onDelete: () async {
-          final confirm = await showFluidDialog<bool>(
+          final confirm = await showPrecisionDialog<bool>(
             context: context,
             accentColor: AppColors.error,
-            icon: const Icon(Icons.delete_forever_rounded),
-            title: Text(AppLocalizations.of(context)!.permanentDelete),
-            content: Text(AppLocalizations.of(context)!.permanentDeleteDesc),
+            title: AppLocalizations.of(context)!.permanentDelete,
+            content: AppLocalizations.of(context)!.permanentDeleteDesc,
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(
-                  AppLocalizations.of(context)!.cancel,
-                  style: TextStyle(color: AppColors.getTextSecondary(context)),
-                ),
+              PrecisionDialogAction(
+                label: AppLocalizations.of(context)!.cancel,
+                onTap: () => Navigator.pop(context, false),
+                isPrimary: false,
               ),
-              FluidDialogButton(
+              PrecisionDialogAction(
                 label: AppLocalizations.of(context)!.ok,
                 onTap: () => Navigator.pop(context, true),
-                color: AppColors.error,
+                isPrimary: true,
               ),
             ],
           );
@@ -475,24 +472,21 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
           );
         },
         onDelete: () async {
-          final confirm = await showFluidDialog<bool>(
+          final confirm = await showPrecisionDialog<bool>(
             context: context,
             accentColor: AppColors.error,
-            icon: const Icon(Icons.delete_forever_rounded),
-            title: Text(AppLocalizations.of(context)!.permanentDelete),
-            content: Text(AppLocalizations.of(context)!.permanentDeleteDesc),
+            title: AppLocalizations.of(context)!.permanentDelete,
+            content: AppLocalizations.of(context)!.permanentDeleteDesc,
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(
-                  AppLocalizations.of(context)!.cancel,
-                  style: TextStyle(color: AppColors.getTextSecondary(context)),
-                ),
+              PrecisionDialogAction(
+                label: AppLocalizations.of(context)!.cancel,
+                onTap: () => Navigator.pop(context, false),
+                isPrimary: false,
               ),
-              FluidDialogButton(
+              PrecisionDialogAction(
                 label: AppLocalizations.of(context)!.ok,
                 onTap: () => Navigator.pop(context, true),
-                color: AppColors.error,
+                isPrimary: true,
               ),
             ],
           );
