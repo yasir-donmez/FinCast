@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../dashboard/main_scaffold.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/theme/app_constants.dart';
-import '../../../shared/widgets/fluid_button.dart';
-import '../../../shared/widgets/fluid_text_field.dart';
+import '../../../shared/widgets/precision_button.dart';
+import '../../../shared/widgets/precision_input.dart';
+import '../../../shared/widgets/premium_glass_card.dart';
 import '../widgets/liquid_background.dart';
 import '../widgets/fluid_flip_card.dart';
 import '../widgets/liquid_wave.dart';
@@ -195,10 +196,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
                       _buildHero(context, primaryColor, screenHeight),
                       SizedBox(height: heroToCardSpacer),
 
-                      FluidFlipCard(
-                        isFront: _isLogin,
-                        front: _buildLoginForm(context, screenHeight),
-                        back: _buildRegisterForm(context, screenHeight),
+                      PremiumGlassCard(
+                        padding: const EdgeInsets.all(24),
+                        child: AnimatedSize(
+                          duration: const Duration(milliseconds: 400),
+                          curve: Curves.fastOutSlowIn,
+                          clipBehavior: Clip.hardEdge,
+                          alignment: Alignment.topCenter,
+                          child: FluidFlipCard(
+                            isFront: _isLogin,
+                            front: _buildLoginForm(context, screenHeight),
+                            back: _buildRegisterForm(context, screenHeight),
+                          ),
+                        ),
                       ),
 
                       SizedBox(height: cardToBottomSpacer),
@@ -243,9 +253,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
   }
 
   Widget _buildLoginForm(BuildContext context, double screenHeight) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 400),
+      opacity: _isLogin ? 1.0 : 0.0,
+      curve: Curves.easeInQuad,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
         Text(
           'Hoş Geldiniz',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -262,21 +276,21 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
           ),
         ),
         SizedBox(height: screenHeight * 0.035),
-        FluidTextField(
+        PrecisionInput(
           controller: _emailController,
           hintText: 'E-posta',
-          prefixIcon: Icons.email_rounded,
+          icon: Icons.email_rounded,
           errorText: _emailError,
           keyboardType: TextInputType.emailAddress,
         ),
         SizedBox(height: screenHeight * 0.02),
-        FluidTextField(
+        PrecisionInput(
           controller: _passwordController,
           hintText: 'Şifre',
-          prefixIcon: Icons.lock_rounded,
+          icon: Icons.lock_rounded,
           obscureText: _obscurePassword,
           errorText: _passwordError,
-          suffixIcon: IconButton(
+          suffix: IconButton(
             icon: Icon(
               _obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
               color: AppColors.getPrimary(context).withValues(alpha: 0.5),
@@ -303,21 +317,25 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
         SizedBox(height: screenHeight * 0.015),
         _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : FluidButton(
+            : PrecisionButton(
+                label: 'Giriş Yap',
                 onTap: _submit,
-                width: double.infinity,
-                child: const Text('Giriş Yap'),
               ),
         SizedBox(height: screenHeight * 0.035),
         _buildSocialLogin(context, screenHeight),
       ],
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildRegisterForm(BuildContext context, double screenHeight) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 400),
+      opacity: !_isLogin ? 1.0 : 0.0,
+      curve: Curves.easeInQuad,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
         Text(
           'Yeni Hesap',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -334,21 +352,21 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
           ),
         ),
         SizedBox(height: screenHeight * 0.035),
-        FluidTextField(
+        PrecisionInput(
           controller: _emailController,
           hintText: 'E-posta',
-          prefixIcon: Icons.email_rounded,
+          icon: Icons.email_rounded,
           errorText: _emailError,
           keyboardType: TextInputType.emailAddress,
         ),
         SizedBox(height: screenHeight * 0.02),
-        FluidTextField(
+        PrecisionInput(
           controller: _passwordController,
           hintText: 'Şifre',
-          prefixIcon: Icons.lock_rounded,
+          icon: Icons.lock_rounded,
           obscureText: _obscurePassword,
           errorText: _passwordError,
-          suffixIcon: IconButton(
+          suffix: IconButton(
             icon: Icon(
               _obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
               color: AppColors.getPrimary(context).withValues(alpha: 0.5),
@@ -358,13 +376,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
           ),
         ),
         SizedBox(height: screenHeight * 0.02),
-        FluidTextField(
+        PrecisionInput(
           controller: _confirmPasswordController,
           hintText: 'Şifre Tekrar',
-          prefixIcon: Icons.security_rounded,
+          icon: Icons.security_rounded,
           obscureText: _obscureConfirmPassword,
           errorText: _confirmPasswordError,
-          suffixIcon: IconButton(
+          suffix: IconButton(
             icon: Icon(
               _obscureConfirmPassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
               color: AppColors.secondary.withValues(alpha: 0.5),
@@ -376,15 +394,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
         SizedBox(height: screenHeight * 0.035),
         _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : FluidButton(
+            : PrecisionButton(
+                label: 'Hemen Katıl',
                 onTap: _submit,
-                width: double.infinity,
-                color: AppColors.secondary,
-                child: const Text('Hemen Katıl'),
+                activeColor: AppColors.secondary,
               ),
       ],
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSocialLogin(BuildContext context, double screenHeight) {
     return Column(
@@ -406,20 +424,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
           ],
         ),
         SizedBox(height: screenHeight * 0.025),
-        FluidButton(
+        PrecisionButton(
+          label: 'Google ile Devam Et',
           onTap: _signInWithGoogle,
-          isSecondary: true,
-          width: double.infinity,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.g_mobiledata, size: (screenHeight * 0.035).clamp(24.0, 32.0), color: AppColors.getTextPrimary(context)),
-              const SizedBox(width: 8),
-              Text(
-                'Google ile Devam Et', 
-                style: TextStyle(fontSize: (screenHeight * 0.017).clamp(12.0, 15.0)),
-              ),
-            ],
+          isPrimary: false,
+          activeColor: AppColors.getTextPrimary(context).withValues(alpha: 0.6),
+          leading: Icon(
+            Icons.g_mobiledata, 
+            size: (screenHeight * 0.045).clamp(24.0, 42.0), 
+            color: AppColors.getTextPrimary(context)
           ),
         ),
       ],

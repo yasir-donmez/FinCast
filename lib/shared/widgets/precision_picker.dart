@@ -43,7 +43,8 @@ class PrecisionPicker extends StatelessWidget {
           child: Text(
             items[index],
             style: TextStyle(
-              color: AppColors.getTextPrimary(context).withValues(alpha: isSelected ? 1.0 : 0.4),
+              color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black)
+                  .withValues(alpha: isSelected ? 1.0 : 0.4),
               fontSize: 18,
               fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
               letterSpacing: -0.5,

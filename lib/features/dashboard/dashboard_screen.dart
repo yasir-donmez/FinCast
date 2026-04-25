@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_constants.dart';
 import '../../core/utils/currency_utils.dart';
 import '../../core/providers/db_providers.dart';
 import '../../shared/widgets/fluid_container.dart';
-import '../../shared/widgets/fluid_sheet.dart';
 import 'dashboard_providers.dart';
+import '../../core/providers/settings_provider.dart';
 import 'widgets/rotary_time_dial.dart';
 import 'widgets/expandable_vault_grid.dart';
-import 'package:flutter/services.dart';
-import '../../shared/widgets/precision_picker.dart';
-import '../../shared/widgets/precision_button.dart';
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -144,7 +140,7 @@ class _LiquidBlob extends StatelessWidget {
   }
 }
 
-class AnimatedCurrencySelector extends ConsumerStatefulWidget {
+class AnimatedCurrencySelector extends ConsumerWidget {
   final double fontSize;
   final double totalBalance;
   final double? minBalance;
@@ -159,182 +155,115 @@ class AnimatedCurrencySelector extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<AnimatedCurrencySelector> createState() => _AnimatedCurrencySelectorState();
-}
-
-class _AnimatedCurrencySelectorState extends ConsumerState<AnimatedCurrencySelector> {
-  final List<String> _currencies = AppCurrency.supportedSymbols;
-  int _currentIndex = 0;
-
-  void _showCurrencyPicker(BuildContext context) {
-    HapticFeedback.lightImpact();
-    
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final rotaryColor = ref.read(rotaryColorProvider);
-    final activeColor = isDark ? rotaryColor : AppColors.getAccentDeep(context, rotaryColor);
-
-    FluidSheet.show(
-      context: context,
-      title: AppLocalizations.of(context)!.selectCurrency,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          PrecisionPicker(
-            itemCount: _currencies.length,
-            initialItem: _currentIndex,
-            onSelectedItemChanged: (index) {
-              HapticFeedback.selectionClick();
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            itemBuilder: (context, index, isSelected) {
-              final currency = _currencies[index];
-              return Center(
-                child: Text(
-                  currency,
-                  style: TextStyle(
-                    color: isSelected 
-                      ? activeColor 
-                      : activeColor.withValues(alpha: isDark ? 0.2 : 0.35),
-                    fontSize: isSelected ? 34 : 26,
-                    fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-                    shadows: isSelected ? [
-                      Shadow(color: activeColor.withValues(alpha: isDark ? 0.5 : 0.3), blurRadius: 15)
-                    ] : null,
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 32),
-          PrecisionButton(
-            label: AppLocalizations.of(context)!.ok,
-            onTap: () => Navigator.pop(context),
-            activeColor: rotaryColor,
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getCurrencyCode(String symbol) => AppCurrency.getCode(symbol);
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final rotaryColor = ref.watch(rotaryColorProvider);
     final activeColor = isDark ? rotaryColor : AppColors.getAccentDeep(context, rotaryColor);
+    final currencySymbol = ref.watch(settingsProvider.select((s) => s.currencySymbol));
 
-    return GestureDetector(
-      onLongPress: () => _showCurrencyPicker(context),
-      child: Container(
-        height: 106, // Sabit yükseklik taşmayı önlemek için 100'den 106'ya çıkarıldı
-        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center, // Dikeyde merkezleyerek en dengeli görünümü sağla
-          children: [
-            // Sol: Para Birimi Simgesi (Sabit Boyut)
-            FluidContainer(
-              width: 54,
-              height: 54,
-              padding: EdgeInsets.zero,
-              borderRadius: 27,
-              isGlass: true,
-              blur: 15,
-              child: Center(
-                child: Text(
-                  _currencies[_currentIndex],
-                  style: TextStyle(
-                    color: activeColor,
-                    fontSize: 26,
-                    fontWeight: FontWeight.w900,
-                    shadows: isDark ? [
-                      Shadow(color: activeColor.withValues(alpha: 0.6), blurRadius: 10),
-                    ] : null,
-                  ),
+    return Container(
+      height: 106,
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Sol: Para Birimi Simgesi (Sabit Boyut)
+          FluidContainer(
+            width: 54,
+            height: 54,
+            padding: EdgeInsets.zero,
+            borderRadius: 27,
+            isGlass: true,
+            blur: 15,
+            child: Center(
+              child: Text(
+                currencySymbol,
+                style: TextStyle(
+                  color: activeColor,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ),
-            const SizedBox(width: 16),
-            // Sağ: Tutar + Min/Max (Dikey kolon içinde birbirine göre ORTALANIR)
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center, // Min/Max tutarın tam altında merkezlenir
-                mainAxisAlignment: MainAxisAlignment.end, // Dial'a yaklaştırmak için alta yaslandık
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.center,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          CurrencyUtils.formatFullAmount(widget.totalBalance),
-                          style: TextStyle(
-                            color: activeColor,
-                            fontSize: 56,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -2.5,
-                            shadows: isDark ? [
-                              Shadow(color: activeColor.withValues(alpha: 0.6), blurRadius: 20),
-                            ] : null,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _getCurrencyCode(_currencies[_currentIndex]),
-                          style: TextStyle(
-                            color: activeColor.withValues(alpha: isDark ? 0.35 : 0.55),
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (widget.minBalance != null && widget.maxBalance != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2), // Sadece üst boşluk, yatayda ortalanacak
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.center,
-                        child: Row(
-                          children: [
-                            _buildRangeIndicator(
-                              context: context,
-                              icon: Icons.south_east_rounded,
-                              amount: widget.minBalance!,
-                              color: AppColors.getExpense(context),
-                            ),
-                            const SizedBox(width: 12),
-                            Container(
-                              width: 3,
-                              height: 3,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: activeColor.withValues(alpha: 0.3),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            _buildRangeIndicator(
-                              context: context,
-                              icon: Icons.north_east_rounded,
-                              amount: widget.maxBalance!,
-                              color: AppColors.getIncome(context),
-                            ),
-                          ],
+          ),
+          const SizedBox(width: 16),
+          // Sağ: Tutar + Min/Max
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        CurrencyUtils.formatFullAmount(totalBalance),
+                        style: TextStyle(
+                          color: activeColor,
+                          fontSize: 56,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -2.5,
+                          shadows: isDark ? [
+                            Shadow(color: activeColor.withValues(alpha: 0.6), blurRadius: 20),
+                          ] : null,
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      Text(
+                        AppCurrency.getCode(currencySymbol),
+                        style: TextStyle(
+                          color: activeColor.withValues(alpha: isDark ? 0.35 : 0.55),
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (minBalance != null && maxBalance != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.center,
+                      child: Row(
+                        children: [
+                          _buildRangeIndicator(
+                            context: context,
+                            icon: Icons.south_east_rounded,
+                            amount: minBalance!,
+                            color: AppColors.getExpense(context),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            width: 3,
+                            height: 3,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: activeColor.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          _buildRangeIndicator(
+                            context: context,
+                            icon: Icons.north_east_rounded,
+                            amount: maxBalance!,
+                            color: AppColors.getIncome(context),
+                          ),
+                        ],
+                      ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -24,6 +24,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..id = state.id
       ..themeModeIndex = index
       ..languageCode = state.languageCode
+      ..currencySymbol = state.currencySymbol
       ..dataRetentionDays = state.dataRetentionDays
       ..isAiNotificationsEnabled = state.isAiNotificationsEnabled
       ..isSyncEnabled = state.isSyncEnabled
@@ -39,6 +40,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..id = state.id
       ..themeModeIndex = state.themeModeIndex
       ..languageCode = code
+      ..currencySymbol = state.currencySymbol
       ..dataRetentionDays = state.dataRetentionDays
       ..isAiNotificationsEnabled = state.isAiNotificationsEnabled
       ..isSyncEnabled = state.isSyncEnabled
@@ -46,6 +48,22 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..syncStatus = state.syncStatus;
     await _save(newSettings);
     _updateIntl(code);
+  }
+
+  Future<void> setCurrency(String symbol) async {
+    if (state.currencySymbol == symbol) return;
+
+    final newSettings = AppSettings()
+      ..id = state.id
+      ..themeModeIndex = state.themeModeIndex
+      ..languageCode = state.languageCode
+      ..currencySymbol = symbol
+      ..dataRetentionDays = state.dataRetentionDays
+      ..isAiNotificationsEnabled = state.isAiNotificationsEnabled
+      ..isSyncEnabled = state.isSyncEnabled
+      ..remoteId = state.remoteId
+      ..syncStatus = state.syncStatus;
+    await _save(newSettings);
   }
 
   void _updateIntl(String langCode) {
@@ -71,9 +89,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..id = state.id
       ..themeModeIndex = state.themeModeIndex
       ..languageCode = state.languageCode
+      ..currencySymbol = state.currencySymbol
       ..dataRetentionDays = days
       ..isAiNotificationsEnabled = state.isAiNotificationsEnabled
       ..isSyncEnabled = state.isSyncEnabled
+      ..isLocationEnabled = state.isLocationEnabled
       ..remoteId = state.remoteId
       ..syncStatus = state.syncStatus;
     await _save(updated);
@@ -86,9 +106,45 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..id = state.id
       ..themeModeIndex = state.themeModeIndex
       ..languageCode = state.languageCode
+      ..currencySymbol = state.currencySymbol
       ..dataRetentionDays = state.dataRetentionDays
       ..isAiNotificationsEnabled = value
       ..isSyncEnabled = state.isSyncEnabled
+      ..isLocationEnabled = state.isLocationEnabled
+      ..remoteId = state.remoteId
+      ..syncStatus = state.syncStatus;
+    await _save(updated);
+  }
+
+  Future<void> toggleLocation(bool value) async {
+    if (state.isLocationEnabled == value) return;
+
+    final updated = AppSettings()
+      ..id = state.id
+      ..themeModeIndex = state.themeModeIndex
+      ..languageCode = state.languageCode
+      ..currencySymbol = state.currencySymbol
+      ..dataRetentionDays = state.dataRetentionDays
+      ..isAiNotificationsEnabled = state.isAiNotificationsEnabled
+      ..isSyncEnabled = state.isSyncEnabled
+      ..isLocationEnabled = value
+      ..remoteId = state.remoteId
+      ..syncStatus = state.syncStatus;
+    await _save(updated);
+  }
+
+  Future<void> toggleSync(bool value) async {
+    if (state.isSyncEnabled == value) return;
+
+    final updated = AppSettings()
+      ..id = state.id
+      ..themeModeIndex = state.themeModeIndex
+      ..languageCode = state.languageCode
+      ..currencySymbol = state.currencySymbol
+      ..dataRetentionDays = state.dataRetentionDays
+      ..isAiNotificationsEnabled = state.isAiNotificationsEnabled
+      ..isSyncEnabled = value
+      ..isLocationEnabled = state.isLocationEnabled
       ..remoteId = state.remoteId
       ..syncStatus = state.syncStatus;
     await _save(updated);

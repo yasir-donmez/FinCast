@@ -13,12 +13,16 @@ class PrecisionButton extends StatelessWidget {
   final double? height;
   final double fontSize;
   final double letterSpacing;
+  final bool isFilled;
+  final Widget? leading;
 
   const PrecisionButton({
     super.key,
     required this.label,
     required this.onTap,
     this.isPrimary = true,
+    this.isFilled = false,
+    this.leading,
     this.activeColor,
     this.width,
     this.height = 60,
@@ -41,14 +45,24 @@ class PrecisionButton extends StatelessWidget {
       pressedColor: color.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(100),
       child: Center(
-        child: Text(
-          label.toUpperCase(),
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.w900,
-            fontSize: fontSize,
-            letterSpacing: letterSpacing,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (leading != null) ...[
+              leading!,
+              const SizedBox(width: 12),
+            ],
+            Text(
+              label.toUpperCase(),
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w900,
+                fontSize: fontSize,
+                letterSpacing: letterSpacing,
+              ),
+            ),
+          ],
         ),
       ),
     );

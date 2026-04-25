@@ -17,43 +17,53 @@ const AppSettingsSchema = CollectionSchema(
   name: r'AppSettings',
   id: -5633561779022347008,
   properties: {
-    r'dataRetentionDays': PropertySchema(
+    r'currencySymbol': PropertySchema(
       id: 0,
+      name: r'currencySymbol',
+      type: IsarType.string,
+    ),
+    r'dataRetentionDays': PropertySchema(
+      id: 1,
       name: r'dataRetentionDays',
       type: IsarType.long,
     ),
     r'isAiNotificationsEnabled': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'isAiNotificationsEnabled',
       type: IsarType.bool,
     ),
+    r'isLocationEnabled': PropertySchema(
+      id: 3,
+      name: r'isLocationEnabled',
+      type: IsarType.bool,
+    ),
     r'isSyncEnabled': PropertySchema(
-      id: 2,
+      id: 4,
       name: r'isSyncEnabled',
       type: IsarType.bool,
     ),
     r'languageCode': PropertySchema(
-      id: 3,
+      id: 5,
       name: r'languageCode',
       type: IsarType.string,
     ),
     r'remoteId': PropertySchema(
-      id: 4,
+      id: 6,
       name: r'remoteId',
       type: IsarType.string,
     ),
     r'syncStatus': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'syncStatus',
       type: IsarType.long,
     ),
     r'themeModeIndex': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'themeModeIndex',
       type: IsarType.long,
     ),
     r'updatedAt': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -118,6 +128,7 @@ int _appSettingsEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.currencySymbol.length * 3;
   bytesCount += 3 + object.languageCode.length * 3;
   {
     final value = object.remoteId;
@@ -134,14 +145,16 @@ void _appSettingsSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeLong(offsets[0], object.dataRetentionDays);
-  writer.writeBool(offsets[1], object.isAiNotificationsEnabled);
-  writer.writeBool(offsets[2], object.isSyncEnabled);
-  writer.writeString(offsets[3], object.languageCode);
-  writer.writeString(offsets[4], object.remoteId);
-  writer.writeLong(offsets[5], object.syncStatus);
-  writer.writeLong(offsets[6], object.themeModeIndex);
-  writer.writeDateTime(offsets[7], object.updatedAt);
+  writer.writeString(offsets[0], object.currencySymbol);
+  writer.writeLong(offsets[1], object.dataRetentionDays);
+  writer.writeBool(offsets[2], object.isAiNotificationsEnabled);
+  writer.writeBool(offsets[3], object.isLocationEnabled);
+  writer.writeBool(offsets[4], object.isSyncEnabled);
+  writer.writeString(offsets[5], object.languageCode);
+  writer.writeString(offsets[6], object.remoteId);
+  writer.writeLong(offsets[7], object.syncStatus);
+  writer.writeLong(offsets[8], object.themeModeIndex);
+  writer.writeDateTime(offsets[9], object.updatedAt);
 }
 
 AppSettings _appSettingsDeserialize(
@@ -151,15 +164,17 @@ AppSettings _appSettingsDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = AppSettings();
-  object.dataRetentionDays = reader.readLong(offsets[0]);
+  object.currencySymbol = reader.readString(offsets[0]);
+  object.dataRetentionDays = reader.readLong(offsets[1]);
   object.id = id;
-  object.isAiNotificationsEnabled = reader.readBool(offsets[1]);
-  object.isSyncEnabled = reader.readBool(offsets[2]);
-  object.languageCode = reader.readString(offsets[3]);
-  object.remoteId = reader.readStringOrNull(offsets[4]);
-  object.syncStatus = reader.readLong(offsets[5]);
-  object.themeModeIndex = reader.readLong(offsets[6]);
-  object.updatedAt = reader.readDateTime(offsets[7]);
+  object.isAiNotificationsEnabled = reader.readBool(offsets[2]);
+  object.isLocationEnabled = reader.readBool(offsets[3]);
+  object.isSyncEnabled = reader.readBool(offsets[4]);
+  object.languageCode = reader.readString(offsets[5]);
+  object.remoteId = reader.readStringOrNull(offsets[6]);
+  object.syncStatus = reader.readLong(offsets[7]);
+  object.themeModeIndex = reader.readLong(offsets[8]);
+  object.updatedAt = reader.readDateTime(offsets[9]);
   return object;
 }
 
@@ -171,20 +186,24 @@ P _appSettingsDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readLong(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 1:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 2:
       return (reader.readBool(offset)) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 4:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 5:
-      return (reader.readLong(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 6:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 7:
+      return (reader.readLong(offset)) as P;
+    case 8:
+      return (reader.readLong(offset)) as P;
+    case 9:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -549,6 +568,142 @@ extension AppSettingsQueryWhere
 extension AppSettingsQueryFilter
     on QueryBuilder<AppSettings, AppSettings, QFilterCondition> {
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      currencySymbolEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'currencySymbol',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      currencySymbolGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'currencySymbol',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      currencySymbolLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'currencySymbol',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      currencySymbolBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'currencySymbol',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      currencySymbolStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'currencySymbol',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      currencySymbolEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'currencySymbol',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      currencySymbolContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'currencySymbol',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      currencySymbolMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'currencySymbol',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      currencySymbolIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'currencySymbol',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      currencySymbolIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'currencySymbol',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
       dataRetentionDaysEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -662,6 +817,16 @@ extension AppSettingsQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isAiNotificationsEnabled',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      isLocationEnabledEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isLocationEnabled',
         value: value,
       ));
     });
@@ -1143,6 +1308,19 @@ extension AppSettingsQueryLinks
 
 extension AppSettingsQuerySortBy
     on QueryBuilder<AppSettings, AppSettings, QSortBy> {
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByCurrencySymbol() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'currencySymbol', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByCurrencySymbolDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'currencySymbol', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
       sortByDataRetentionDays() {
     return QueryBuilder.apply(this, (query) {
@@ -1168,6 +1346,20 @@ extension AppSettingsQuerySortBy
       sortByIsAiNotificationsEnabledDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isAiNotificationsEnabled', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByIsLocationEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isLocationEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByIsLocationEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isLocationEnabled', Sort.desc);
     });
   }
 
@@ -1249,6 +1441,19 @@ extension AppSettingsQuerySortBy
 
 extension AppSettingsQuerySortThenBy
     on QueryBuilder<AppSettings, AppSettings, QSortThenBy> {
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByCurrencySymbol() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'currencySymbol', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByCurrencySymbolDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'currencySymbol', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
       thenByDataRetentionDays() {
     return QueryBuilder.apply(this, (query) {
@@ -1286,6 +1491,20 @@ extension AppSettingsQuerySortThenBy
       thenByIsAiNotificationsEnabledDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isAiNotificationsEnabled', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByIsLocationEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isLocationEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByIsLocationEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isLocationEnabled', Sort.desc);
     });
   }
 
@@ -1367,6 +1586,14 @@ extension AppSettingsQuerySortThenBy
 
 extension AppSettingsQueryWhereDistinct
     on QueryBuilder<AppSettings, AppSettings, QDistinct> {
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByCurrencySymbol(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'currencySymbol',
+          caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QDistinct>
       distinctByDataRetentionDays() {
     return QueryBuilder.apply(this, (query) {
@@ -1378,6 +1605,13 @@ extension AppSettingsQueryWhereDistinct
       distinctByIsAiNotificationsEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isAiNotificationsEnabled');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByIsLocationEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isLocationEnabled');
     });
   }
 
@@ -1428,6 +1662,12 @@ extension AppSettingsQueryProperty
     });
   }
 
+  QueryBuilder<AppSettings, String, QQueryOperations> currencySymbolProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'currencySymbol');
+    });
+  }
+
   QueryBuilder<AppSettings, int, QQueryOperations> dataRetentionDaysProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'dataRetentionDays');
@@ -1438,6 +1678,13 @@ extension AppSettingsQueryProperty
       isAiNotificationsEnabledProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isAiNotificationsEnabled');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations>
+      isLocationEnabledProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isLocationEnabled');
     });
   }
 

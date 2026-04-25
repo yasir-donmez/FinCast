@@ -21,8 +21,14 @@ class AppSettings {
   /// Uygulama dili (varsayılan: tr)
   String languageCode = 'tr';
 
+  /// Varsayılan para birimi simgesi (varsayılan: ₺)
+  String currencySymbol = '₺';
+
   /// AI asistan bildirimleri açık mı?
   bool isAiNotificationsEnabled = true;
+
+  /// Konum servisleri açık mı?
+  bool isLocationEnabled = false;
 
   /// Bulut senkronizasyonu aktif mi?
   bool isSyncEnabled = false;

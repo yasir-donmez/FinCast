@@ -87,14 +87,6 @@ class _FluidFlipCardState extends State<FluidFlipCard> with SingleTickerProvider
   }
 
   Widget _buildCardSide(Widget child) {
-    return FluidContainer(
-      width: double.infinity,
-      borderRadius: AppSizes.radiusLarge,
-      padding: const EdgeInsets.all(AppSizes.paddingLarge),
-      isGlass: true,
-      blur: 35,
-      margin: EdgeInsets.zero,
-      child: child,
-    );
+    return child;
   }
 }
