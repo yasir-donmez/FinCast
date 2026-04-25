@@ -106,8 +106,8 @@ class TransactionCard extends StatelessWidget {
       child: FluidContainer(
         padding: EdgeInsets.all(10 * sf), // Senin istediğin padding'e geri döndü
         borderRadius: 18 * sf,
-        isGlass: true,
-        color: tx.color.withValues(alpha: isDark ? 0.08 : 0.04),
+        isGlass: false,
+        color: tx.color.withValues(alpha: isDark ? 0.12 : 0.08),
         child: Stack(
           children: [
             Positioned(
@@ -133,34 +133,40 @@ class TransactionCard extends StatelessWidget {
                       ),
                       child: Icon(tx.icon, color: tx.color, size: 15 * sf),
                     ),
-                    const Spacer(),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           Text(
                             hasSubCategory ? parentName : categoryName,
-                          style: TextStyle(
-                            fontSize: 15 * sf,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.getTextPrimary(context),
-                            letterSpacing: -0.5,
-                            height: 1.0,
-                          ),
-                          textAlign: TextAlign.right,
-                        ),
-                        if (hasSubCategory)
-                          Text(
-                            categoryName.toUpperCase(),
                             style: TextStyle(
-                              fontSize: 9 * sf,
-                              fontWeight: FontWeight.w800,
-                              color: tx.color.withValues(alpha: 0.5),
-                              letterSpacing: 0.5,
+                              fontSize: 15 * sf,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.getTextPrimary(context),
+                              letterSpacing: -0.5,
+                              height: 1.0,
                             ),
                             textAlign: TextAlign.right,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                      ],
+                          if (hasSubCategory)
+                            Text(
+                              categoryName.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 9 * sf,
+                                fontWeight: FontWeight.w800,
+                                color: tx.color.withValues(alpha: 0.5),
+                                letterSpacing: 0.5,
+                              ),
+                              textAlign: TextAlign.right,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -182,27 +188,30 @@ class TransactionCard extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.minAmount!)}',
-                                  style: TextStyle(
-                                    fontSize: 10.5 * sf,
-                                    fontWeight: FontWeight.w800,
-                                    color: isDark ? Colors.white30 : Colors.black26,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.minAmount!)}',
+                                    style: TextStyle(
+                                      fontSize: 10.5 * sf,
+                                      fontWeight: FontWeight.w800,
+                                      color: isDark ? Colors.white30 : Colors.black26,
+                                    ),
                                   ),
-                                ),
-                                Text(' – ', style: TextStyle(fontSize: 10 * sf, color: isDark ? Colors.white24 : Colors.black12)),
-                                Text(
-                                  '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.maxAmount!)}',
-                                  style: TextStyle(
-                                    fontSize: 10.5 * sf,
-                                    fontWeight: FontWeight.w800,
-                                    color: isDark ? Colors.white30 : Colors.black26,
+                                  Text(' – ', style: TextStyle(fontSize: 10 * sf, color: isDark ? Colors.white24 : Colors.black12)),
+                                  Text(
+                                    '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.maxAmount!)}',
+                                    style: TextStyle(
+                                      fontSize: 10.5 * sf,
+                                      fontWeight: FontWeight.w800,
+                                      color: isDark ? Colors.white30 : Colors.black26,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ],
                         )
@@ -223,34 +232,45 @@ class TransactionCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          tx.showOnDashboard ? Icons.visibility_rounded : Icons.visibility_off_rounded,
-                          color: tx.showOnDashboard ? AppColors.getPrimary(context) : Colors.grey.withValues(alpha: 0.3),
-                          size: 13 * sf,
-                        ),
-                        if (vaultCount > 0) ...[
-                          SizedBox(width: 4 * sf),
-                          Text(
-                            '$vaultCount',
-                            style: TextStyle(fontSize: 10 * sf, fontWeight: FontWeight.w900, color: Colors.grey.withValues(alpha: 0.6)),
+                    Flexible(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            tx.showOnDashboard ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                            color: tx.showOnDashboard ? AppColors.getPrimary(context) : Colors.grey.withValues(alpha: 0.3),
+                            size: 13 * sf,
                           ),
-                          Icon(Icons.account_balance_wallet_rounded, size: 9 * sf, color: Colors.grey.withValues(alpha: 0.4)),
+                          if (vaultCount > 0) ...[
+                            SizedBox(width: 4 * sf),
+                            Flexible(
+                              child: Text(
+                                '$vaultCount',
+                                style: TextStyle(fontSize: 10 * sf, fontWeight: FontWeight.w900, color: Colors.grey.withValues(alpha: 0.6)),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Icon(Icons.account_balance_wallet_rounded, size: 9 * sf, color: Colors.grey.withValues(alpha: 0.4)),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
+                    const SizedBox(width: 4),
                     if (periodLabel != null)
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 5 * sf, vertical: 2 * sf),
-                        decoration: BoxDecoration(
-                          color: amountColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(5 * sf),
-                        ),
-                        child: Text(
-                          periodLabel.toUpperCase(),
-                          style: TextStyle(fontSize: 8 * sf, fontWeight: FontWeight.w900, color: amountColor, letterSpacing: 0.4),
+                      Flexible(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 5 * sf, vertical: 2 * sf),
+                          decoration: BoxDecoration(
+                            color: amountColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(5 * sf),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              periodLabel.toUpperCase(),
+                              style: TextStyle(fontSize: 8 * sf, fontWeight: FontWeight.w900, color: amountColor, letterSpacing: 0.4),
+                            ),
+                          ),
                         ),
                       ),
                   ],

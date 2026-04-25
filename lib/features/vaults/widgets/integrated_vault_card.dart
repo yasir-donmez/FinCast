@@ -138,7 +138,12 @@ class IntegratedVaultCard extends StatelessWidget {
         final double titleTop = lerpDouble(titleExpandedTop, titleCompactTop, magneticT)!;
         final double balanceTop = lerpDouble(balanceExpandedTop, balanceCompactTop, magneticT)!;
         
-        final double secondaryOpacity = (1 - morphProgress * 3.5).clamp(0.0, 1.0); // Daha geç kaybolsun
+        final double statsOpacity = (1 - morphProgress * 5.0).clamp(0.0, 1.0); 
+        final double rangeOpacity = (1 - morphProgress * 8.0).clamp(0.0, 1.0); 
+        final double swapOpacity  = (1 - morphProgress * 12.0).clamp(0.0, 1.0); 
+
+        // Yukarı kaçma efekti (Parallax)
+        final double parallaxOffset = morphProgress * -80.0; 
         
         return Stack(
           clipBehavior: Clip.none,
@@ -202,39 +207,60 @@ class IntegratedVaultCard extends StatelessWidget {
               ),
             ),
             
-            // === SECONDARY STATS (ORİJİNAL DİKEY DÜZEN) ===
-            if (secondaryOpacity > 0.01)
+            // === SECONDARY STATS (STAGGERED FADE-OUT + PARALLAX) ===
+            if (statsOpacity > 0.01)
               Positioned(
                 left: 0, right: 0,
                 top: secondaryExpandedTop,
-                child: Opacity(
-                  opacity: secondaryOpacity,
+                child: Transform.translate(
+                  offset: Offset(0, parallaxOffset),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(child: _buildMiniStat(l10n.income, income, AppColors.getIncome(context))),
-                          Container(width: 1, height: 30, color: activeColor.withValues(alpha: 0.15)),
-                          Expanded(child: _buildMiniStat(l10n.expense, expense, AppColors.getExpense(context))),
-                        ],
-                      ),
-                      
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: Divider(
-                          height: 1, 
-                          thickness: 0.5, 
-                          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1)
+                      Opacity(
+                        opacity: statsOpacity,
+                        child: Row(
+                          children: [
+                            Expanded(child: _buildMiniStat(l10n.income, income, AppColors.getIncome(context))),
+                            Container(width: 1, height: 30, color: activeColor.withValues(alpha: 0.15)),
+                            Expanded(child: _buildMiniStat(l10n.expense, expense, AppColors.getExpense(context))),
+                          ],
                         ),
                       ),
+                      
+                      if (rangeOpacity > 0.01)
+                        Opacity(
+                          opacity: rangeOpacity,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Divider(
+                              height: 1, 
+                              thickness: 0.5, 
+                              color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1)
+                            ),
+                          ),
+                        ),
 
-                      if (hasFlexibleTx) ...[
-                        _buildRangeStats(txs),
-                        const SizedBox(height: 16),
-                      ],
+                      if (hasFlexibleTx && rangeOpacity > 0.01)
+                        Opacity(
+                          opacity: rangeOpacity,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildRangeStats(txs),
+                              const SizedBox(height: 16),
+                            ],
+                          ),
+                        ),
 
-                      const Icon(Icons.swap_horiz_rounded, size: 20, color: Colors.grey),
+                      if (swapOpacity > 0.01)
+                        Opacity(
+                          opacity: swapOpacity,
+                          child: Transform.translate(
+                            offset: Offset(0, parallaxOffset * 0.5), // Ok simgesi daha da hızlı kaçsın
+                            child: const Icon(Icons.swap_horiz_rounded, size: 20, color: Colors.grey),
+                          ),
+                        ),
                     ],
                   ),
                 ),
