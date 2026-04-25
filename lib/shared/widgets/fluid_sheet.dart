@@ -10,6 +10,7 @@ class FluidSheet extends StatelessWidget {
   final List<Widget>? actions;
   final double? height;
   final bool showHandle;
+  final bool isFullScreen;
 
   const FluidSheet({
     super.key,
@@ -18,6 +19,7 @@ class FluidSheet extends StatelessWidget {
     this.actions,
     this.height,
     this.showHandle = true,
+    this.isFullScreen = false,
   });
 
   /// Statik bir yardımcı metod ile kolayca çağrılabilir
@@ -28,6 +30,7 @@ class FluidSheet extends StatelessWidget {
     List<Widget>? actions,
     double? height,
     bool showHandle = true,
+    bool isFullScreen = false,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return showModalBottomSheet<T>(
@@ -46,6 +49,7 @@ class FluidSheet extends StatelessWidget {
         actions: actions,
         height: height,
         showHandle: showHandle,
+        isFullScreen: isFullScreen,
         child: child,
       ),
     );
@@ -73,7 +77,9 @@ class FluidSheet extends StatelessWidget {
           // Bombeli Sıvı Gövde
           Container(
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.9, // Ekranın %90'ından fazlasını kaplamasın
+              maxHeight: isFullScreen 
+                  ? MediaQuery.of(context).size.height 
+                  : MediaQuery.of(context).size.height * 0.9,
             ),
             width: double.infinity,
             decoration: BoxDecoration(

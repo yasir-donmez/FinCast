@@ -21,6 +21,14 @@ class TransactionUI {
   final int? dbId; // Isar DB ID (null = henüz kaydedilmemiş)
   final String? categoryId; // Multi-language desteği için benzersiz anahtar
   final String? iconCode;   // İkon referansı (ID veya özel kod)
+  
+  // --- Eksik Kalan Detaylar ---
+  final String? note;
+  final String? currency;
+  final int? recurrenceDay;
+  final DateTime? recurrenceDate;
+  final int? recurrenceDuration;
+
   final bool showOnDashboard;
   final int dashboardLayoutType;
   List<String> groupIds = []; // Çoklu kasa desteği
@@ -40,6 +48,11 @@ class TransactionUI {
     this.dbId,
     this.categoryId,
     this.iconCode,
+    this.note,
+    this.currency,
+    this.recurrenceDay,
+    this.recurrenceDate,
+    this.recurrenceDuration,
     required this.showOnDashboard,
     this.dashboardLayoutType = 4,
     List<String>? groupIds,
@@ -95,8 +108,8 @@ class TransactionUI {
     return TransactionUI(
       id: 'db_${record.id}',
       name: record.title,
-      icon: IconUtils.getIcon(record.iconCode ?? record.title),
-      color: IconUtils.getColor(record.iconCode ?? record.title),
+      icon: IconUtils.getIcon(record.categoryId ?? record.iconCode ?? record.title),
+      color: IconUtils.getColor(record.categoryId ?? record.iconCode ?? record.title),
       amount: record.amount,
       minAmount: record.minAmount,
       maxAmount: record.maxAmount,
@@ -107,6 +120,11 @@ class TransactionUI {
       dbId: record.id,
       categoryId: record.categoryId,
       iconCode: record.iconCode,
+      note: record.note,
+      currency: record.currency,
+      recurrenceDay: record.recurrenceDay,
+      recurrenceDate: record.recurrenceDate,
+      recurrenceDuration: record.recurrenceDuration,
       showOnDashboard: record.showOnDashboard,
       dashboardLayoutType: record.dashboardLayoutType,
       groupIds: record.vaultIds.map((vId) => 'v_$vId').toList(),

@@ -1,7 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_constants.dart';
-import '../../../shared/widgets/fluid_container.dart';
 
 /// FinCast "Akışkan Çift Yüzlü Kart" (Fluid 3D Flip Card).
 /// Giriş ve Kayıt formlarını kartın ön ve arka yüzünde taşıyan, 

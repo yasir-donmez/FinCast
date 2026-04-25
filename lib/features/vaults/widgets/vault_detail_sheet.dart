@@ -352,7 +352,7 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
               children: [
                 Text(tx.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14 * sf, letterSpacing: -0.5)),
                 Text(
-                  '₺${CurrencyUtils.formatAmount(tx.amount)}',
+                  '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.amount)}',
                   style: TextStyle(
                     fontSize: 12 * sf,
                     fontWeight: FontWeight.w900,

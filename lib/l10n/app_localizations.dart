@@ -380,6 +380,12 @@ abstract class AppLocalizations {
   /// **'Tutar'**
   String get amount;
 
+  /// No description provided for @currency.
+  ///
+  /// In tr, this message translates to:
+  /// **'Para Birimi'**
+  String get currency;
+
   /// No description provided for @description.
   ///
   /// In tr, this message translates to:

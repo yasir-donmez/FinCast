@@ -371,7 +371,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
     final parentId = tx.categoryId?.split('_').take(2).join('_');
     final parentName = parentId != null ? localizedCategoryName(parentId, l10n) : null;
     final fullTitle = parentName != null && parentName != categoryName 
-        ? '$parentName > $categoryName' 
+        ? '$parentName / $categoryName' 
         : categoryName;
 
     final selectedVaultId = ref.read(selectedVaultProvider);
@@ -395,6 +395,12 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                   .map((vId) => int.parse(vId.replaceFirst('v_', '')))
                   .toList(),
               initialCategoryId: tx.categoryId,
+              initialNote: tx.note,
+              initialCurrency: tx.currency,
+              initialPeriodType: tx.periodType,
+              initialRecurrenceDay: tx.recurrenceDay,
+              initialRecurrenceDate: tx.recurrenceDate,
+              initialRecurrenceDuration: tx.recurrenceDuration,
             ),
           );
         },
@@ -468,6 +474,12 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                   .map((vId) => int.parse(vId.replaceFirst('v_', '')))
                   .toList(),
               initialCategoryId: tx.categoryId,
+              initialNote: tx.note,
+              initialCurrency: tx.currency,
+              initialPeriodType: tx.periodType,
+              initialRecurrenceDay: tx.recurrenceDay,
+              initialRecurrenceDate: tx.recurrenceDate,
+              initialRecurrenceDuration: tx.recurrenceDuration,
             ),
           );
         },

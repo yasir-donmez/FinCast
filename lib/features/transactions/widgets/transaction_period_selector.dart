@@ -4,7 +4,6 @@ import '../../../core/theme/app_constants.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/fluid_sheet.dart';
 import '../../../shared/widgets/precision_clickable.dart';
-import '../../../shared/widgets/precision_card.dart';
 import '../../../shared/widgets/precision_picker.dart';
 import '../../../shared/widgets/precision_button.dart';
 
@@ -50,6 +49,18 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
     super.initState();
     _periodType = widget.initialData.periodType;
     _expandedPeriodCategory = widget.initialData.expandedPeriodCategory;
+    
+    // Eğer null gönderildiyse (Düzenleme modu vb.), periodType'a göre otomatik çıkarım yap
+    if (_expandedPeriodCategory == null) {
+      if ([8, 9, 10].contains(_periodType)) {
+        _expandedPeriodCategory = 'gun';
+      } else if ([1, 4, 5].contains(_periodType)) {
+        _expandedPeriodCategory = 'hafta';
+      } else if ([2, 6, 7].contains(_periodType)) {
+        _expandedPeriodCategory = 'ay';
+      }
+    }
+    
     _selectedDay = widget.initialData.selectedDay;
     _selectedDateForRecurrence = widget.initialData.selectedDateForRecurrence;
     _duration = widget.initialData.duration;
@@ -81,36 +92,34 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
     final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return PrecisionCard(
-      padding: EdgeInsets.zero,
-      child: Column(
-        children: [
-          // --- ESNEK PERİYOT ŞERİDİ (INLINE EXPANSION) ---
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.event_repeat_rounded,
-                      size: 20,
-                      color: AppColors.getPrimary(context).withValues(alpha: 0.7),
+    return Column(
+      children: [
+        // --- ESNEK PERİYOT ŞERİDİ (INLINE EXPANSION) ---
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.event_repeat_rounded,
+                    size: 20,
+                    color: AppColors.getPrimary(context).withValues(alpha: 0.7),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    l10n.period.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.getTextPrimary(context).withValues(alpha: 0.8),
+                      letterSpacing: 0.5,
                     ),
-                    const SizedBox(width: 12),
-                    Text(
-                      l10n.period.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.getTextPrimary(context).withValues(alpha: 0.8),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
                 Container(
                   height: 44, // Alt seçeneklerin inline sığabilmesi için biraz daha uzun
                   padding: const EdgeInsets.all(4),
@@ -191,47 +200,50 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
             ),
           ),
 
-          // AYIRICI
-          if (_periodType != 0)
-            Divider(
-              height: 1,
-              thickness: 0.5,
-              indent: 16,
-              endIndent: 16,
-              color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
-            ),
+          // --- EKSTRA AYARLAR (ANİMASYONLU GENİŞLEME) ---
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOutQuart,
+            alignment: Alignment.topCenter,
+            child: _periodType == 0 
+              ? const SizedBox.shrink() // Tek seferlikte tamamen kapanır (0 px)
+              : Column(
+                  children: [
+                    // AYIRICI
+                    Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      indent: 16,
+                      endIndent: 16,
+                      color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+                    ),
 
-          // 3. SATIR: DETAY SEÇİCİ (GÜN/TARİH)
-          if (_periodType != 0)
-            AnimatedSize(
-              duration: const Duration(milliseconds: 300),
-              child: Column(
-                children: [
-                  if (_periodType == 1 || [4, 5].contains(_periodType)) 
-                    _buildStandardRow(
-                      l10n.dayOfWeek,
-                      _getWeekDays(l10n)[_selectedDay - 1],
-                      Icons.calendar_view_week_rounded,
-                      () => _showWeekDayPicker(l10n),
+                    // 3. SATIR: DETAY SEÇİCİ (GÜN/TARİH)
+                    if (_periodType == 1 || [4, 5].contains(_periodType)) 
+                      _buildStandardRow(
+                        l10n.dayOfWeek,
+                        _getWeekDays(l10n)[_selectedDay - 1],
+                        Icons.calendar_view_week_rounded,
+                        () => _showWeekDayPicker(l10n),
+                      ),
+                    if ([2, 3, 6, 7, 9, 10].contains(_periodType))
+                      _buildStandardRow(
+                        [2, 6, 7, 9, 10].contains(_periodType) ? l10n.dayOfMonth : l10n.dayOfYear,
+                        _periodType == 3
+                            ? "${_selectedDateForRecurrence.day} ${_getMonths(l10n)[_selectedDateForRecurrence.month - 1]}"
+                            : "${l10n.dayOf} ${_selectedDateForRecurrence.day}",
+                        Icons.calendar_month_rounded,
+                        () => _showDatePicker(l10n),
+                      ),
+                    
+                    // AYIRICI (Süre öncesi)
+                    Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      indent: 16,
+                      endIndent: 16,
+                      color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
                     ),
-                  if ([2, 3, 6, 7, 9, 10].contains(_periodType))
-                    _buildStandardRow(
-                      [2, 6, 7, 9, 10].contains(_periodType) ? l10n.dayOfMonth : l10n.dayOfYear,
-                      _periodType == 3
-                          ? "${_selectedDateForRecurrence.day} ${_getMonths(l10n)[_selectedDateForRecurrence.month - 1]}"
-                          : "${l10n.dayOf} ${_selectedDateForRecurrence.day}",
-                      Icons.calendar_month_rounded,
-                      () => _showDatePicker(l10n),
-                    ),
-                  
-                  // AYIRICI (Süre öncesi)
-                  Divider(
-                    height: 1,
-                    thickness: 0.5,
-                    indent: 16,
-                    endIndent: 16,
-                    color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
-                  ),
 
                   // 4. SATIR: BİTİŞ SÜRESİ
                   Padding(
@@ -304,8 +316,7 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
               ),
             ),
         ],
-      ),
-    );
+      );
   }
 
   Widget _buildStandardRow(String label, String value, IconData icon, VoidCallback onTap) {

@@ -78,6 +78,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
 
     FluidSheet.show(
       context: context,
+      isFullScreen: true,
       title: AppLocalizations.of(context)!.addTransaction,
       child: AddTransactionSheet(initialVaultIds: preselectedVaultId != null ? [preselectedVaultId] : []),
     );

@@ -27,88 +27,123 @@ const TransactionRecordSchema = CollectionSchema(
       name: r'categoryId',
       type: IsarType.string,
     ),
-    r'dashboardLayoutType': PropertySchema(
+    r'currency': PropertySchema(
       id: 2,
+      name: r'currency',
+      type: IsarType.string,
+    ),
+    r'dashboardLayoutType': PropertySchema(
+      id: 3,
       name: r'dashboardLayoutType',
       type: IsarType.long,
     ),
     r'dashboardOrder': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'dashboardOrder',
       type: IsarType.long,
     ),
     r'date': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'date',
       type: IsarType.dateTime,
     ),
     r'iconCode': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'iconCode',
       type: IsarType.string,
     ),
     r'isArchived': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'isArchived',
       type: IsarType.bool,
     ),
     r'isIncome': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'isIncome',
       type: IsarType.bool,
     ),
     r'isLocked': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'isLocked',
       type: IsarType.bool,
     ),
+    r'latitude': PropertySchema(
+      id: 10,
+      name: r'latitude',
+      type: IsarType.double,
+    ),
+    r'longitude': PropertySchema(
+      id: 11,
+      name: r'longitude',
+      type: IsarType.double,
+    ),
     r'maxAmount': PropertySchema(
-      id: 9,
+      id: 12,
       name: r'maxAmount',
       type: IsarType.double,
     ),
     r'minAmount': PropertySchema(
-      id: 10,
+      id: 13,
       name: r'minAmount',
       type: IsarType.double,
     ),
+    r'note': PropertySchema(
+      id: 14,
+      name: r'note',
+      type: IsarType.string,
+    ),
     r'periodType': PropertySchema(
-      id: 11,
+      id: 15,
       name: r'periodType',
       type: IsarType.long,
     ),
+    r'recurrenceDate': PropertySchema(
+      id: 16,
+      name: r'recurrenceDate',
+      type: IsarType.dateTime,
+    ),
+    r'recurrenceDay': PropertySchema(
+      id: 17,
+      name: r'recurrenceDay',
+      type: IsarType.long,
+    ),
+    r'recurrenceDuration': PropertySchema(
+      id: 18,
+      name: r'recurrenceDuration',
+      type: IsarType.long,
+    ),
     r'remainingInstallments': PropertySchema(
-      id: 12,
+      id: 19,
       name: r'remainingInstallments',
       type: IsarType.long,
     ),
     r'remoteId': PropertySchema(
-      id: 13,
+      id: 20,
       name: r'remoteId',
       type: IsarType.string,
     ),
     r'showOnDashboard': PropertySchema(
-      id: 14,
+      id: 21,
       name: r'showOnDashboard',
       type: IsarType.bool,
     ),
     r'syncStatus': PropertySchema(
-      id: 15,
+      id: 22,
       name: r'syncStatus',
       type: IsarType.long,
     ),
     r'title': PropertySchema(
-      id: 16,
+      id: 23,
       name: r'title',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 17,
+      id: 24,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'vaultIds': PropertySchema(
-      id: 18,
+      id: 25,
       name: r'vaultIds',
       type: IsarType.longList,
     )
@@ -180,7 +215,19 @@ int _transactionRecordEstimateSize(
     }
   }
   {
+    final value = object.currency;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.iconCode;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.note;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
     }
@@ -204,23 +251,30 @@ void _transactionRecordSerialize(
 ) {
   writer.writeDouble(offsets[0], object.amount);
   writer.writeString(offsets[1], object.categoryId);
-  writer.writeLong(offsets[2], object.dashboardLayoutType);
-  writer.writeLong(offsets[3], object.dashboardOrder);
-  writer.writeDateTime(offsets[4], object.date);
-  writer.writeString(offsets[5], object.iconCode);
-  writer.writeBool(offsets[6], object.isArchived);
-  writer.writeBool(offsets[7], object.isIncome);
-  writer.writeBool(offsets[8], object.isLocked);
-  writer.writeDouble(offsets[9], object.maxAmount);
-  writer.writeDouble(offsets[10], object.minAmount);
-  writer.writeLong(offsets[11], object.periodType);
-  writer.writeLong(offsets[12], object.remainingInstallments);
-  writer.writeString(offsets[13], object.remoteId);
-  writer.writeBool(offsets[14], object.showOnDashboard);
-  writer.writeLong(offsets[15], object.syncStatus);
-  writer.writeString(offsets[16], object.title);
-  writer.writeDateTime(offsets[17], object.updatedAt);
-  writer.writeLongList(offsets[18], object.vaultIds);
+  writer.writeString(offsets[2], object.currency);
+  writer.writeLong(offsets[3], object.dashboardLayoutType);
+  writer.writeLong(offsets[4], object.dashboardOrder);
+  writer.writeDateTime(offsets[5], object.date);
+  writer.writeString(offsets[6], object.iconCode);
+  writer.writeBool(offsets[7], object.isArchived);
+  writer.writeBool(offsets[8], object.isIncome);
+  writer.writeBool(offsets[9], object.isLocked);
+  writer.writeDouble(offsets[10], object.latitude);
+  writer.writeDouble(offsets[11], object.longitude);
+  writer.writeDouble(offsets[12], object.maxAmount);
+  writer.writeDouble(offsets[13], object.minAmount);
+  writer.writeString(offsets[14], object.note);
+  writer.writeLong(offsets[15], object.periodType);
+  writer.writeDateTime(offsets[16], object.recurrenceDate);
+  writer.writeLong(offsets[17], object.recurrenceDay);
+  writer.writeLong(offsets[18], object.recurrenceDuration);
+  writer.writeLong(offsets[19], object.remainingInstallments);
+  writer.writeString(offsets[20], object.remoteId);
+  writer.writeBool(offsets[21], object.showOnDashboard);
+  writer.writeLong(offsets[22], object.syncStatus);
+  writer.writeString(offsets[23], object.title);
+  writer.writeDateTime(offsets[24], object.updatedAt);
+  writer.writeLongList(offsets[25], object.vaultIds);
 }
 
 TransactionRecord _transactionRecordDeserialize(
@@ -232,24 +286,31 @@ TransactionRecord _transactionRecordDeserialize(
   final object = TransactionRecord();
   object.amount = reader.readDouble(offsets[0]);
   object.categoryId = reader.readStringOrNull(offsets[1]);
-  object.dashboardLayoutType = reader.readLong(offsets[2]);
-  object.dashboardOrder = reader.readLong(offsets[3]);
-  object.date = reader.readDateTime(offsets[4]);
-  object.iconCode = reader.readStringOrNull(offsets[5]);
+  object.currency = reader.readStringOrNull(offsets[2]);
+  object.dashboardLayoutType = reader.readLong(offsets[3]);
+  object.dashboardOrder = reader.readLong(offsets[4]);
+  object.date = reader.readDateTime(offsets[5]);
+  object.iconCode = reader.readStringOrNull(offsets[6]);
   object.id = id;
-  object.isArchived = reader.readBool(offsets[6]);
-  object.isIncome = reader.readBool(offsets[7]);
-  object.isLocked = reader.readBool(offsets[8]);
-  object.maxAmount = reader.readDoubleOrNull(offsets[9]);
-  object.minAmount = reader.readDoubleOrNull(offsets[10]);
-  object.periodType = reader.readLong(offsets[11]);
-  object.remainingInstallments = reader.readLongOrNull(offsets[12]);
-  object.remoteId = reader.readStringOrNull(offsets[13]);
-  object.showOnDashboard = reader.readBool(offsets[14]);
-  object.syncStatus = reader.readLong(offsets[15]);
-  object.title = reader.readString(offsets[16]);
-  object.updatedAt = reader.readDateTime(offsets[17]);
-  object.vaultIds = reader.readLongList(offsets[18]) ?? [];
+  object.isArchived = reader.readBool(offsets[7]);
+  object.isIncome = reader.readBool(offsets[8]);
+  object.isLocked = reader.readBool(offsets[9]);
+  object.latitude = reader.readDoubleOrNull(offsets[10]);
+  object.longitude = reader.readDoubleOrNull(offsets[11]);
+  object.maxAmount = reader.readDoubleOrNull(offsets[12]);
+  object.minAmount = reader.readDoubleOrNull(offsets[13]);
+  object.note = reader.readStringOrNull(offsets[14]);
+  object.periodType = reader.readLong(offsets[15]);
+  object.recurrenceDate = reader.readDateTimeOrNull(offsets[16]);
+  object.recurrenceDay = reader.readLongOrNull(offsets[17]);
+  object.recurrenceDuration = reader.readLongOrNull(offsets[18]);
+  object.remainingInstallments = reader.readLongOrNull(offsets[19]);
+  object.remoteId = reader.readStringOrNull(offsets[20]);
+  object.showOnDashboard = reader.readBool(offsets[21]);
+  object.syncStatus = reader.readLong(offsets[22]);
+  object.title = reader.readString(offsets[23]);
+  object.updatedAt = reader.readDateTime(offsets[24]);
+  object.vaultIds = reader.readLongList(offsets[25]) ?? [];
   return object;
 }
 
@@ -265,38 +326,52 @@ P _transactionRecordDeserializeProp<P>(
     case 1:
       return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 3:
       return (reader.readLong(offset)) as P;
     case 4:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 5:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 6:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 7:
       return (reader.readBool(offset)) as P;
     case 8:
       return (reader.readBool(offset)) as P;
     case 9:
-      return (reader.readDoubleOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 10:
       return (reader.readDoubleOrNull(offset)) as P;
     case 11:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 12:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 13:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 14:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 15:
       return (reader.readLong(offset)) as P;
     case 16:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 17:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 18:
+      return (reader.readLongOrNull(offset)) as P;
+    case 19:
+      return (reader.readLongOrNull(offset)) as P;
+    case 20:
+      return (reader.readStringOrNull(offset)) as P;
+    case 21:
+      return (reader.readBool(offset)) as P;
+    case 22:
+      return (reader.readLong(offset)) as P;
+    case 23:
+      return (reader.readString(offset)) as P;
+    case 24:
+      return (reader.readDateTime(offset)) as P;
+    case 25:
       return (reader.readLongList(offset) ?? []) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -891,6 +966,160 @@ extension TransactionRecordQueryFilter
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      currencyIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'currency',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      currencyIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'currency',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      currencyEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'currency',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      currencyGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'currency',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      currencyLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'currency',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      currencyBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'currency',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      currencyStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'currency',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      currencyEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'currency',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      currencyContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'currency',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      currencyMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'currency',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      currencyIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'currency',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      currencyIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'currency',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
       dashboardLayoutTypeEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -1299,6 +1528,174 @@ extension TransactionRecordQueryFilter
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      latitudeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'latitude',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      latitudeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'latitude',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      latitudeEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'latitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      latitudeGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'latitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      latitudeLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'latitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      latitudeBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'latitude',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      longitudeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'longitude',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      longitudeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'longitude',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      longitudeEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'longitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      longitudeGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'longitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      longitudeLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'longitude',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      longitudeBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'longitude',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
       maxAmountIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1467,6 +1864,160 @@ extension TransactionRecordQueryFilter
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      noteIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'note',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      noteIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'note',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      noteEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'note',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      noteGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'note',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      noteLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'note',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      noteBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'note',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      noteStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'note',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      noteEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'note',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      noteContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'note',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      noteMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'note',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      noteIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'note',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      noteIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'note',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
       periodTypeEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -1514,6 +2065,228 @@ extension TransactionRecordQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'periodType',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'recurrenceDate',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'recurrenceDate',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDateEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'recurrenceDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDateGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'recurrenceDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDateLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'recurrenceDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDateBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'recurrenceDate',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDayIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'recurrenceDay',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDayIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'recurrenceDay',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDayEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'recurrenceDay',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDayGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'recurrenceDay',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDayLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'recurrenceDay',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDayBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'recurrenceDay',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDurationIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'recurrenceDuration',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDurationIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'recurrenceDuration',
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDurationEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'recurrenceDuration',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDurationGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'recurrenceDuration',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDurationLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'recurrenceDuration',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterFilterCondition>
+      recurrenceDurationBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'recurrenceDuration',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -2191,6 +2964,20 @@ extension TransactionRecordQuerySortBy
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByCurrency() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'currency', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByCurrencyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'currency', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
       sortByDashboardLayoutType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'dashboardLayoutType', Sort.asc);
@@ -2289,6 +3076,34 @@ extension TransactionRecordQuerySortBy
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByLatitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'latitude', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByLatitudeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'latitude', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByLongitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'longitude', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByLongitudeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'longitude', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
       sortByMaxAmount() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'maxAmount', Sort.asc);
@@ -2317,6 +3132,20 @@ extension TransactionRecordQuerySortBy
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByNote() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'note', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByNoteDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'note', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
       sortByPeriodType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'periodType', Sort.asc);
@@ -2327,6 +3156,48 @@ extension TransactionRecordQuerySortBy
       sortByPeriodTypeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'periodType', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByRecurrenceDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recurrenceDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByRecurrenceDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recurrenceDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByRecurrenceDay() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recurrenceDay', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByRecurrenceDayDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recurrenceDay', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByRecurrenceDuration() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recurrenceDuration', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      sortByRecurrenceDurationDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recurrenceDuration', Sort.desc);
     });
   }
 
@@ -2446,6 +3317,20 @@ extension TransactionRecordQuerySortThenBy
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByCurrency() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'currency', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByCurrencyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'currency', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
       thenByDashboardLayoutType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'dashboardLayoutType', Sort.asc);
@@ -2557,6 +3442,34 @@ extension TransactionRecordQuerySortThenBy
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByLatitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'latitude', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByLatitudeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'latitude', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByLongitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'longitude', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByLongitudeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'longitude', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
       thenByMaxAmount() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'maxAmount', Sort.asc);
@@ -2585,6 +3498,20 @@ extension TransactionRecordQuerySortThenBy
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByNote() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'note', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByNoteDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'note', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
       thenByPeriodType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'periodType', Sort.asc);
@@ -2595,6 +3522,48 @@ extension TransactionRecordQuerySortThenBy
       thenByPeriodTypeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'periodType', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByRecurrenceDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recurrenceDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByRecurrenceDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recurrenceDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByRecurrenceDay() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recurrenceDay', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByRecurrenceDayDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recurrenceDay', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByRecurrenceDuration() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recurrenceDuration', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QAfterSortBy>
+      thenByRecurrenceDurationDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'recurrenceDuration', Sort.desc);
     });
   }
 
@@ -2700,6 +3669,13 @@ extension TransactionRecordQueryWhereDistinct
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QDistinct>
+      distinctByCurrency({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'currency', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QDistinct>
       distinctByDashboardLayoutType() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'dashboardLayoutType');
@@ -2749,6 +3725,20 @@ extension TransactionRecordQueryWhereDistinct
   }
 
   QueryBuilder<TransactionRecord, TransactionRecord, QDistinct>
+      distinctByLatitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'latitude');
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QDistinct>
+      distinctByLongitude() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'longitude');
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QDistinct>
       distinctByMaxAmount() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'maxAmount');
@@ -2762,10 +3752,38 @@ extension TransactionRecordQueryWhereDistinct
     });
   }
 
+  QueryBuilder<TransactionRecord, TransactionRecord, QDistinct> distinctByNote(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'note', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<TransactionRecord, TransactionRecord, QDistinct>
       distinctByPeriodType() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'periodType');
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QDistinct>
+      distinctByRecurrenceDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'recurrenceDate');
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QDistinct>
+      distinctByRecurrenceDay() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'recurrenceDay');
+    });
+  }
+
+  QueryBuilder<TransactionRecord, TransactionRecord, QDistinct>
+      distinctByRecurrenceDuration() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'recurrenceDuration');
     });
   }
 
@@ -2840,6 +3858,13 @@ extension TransactionRecordQueryProperty
     });
   }
 
+  QueryBuilder<TransactionRecord, String?, QQueryOperations>
+      currencyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'currency');
+    });
+  }
+
   QueryBuilder<TransactionRecord, int, QQueryOperations>
       dashboardLayoutTypeProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -2886,6 +3911,20 @@ extension TransactionRecordQueryProperty
   }
 
   QueryBuilder<TransactionRecord, double?, QQueryOperations>
+      latitudeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'latitude');
+    });
+  }
+
+  QueryBuilder<TransactionRecord, double?, QQueryOperations>
+      longitudeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'longitude');
+    });
+  }
+
+  QueryBuilder<TransactionRecord, double?, QQueryOperations>
       maxAmountProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'maxAmount');
@@ -2899,9 +3938,36 @@ extension TransactionRecordQueryProperty
     });
   }
 
+  QueryBuilder<TransactionRecord, String?, QQueryOperations> noteProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'note');
+    });
+  }
+
   QueryBuilder<TransactionRecord, int, QQueryOperations> periodTypeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'periodType');
+    });
+  }
+
+  QueryBuilder<TransactionRecord, DateTime?, QQueryOperations>
+      recurrenceDateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'recurrenceDate');
+    });
+  }
+
+  QueryBuilder<TransactionRecord, int?, QQueryOperations>
+      recurrenceDayProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'recurrenceDay');
+    });
+  }
+
+  QueryBuilder<TransactionRecord, int?, QQueryOperations>
+      recurrenceDurationProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'recurrenceDuration');
     });
   }
 

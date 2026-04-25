@@ -5,6 +5,7 @@ import '../../../l10n/app_localizations.dart';
 
 class TransactionAmountInput extends StatelessWidget {
   final bool isFlexibleAmount;
+  final String currency;
   final TextEditingController amountController;
   final TextEditingController minController;
   final TextEditingController maxController;
@@ -13,6 +14,7 @@ class TransactionAmountInput extends StatelessWidget {
   const TransactionAmountInput({
     super.key,
     required this.isFlexibleAmount,
+    required this.currency,
     required this.amountController,
     required this.minController,
     required this.maxController,
@@ -65,7 +67,7 @@ class TransactionAmountInput extends StatelessWidget {
           hintStyle: TextStyle(
             color: AppColors.getTextSecondary(context).withValues(alpha: 0.2),
           ),
-          prefixText: "₺",
+          prefixText: currency,
           prefixStyle: TextStyle(
             fontSize: 48,
             fontWeight: FontWeight.w900,
@@ -144,7 +146,7 @@ class TransactionAmountInput extends StatelessWidget {
               hintStyle: TextStyle(
                 color: AppColors.getTextSecondary(context).withValues(alpha: 0.2),
               ),
-              prefixText: "₺ ",
+              prefixText: "$currency ",
               prefixStyle: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,

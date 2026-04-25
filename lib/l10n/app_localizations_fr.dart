@@ -146,6 +146,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get amount => 'Montant';
 
   @override
+  String get currency => 'Para Birimi';
+
+  @override
   String get description => 'Description';
 
   @override

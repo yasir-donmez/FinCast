@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/settings_provider.dart';
 import '../../../dashboard/dashboard_providers.dart';
 import '../profile_list_items.dart';
-import '../../../../l10n/app_localizations.dart';
 
 class LocationSetting extends ConsumerWidget {
   const LocationSetting({super.key});
@@ -12,7 +11,6 @@ class LocationSetting extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final activeColor = ref.watch(rotaryColorProvider);
-    final l10n = AppLocalizations.of(context)!;
 
     return ProfileListItems.buildToggle(
       icon: Icons.location_on_rounded,

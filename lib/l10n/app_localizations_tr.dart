@@ -146,6 +146,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get amount => 'Tutar';
 
   @override
+  String get currency => 'Para Birimi';
+
+  @override
   String get description => 'Açıklama';
 
   @override

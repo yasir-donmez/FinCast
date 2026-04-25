@@ -218,7 +218,7 @@ class _VaultVisibilitySheetState extends ConsumerState<VaultVisibilitySheet> {
                   ),
                 ),
                 Text(
-                  '₺${CurrencyUtils.formatAmount(tx.amount)}',
+                  '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.amount)}',
                   style: TextStyle(
                     fontSize: 11 * scalingFactor,
                     fontWeight: FontWeight.w800,

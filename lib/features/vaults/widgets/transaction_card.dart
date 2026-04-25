@@ -32,6 +32,25 @@ String? localizedCategoryName(String? categoryId, AppLocalizations l10n) {
     case 'inc_salary_main': return l10n.mainSalary;
     case 'inc_salary_bonus': return l10n.bonus;
     case 'inc_extra': return l10n.extraIncome;
+    case 'inc_extra_freelance': return l10n.freelance;
+    case 'inc_extra_parttime': return l10n.partTime;
+    case 'inc_extra_commission': return l10n.commission;
+    case 'inc_invest': return l10n.investmentReturn;
+    case 'inc_invest_stock': return l10n.stock;
+    case 'inc_invest_crypto': return l10n.crypto;
+    case 'inc_invest_interest': return l10n.interest;
+    case 'inc_rent': return l10n.rentalIncome;
+    case 'inc_rent_home': return l10n.home;
+    case 'inc_rent_office': return l10n.officeIncome;
+    case 'inc_sale': return l10n.sale;
+    case 'inc_sale_online': return l10n.onlineSale;
+    case 'inc_sale_physical': return l10n.physicalSale;
+    case 'inc_scholarship': return l10n.scholarshipLoan;
+    case 'inc_scholarship_award': return l10n.scholarship;
+    case 'inc_scholarship_loan': return l10n.credit;
+    case 'inc_gift': return l10n.gift;
+    case 'inc_other': return l10n.other;
+    case 'exp_other': return l10n.other;
     default: return null;
   }
 }
@@ -154,7 +173,7 @@ class TransactionCard extends StatelessWidget {
                             FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                '₺${CurrencyUtils.formatAmount(tx.amount)}',
+                                '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.amount)}',
                                 style: TextStyle(
                                   fontSize: 36 * sf,
                                   fontWeight: FontWeight.w900,
@@ -167,7 +186,7 @@ class TransactionCard extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  '₺${CurrencyUtils.formatAmount(tx.minAmount!)}',
+                                  '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.minAmount!)}',
                                   style: TextStyle(
                                     fontSize: 10.5 * sf,
                                     fontWeight: FontWeight.w800,
@@ -176,7 +195,7 @@ class TransactionCard extends StatelessWidget {
                                 ),
                                 Text(' – ', style: TextStyle(fontSize: 10 * sf, color: isDark ? Colors.white24 : Colors.black12)),
                                 Text(
-                                  '₺${CurrencyUtils.formatAmount(tx.maxAmount!)}',
+                                  '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.maxAmount!)}',
                                   style: TextStyle(
                                     fontSize: 10.5 * sf,
                                     fontWeight: FontWeight.w800,
@@ -190,7 +209,7 @@ class TransactionCard extends StatelessWidget {
                       : FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            '₺${CurrencyUtils.formatAmount(tx.amount)}',
+                            '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.amount)}',
                             style: TextStyle(
                               fontSize: 44 * sf,
                               fontWeight: FontWeight.w900,

@@ -44,6 +44,7 @@
   "income": "Income",
   "expense": "Expense",
   "amount": "Amount",
+  "currency": "Currency",
   "description": "Description",
   "selectVault": "Select Vault",
   "done": "Done",

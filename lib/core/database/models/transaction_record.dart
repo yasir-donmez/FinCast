@@ -37,6 +37,13 @@ class TransactionRecord {
   /// Tekrarlama Periyodu (0: Tek Seferlik, 1: Haftalık, 2: Aylık, 3: Yıllık, 4: 2 Haftada Bir, 5: 3 Haftada Bir, 6: 3 Ayda Bir, 7: 6 Ayda Bir, 8: Günlük, 9: 2 Günde Bir, 10: 3 Günde Bir)
   int periodType = 0;
 
+  /// Tekrarlama Detayları (Haftanın Hangi Günü, Ayın Hangi Günü vb.)
+  int? recurrenceDay;
+  DateTime? recurrenceDate;
+
+  /// Kaç kez tekrar edeceği (0 = Sonsuz/Sürekli Tekrar Eder)
+  int? recurrenceDuration;
+
   /// Kaydın oluştuğu veya gerçekleşeceği tarih
   DateTime date = DateTime.now();
 
@@ -56,6 +63,16 @@ class TransactionRecord {
   /// Arşiv bayrağı: Süresi dolmuş periyodik işlemler silinmez, arşivlenir.
   /// true → aktif listede görünmez, analiz motoru geçmiş hesabında kullanır.
   bool isArchived = false;
+
+  /// İşleme dair not veya açıklama
+  String? note;
+
+  /// İşlemin yapıldığı para birimi (USD, TRY vb.)
+  String? currency;
+
+  /// İşlemin yapıldığı konumun koordinatları
+  double? latitude;
+  double? longitude;
 
   /// --- Senkronizasyon Alanları ---
   /// Sunucu anahtarı (UUID)

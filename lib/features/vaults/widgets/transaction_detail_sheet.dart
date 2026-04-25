@@ -115,13 +115,13 @@ class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet>
           children: [
             if (hasFlexibleAmount) ...[
               Text(
-                '₺${CurrencyUtils.formatAmount(tx.minAmount!)} — ₺${CurrencyUtils.formatAmount(tx.maxAmount!)}',
+                '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.minAmount!)} — ${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.maxAmount!)}',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.grey.withValues(alpha: 0.6), letterSpacing: 0.5),
               ),
               const SizedBox(height: 4),
             ],
             Text(
-              '₺${CurrencyUtils.formatAmount(tx.amount)}',
+              '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount((hasFlexibleAmount && tx.amount == 0) ? ((tx.minAmount! + tx.maxAmount!) / 2) : tx.amount)}',
               style: TextStyle(
                 fontSize: 44 * sf,
                 fontWeight: FontWeight.w900,
@@ -144,7 +144,42 @@ class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet>
             children: [
               _buildInfoRow(context, icon: Icons.calendar_today_rounded, label: 'Eklendi', value: _fullRecord != null ? DateFormat('dd MMMM yyyy').format(_fullRecord!.date) : '-', color: Colors.blue),
               const Divider(height: 24, thickness: 0.5),
-              _buildInfoRow(context, icon: Icons.replay_rounded, label: l10n.period, value: _getDetailedPeriodLabel(tx.periodType, l10n), color: Colors.purple),
+              _buildInfoRow(context, icon: Icons.replay_rounded, label: l10n.period, value: _getDetailedPeriodLabel(tx, l10n), color: Colors.purple),
+              
+              if (tx.periodType != 0) ...[
+                if (tx.recurrenceDuration != null && tx.recurrenceDuration! > 0) ...[
+                  const Divider(height: 24, thickness: 0.5),
+                  _buildInfoRow(
+                    context, 
+                    icon: Icons.event_available_rounded, 
+                    label: 'Bitiş Tarihi', 
+                    value: _calculateEndDate(tx) != null ? DateFormat('dd MMMM yyyy').format(_calculateEndDate(tx)!) : '-', 
+                    color: Colors.redAccent
+                  ),
+                  const Divider(height: 24, thickness: 0.5),
+                  _buildInfoRow(
+                    context, 
+                    icon: Icons.hourglass_bottom_rounded, 
+                    label: 'Kalan Tekrar', 
+                    value: '${(tx.recurrenceDuration! - _calculatePassedOccurrences(tx)).clamp(0, tx.recurrenceDuration!)} Kez', 
+                    color: Colors.deepOrange
+                  ),
+                ] else ...[
+                  const Divider(height: 24, thickness: 0.5),
+                  _buildInfoRow(
+                    context, 
+                    icon: Icons.task_alt_rounded, 
+                    label: 'Gerçekleşen', 
+                    value: '${_calculatePassedOccurrences(tx)} Kez', 
+                    color: Colors.teal
+                  ),
+                ],
+              ],
+
+              if (tx.note != null && tx.note!.isNotEmpty) ...[
+                const Divider(height: 24, thickness: 0.5),
+                _buildInfoRow(context, icon: Icons.notes_rounded, label: 'Not', value: tx.note!, color: Colors.amber),
+              ]
             ],
           ),
         ),
@@ -263,9 +298,67 @@ class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet>
     );
   }
 
-  String _getDetailedPeriodLabel(int period, AppLocalizations l10n) {
+  int _calculatePassedOccurrences(TransactionUI tx) {
+    if (tx.periodType == 0) return 0;
+    
+    final now = DateTime.now();
+    final start = tx.date;
+    if (now.isBefore(start)) return 0;
+
+    final diffDays = now.difference(start).inDays;
+    
+    switch (tx.periodType) {
+      case 1: return diffDays ~/ 7; // Haftalık
+      case 2: // Aylık
+        int months = (now.year - start.year) * 12 + now.month - start.month;
+        if (now.day < start.day) months--;
+        return months < 0 ? 0 : months;
+      case 3: // Yıllık
+        int years = now.year - start.year;
+        if (now.month < start.month || (now.month == start.month && now.day < start.day)) years--;
+        return years < 0 ? 0 : years;
+      case 4: return diffDays ~/ 14; // 2 Haftada bir
+      case 5: return diffDays ~/ 21; // 3 Haftada bir
+      case 6: // 3 Ayda bir
+        int months = (now.year - start.year) * 12 + now.month - start.month;
+        if (now.day < start.day) months--;
+        return (months < 0 ? 0 : months) ~/ 3;
+      case 7: // 6 Ayda bir
+        int months = (now.year - start.year) * 12 + now.month - start.month;
+        if (now.day < start.day) months--;
+        return (months < 0 ? 0 : months) ~/ 6;
+      case 8: return diffDays; // Her gün
+      case 9: return diffDays ~/ 2; // 2 Günde bir
+      case 10: return diffDays ~/ 3; // 3 Günde bir
+      default: return 0;
+    }
+  }
+
+  DateTime? _calculateEndDate(TransactionUI tx) {
+    if (tx.periodType == 0 || tx.recurrenceDuration == null || tx.recurrenceDuration! <= 0) return null;
+    
+    final start = tx.date;
+    final duration = tx.recurrenceDuration! - 1; // İlki başlangıç tarihinde gerçekleştiği için -1
+    if (duration <= 0) return start;
+    
+    switch (tx.periodType) {
+      case 1: return start.add(Duration(days: duration * 7));
+      case 2: return DateTime(start.year, start.month + duration, start.day, start.hour, start.minute);
+      case 3: return DateTime(start.year + duration, start.month, start.day, start.hour, start.minute);
+      case 4: return start.add(Duration(days: duration * 14));
+      case 5: return start.add(Duration(days: duration * 21));
+      case 6: return DateTime(start.year, start.month + (duration * 3), start.day, start.hour, start.minute);
+      case 7: return DateTime(start.year, start.month + (duration * 6), start.day, start.hour, start.minute);
+      case 8: return start.add(Duration(days: duration));
+      case 9: return start.add(Duration(days: duration * 2));
+      case 10: return start.add(Duration(days: duration * 3));
+      default: return null;
+    }
+  }
+
+  String _getDetailedPeriodLabel(TransactionUI tx, AppLocalizations l10n) {
     String base = '';
-    switch (period) {
+    switch (tx.periodType) {
       case 0: base = l10n.oneTime; break;
       case 1: base = "Her hafta"; break;
       case 2: base = "Her ay"; break;
@@ -274,20 +367,32 @@ class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet>
       case 5: base = "3 haftada bir"; break;
       case 6: base = "3 ayda bir"; break;
       case 7: base = "6 ayda bir"; break;
+      case 8: base = "Her gün"; break;
+      case 9: base = "2 günde bir"; break;
+      case 10: base = "3 günde bir"; break;
       default: base = l10n.oneTime;
     }
-    if (period != 0 && _fullRecord != null) {
-      final daysPast = DateTime.now().difference(_fullRecord!.date).inDays;
-      int count = 0;
-      if (period == 1) {
-        count = (daysPast / 7).floor();
-      } else if (period == 2) {
-        count = (daysPast / 30).floor();
-      } else if (period == 3) {
-        count = (daysPast / 365).floor();
+    if (tx.periodType != 0) {
+      List<String> details = [base];
+      
+      if (tx.recurrenceDay != null && [1, 4, 5].contains(tx.periodType)) {
+        final List<String> weekDays = [l10n.monday, l10n.tuesday, l10n.wednesday, l10n.thursday, l10n.friday, l10n.saturday, l10n.sunday];
+        if (tx.recurrenceDay! > 0 && tx.recurrenceDay! <= 7) {
+          details.add(weekDays[tx.recurrenceDay! - 1]);
+        }
+      } else if (tx.recurrenceDate != null && [2, 3, 6, 7].contains(tx.periodType)) {
+        details.add("Ayın ${tx.recurrenceDate!.day}'i");
       }
-      if (count > 0) return "$base ($count. tekrar)";
+      
+      if (tx.recurrenceDuration != null && tx.recurrenceDuration! > 0) {
+        details.add("${tx.recurrenceDuration} Kez");
+      } else {
+        details.add("Sürekli");
+      }
+      
+      return details.join(' • ');
     }
+    
     return base;
   }
 }
