@@ -4,15 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_constants.dart';
 import '../../core/database/database_service.dart';
-import '../../core/utils/currency_utils.dart';
-import '../../shared/widgets/fluid_container.dart';
 import '../../shared/widgets/fluid_sheet.dart';
 import '../../shared/widgets/fluid_dialog.dart';
 import '../../shared/widgets/carved_container.dart';
 import 'vaults_providers.dart';
 import 'widgets/transaction_card.dart';
 import '../transactions/add_transaction_sheet.dart';
-import 'widgets/visibility_management_sheet.dart';
+import 'widgets/vault_visibility_sheet.dart';
+import 'widgets/add_vault_sheet.dart';
 import 'widgets/vault_detail_sheet.dart';
 import 'widgets/transaction_detail_sheet.dart';
 import '../dashboard/dashboard_providers.dart';
@@ -522,7 +521,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
     FluidSheet.show(
       context: context,
       title: AppLocalizations.of(context)!.visibilityManagement,
-      child: const VisibilityManagementSheet(),
+      child: const VaultVisibilitySheet(),
     );
   }
 
@@ -531,7 +530,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
     FluidSheet.show(
       context: context,
       title: 'Yeni Kasa',
-      child: const VisibilityManagementSheet(startInAddMode: true),
+      child: const AddVaultSheet(),
     );
   }
 

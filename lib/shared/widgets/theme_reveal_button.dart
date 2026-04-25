@@ -6,7 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/theme/app_constants.dart';
 import '../../l10n/app_localizations.dart';
-import 'fluid_animated_icon.dart';
+import 'fluid_switch.dart';
+
+// Global key for screenshot boundary
+// Global key is imported from settings_provider
 
 class ThemeRevealButton extends ConsumerStatefulWidget {
   final Color activeColor;
@@ -18,44 +21,23 @@ class ThemeRevealButton extends ConsumerStatefulWidget {
 
 class _ThemeRevealButtonState extends ConsumerState<ThemeRevealButton> with TickerProviderStateMixin {
   late AnimationController _controller;
-  late AnimationController _toggleController;
-  late Animation<double> _stretchAnimation;
   OverlayEntry? _overlayEntry;
   ui.Image? _screenshot;
-  final GlobalKey _toggleKey = GlobalKey();
+  final GlobalKey _switchKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 800),
     );
-
-    _toggleController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-
-    _stretchAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween<double>(begin: 30, end: 44).chain(CurveTween(curve: Curves.easeInQuart)), weight: 50),
-      TweenSequenceItem(tween: Tween<double>(begin: 44, end: 30).chain(CurveTween(curve: Curves.easeOutQuart)), weight: 50),
-    ]).animate(_toggleController);
-
-    // Initial state setup
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final settings = ref.read(settingsProvider);
-      final brightness = MediaQuery.of(context).platformBrightness;
-      final isDark = settings.themeModeIndex == 2 || (settings.themeModeIndex == 0 && brightness == Brightness.dark);
-      if (isDark) _toggleController.value = 1.0;
-    });
   }
 
   @override
   void dispose() {
     _removeOverlay();
     _controller.dispose();
-    _toggleController.dispose();
     super.dispose();
   }
 
@@ -67,43 +49,35 @@ class _ThemeRevealButtonState extends ConsumerState<ThemeRevealButton> with Tick
   }
 
   Future<void> _captureSnapshot(BuildContext context) async {
-    final boundary = rootRepaintBoundaryKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-    if (boundary == null) return;
-    
-    final pixelRatio = View.of(context).devicePixelRatio;
-    _screenshot = await boundary.toImage(pixelRatio: pixelRatio);
+    try {
+      final boundary = rootRepaintBoundaryKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return;
+      
+      final pixelRatio = View.of(context).devicePixelRatio;
+      _screenshot = await boundary.toImage(pixelRatio: pixelRatio);
+    } catch (e) {
+      debugPrint('ThemeReveal screenshot error: $e');
+      _screenshot = null;
+    }
   }
 
-  void _handleToggle() async {
-    if (_controller.isAnimating || _toggleController.isAnimating) return;
+  void _handleToggle(bool val) async {
+    if (_controller.isAnimating) return;
     if (!mounted) return;
 
     // 1. Capture snapshot of OLD theme
     await _captureSnapshot(context);
     if (_screenshot == null || !mounted) return;
 
-    final settings = ref.read(settingsProvider);
-    final currentThemeIndex = settings.themeModeIndex;
-    final brightness = MediaQuery.of(context).platformBrightness;
-    final bool isActuallyDark = currentThemeIndex == 2 || (currentThemeIndex == 0 && brightness == Brightness.dark);
-    final int nextThemeIndex = isActuallyDark ? 1 : 2;
-
-    // 2. Start handle movement
-    if (isActuallyDark) {
-      _toggleController.reverse();
-    } else {
-      _toggleController.forward();
-    }
-
-    // 3. Capture EXACT toggle position for the reveal start
-    final RenderBox? renderBox = _toggleKey.currentContext?.findRenderObject() as RenderBox?;
+    // 2. Capture switch position for reveal start
+    final RenderBox? renderBox = _switchKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
     final center = renderBox.localToGlobal(renderBox.size.center(Offset.zero));
 
-    // 4. Change theme underneath
-    await ref.read(settingsProvider.notifier).setThemeMode(nextThemeIndex);
+    // 3. Change theme underneath
+    await ref.read(settingsProvider.notifier).setThemeMode(val ? 2 : 1);
 
-    // 5. Show OLD snapshot in overlay
+    // 4. Show OLD snapshot in overlay
     if (!mounted) return;
     _overlayEntry = OverlayEntry(
       builder: (context) => _RevealOverlay(
@@ -115,7 +89,7 @@ class _ThemeRevealButtonState extends ConsumerState<ThemeRevealButton> with Tick
 
     Overlay.of(context).insert(_overlayEntry!);
 
-    // 6. Expand the hole from the toggle center
+    // 5. Reveal the new theme
     await _controller.forward(from: 0.0);
     
     _removeOverlay();
@@ -125,143 +99,49 @@ class _ThemeRevealButtonState extends ConsumerState<ThemeRevealButton> with Tick
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final settings = ref.watch(settingsProvider);
-    final brightness = MediaQuery.of(context).platformBrightness;
-    final isDark = settings.themeModeIndex == 2 || (settings.themeModeIndex == 0 && brightness == Brightness.dark);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      margin: const EdgeInsets.only(top: 8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            padding: const EdgeInsets.all(16),
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: AppColors.getSurface(context).withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(24),
+              color: widget.activeColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.05),
-                width: 0.8,
+                color: widget.activeColor.withValues(alpha: 0.15),
+                width: 1,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: widget.activeColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(16), // Squirclish
-                        border: Border.all(
-                          color: widget.activeColor.withValues(alpha: 0.15),
-                          width: 1,
-                        ),
-                      ),
-                      child: FluidAnimatedIcon(
-                        isActive: isDark,
-                        activeIcon: Icons.dark_mode_rounded,
-                        inactiveIcon: Icons.light_mode_rounded,
-                        color: widget.activeColor,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Text(
-                      l10n.themeMode,
-                      style: TextStyle(
-                        color: AppColors.getTextPrimary(context),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-                
-                // THE ROUND TOGGLE (JELLY VERSION)
-                GestureDetector(
-                  onTap: _handleToggle,
-                  child: AnimatedBuilder(
-                    animation: _toggleController,
-                    builder: (context, child) {
-                      final t = _toggleController.value;
-                      final currentWidth = _stretchAnimation.value;
-                      final leftPos = 4 + (t * (72 - 30 - 8));
-
-                      return Container(
-                        width: 72,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: AppColors.getInnerSurface(context),
-                          border: Border.all(
-                            color: Color.lerp(
-                              Colors.white.withValues(alpha: 0.05),
-                              widget.activeColor.withValues(alpha: 0.2),
-                              t,
-                            )!,
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            )
-                          ]
-                        ),
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              left: leftPos,
-                              top: 5,
-                              child: Container(
-                                key: _toggleKey,
-                                width: currentWidth,
-                                height: 30,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  color: Color.lerp(Colors.white, widget.activeColor, t),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Color.lerp(Colors.black, widget.activeColor, t)!.withValues(alpha: 0.4),
-                                      blurRadius: 8,
-                                      spreadRadius: 1,
-                                    )
-                                  ]
-                                ),
-                                child: Center(
-                                  child: FluidAnimatedIcon(
-                                    isActive: isDark,
-                                    activeIcon: Icons.nightlight_round,
-                                    inactiveIcon: Icons.wb_sunny_rounded,
-                                    color: isDark ? Colors.black : Colors.orange[700],
-                                    size: 16,
-                                    duration: const Duration(milliseconds: 300),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                  ),
-                ),
-              ],
+            child: Icon(
+              isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+              color: widget.activeColor,
+              size: 22,
             ),
           ),
-        ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              l10n.themeMode,
+              style: TextStyle(
+                color: AppColors.getTextPrimary(context),
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          FluidSwitch(
+            key: _switchKey,
+            value: isDark,
+            activeColor: widget.activeColor,
+            onChanged: _handleToggle,
+            activeIcon: Icons.dark_mode_rounded,
+            inactiveIcon: Icons.light_mode_rounded,
+          ),
+        ],
       ),
     );
   }
@@ -314,7 +194,6 @@ class _InverseCircularRevealPainter extends CustomPainter {
 
     canvas.saveLayer(Offset.zero & size, Paint());
 
-    // 1. Draw old theme
     paintImage(
       canvas: canvas,
       rect: Offset.zero & size,
@@ -322,7 +201,6 @@ class _InverseCircularRevealPainter extends CustomPainter {
       fit: BoxFit.fill,
     );
 
-    // 2. Cut a hole exactly at 'center'
     final erasePaint = Paint()
       ..blendMode = BlendMode.clear
       ..style = PaintingStyle.fill;

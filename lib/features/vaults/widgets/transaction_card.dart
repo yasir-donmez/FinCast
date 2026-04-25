@@ -3,7 +3,6 @@ import '../../../../core/theme/app_constants.dart';
 import '../../../../core/utils/currency_utils.dart';
 import '../../../../shared/widgets/fluid_container.dart';
 import '../../../../shared/widgets/fluid_sheet.dart';
-import '../../../../shared/widgets/fluid_switch.dart';
 import '../vaults_providers.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'transaction_detail_sheet.dart';
@@ -120,8 +119,8 @@ class TransactionCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          hasSubCategory ? parentName ?? categoryName : categoryName,
+                          Text(
+                            hasSubCategory ? parentName : categoryName,
                           style: TextStyle(
                             fontSize: 15 * sf,
                             fontWeight: FontWeight.w900,
@@ -267,53 +266,3 @@ void showTransactionActionMenu(
   );
 }
 
-Widget _buildActionItem({
-  required BuildContext context,
-  required IconData icon,
-  required String label,
-  required Color color,
-  required VoidCallback onTap,
-  double scalingFactor = 1.0,
-  Widget? trailing,
-}) {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-  return GestureDetector(
-    onTap: onTap,
-    child: FluidContainer(
-      padding: EdgeInsets.all(16 * scalingFactor),
-      borderRadius: 24 * scalingFactor,
-      isGlass: true,
-      color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.01),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(10 * scalingFactor),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(16 * scalingFactor),
-            ),
-            child: Icon(icon, color: color, size: 22 * scalingFactor),
-          ),
-          SizedBox(width: 16 * scalingFactor),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 16 * scalingFactor,
-              fontWeight: FontWeight.w800,
-              color: AppColors.getTextPrimary(context),
-            ),
-          ),
-          const Spacer(),
-          if (trailing != null)
-            trailing
-          else
-            Icon(
-              Icons.chevron_right_rounded,
-              color: Colors.grey.withValues(alpha: 0.5),
-              size: 20 * scalingFactor,
-            ),
-        ],
-      ),
-    ),
-  );
-}

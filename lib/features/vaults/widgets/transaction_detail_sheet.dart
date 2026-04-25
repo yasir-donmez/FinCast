@@ -12,7 +12,6 @@ import '../../../../shared/widgets/precision_clickable.dart';
 import '../../../../shared/widgets/fluid_dialog.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../vaults_providers.dart';
-import 'transaction_card.dart';
 
 class TransactionDetailSheet extends ConsumerStatefulWidget {
   final TransactionUI transaction;
@@ -283,9 +282,13 @@ class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet>
     if (period != 0 && _fullRecord != null) {
       final daysPast = DateTime.now().difference(_fullRecord!.date).inDays;
       int count = 0;
-      if (period == 1) count = (daysPast / 7).floor();
-      else if (period == 2) count = (daysPast / 30).floor();
-      else if (period == 3) count = (daysPast / 365).floor();
+      if (period == 1) {
+        count = (daysPast / 7).floor();
+      } else if (period == 2) {
+        count = (daysPast / 30).floor();
+      } else if (period == 3) {
+        count = (daysPast / 365).floor();
+      }
       if (count > 0) return "$base ($count. tekrar)";
     }
     return base;

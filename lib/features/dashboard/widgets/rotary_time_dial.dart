@@ -185,14 +185,22 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> with SingleTick
                   end: 0.0,
                 ).animate(CurvedAnimation(
                   parent: _resetController,
-                  curve: Curves.elasticOut,
+                  curve: Curves.easeOutExpo,
                 ))
                   ..addListener(() {
                     setState(() {
-                      _currentAngle = _resetAnimation!.value;
+                      _currentAngle = _resetAnimation!.value.clamp(0.0, double.infinity);
                       _lastAngle = 0.0;
+                      _lastHapticLevel = 0; // Reset haptic level to prevent skipping initial ticks
+                      
                       final extraMultiplier = (pow(_currentAngle, 1.5) * 800).toDouble();
                       ref.read(simulationBonusProvider.notifier).state = extraMultiplier;
+                      
+                      // Renk geçişini de sıfırlama sırasında senkronize et
+                      final activeColor = _getSmoothColor(_currentAngle / (2 * pi));
+                      if (ref.read(rotaryColorProvider) != activeColor) {
+                        ref.read(rotaryColorProvider.notifier).state = activeColor;
+                      }
                     });
                   });
                 

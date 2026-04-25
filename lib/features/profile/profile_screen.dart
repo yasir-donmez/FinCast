@@ -8,13 +8,14 @@ import '../../core/services/subscription_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_constants.dart';
 import '../../shared/widgets/fluid_sheet.dart';
-import '../../shared/widgets/fluid_button.dart';
 import '../../shared/widgets/fluid_dialog.dart';
 import '../../core/providers/settings_provider.dart';
 import '../dashboard/dashboard_providers.dart';
-import '../../shared/widgets/theme_reveal_button.dart';
 import '../../shared/widgets/fluid_switch.dart';
-import '../../shared/widgets/fluid_animated_icon.dart';
+import '../../shared/widgets/precision_card.dart';
+import '../../shared/widgets/precision_clickable.dart';
+import '../../shared/widgets/theme_reveal_button.dart';
+import '../../shared/widgets/precision_button.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -58,6 +59,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final settings = ref.watch(settingsProvider);
     final activeColor = ref.watch(rotaryColorProvider);
     final subscription = ref.watch(subscriptionServiceProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Stack(
       children: [
@@ -129,26 +131,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    ThemeRevealButton(activeColor: activeColor),
-
-                    _buildFloatingSetting(
-                      icon: Icons.language_rounded,
-                      title: l10n.language,
-                      trailing: _getLanguageName(settings.languageCode),
-                      onTap: () =>
-                          _showLanguagePicker(settings.languageCode, l10n),
-                      activeColor: activeColor,
-                    ),
-                    _buildFloatingToggle(
-                      icon: Icons.notifications_active_rounded,
-                      title: l10n.aiNotifications,
-                      value: settings.isAiNotificationsEnabled,
-                      onChanged: (val) => ref
-                          .read(settingsProvider.notifier)
-                          .toggleAiNotifications(val),
-                      activeColor: activeColor,
-                      activeIcon: Icons.notifications_active_rounded,
-                      inactiveIcon: Icons.notifications_off_rounded,
+                    PrecisionCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        children: [
+                          ThemeRevealButton(activeColor: activeColor),
+                          _buildListDivider(isDark),
+                          _buildListSetting(
+                            icon: Icons.language_rounded,
+                            title: l10n.language,
+                            trailing: _getLanguageName(settings.languageCode),
+                            onTap: () => _showLanguagePicker(settings.languageCode, l10n),
+                            activeColor: activeColor,
+                          ),
+                          _buildListDivider(isDark),
+                          _buildListToggle(
+                            icon: Icons.notifications_active_rounded,
+                            title: l10n.aiNotifications,
+                            value: settings.isAiNotificationsEnabled,
+                            onChanged: (val) => ref
+                                .read(settingsProvider.notifier)
+                                .toggleAiNotifications(val),
+                            activeColor: activeColor,
+                            activeIcon: Icons.notifications_active_rounded,
+                            inactiveIcon: Icons.notifications_off_rounded,
+                          ),
+                        ],
+                      ),
                     ),
 
                     const SizedBox(height: 40),
@@ -173,19 +182,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       key: _managementKey,
                     ),
                     const SizedBox(height: 12),
-                    _buildFloatingSetting(
-                      icon: Icons.cloud_upload_rounded,
-                      title: l10n.driveBackup,
-                      onTap: () => _showComingSoon(l10n.driveBackup, l10n),
-                      activeColor: AppColors.getSecondary(context),
-                      isAction: true,
-                    ),
-                    _buildFloatingSetting(
-                      icon: Icons.table_view_rounded,
-                      title: l10n.exportExcel,
-                      onTap: () => _showComingSoon(l10n.exportExcel, l10n),
-                      activeColor: AppColors.getSecondary(context),
-                      isAction: true,
+                    PrecisionCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        children: [
+                          _buildListSetting(
+                            icon: Icons.cloud_upload_rounded,
+                            title: l10n.driveBackup,
+                            onTap: () => _showComingSoon(l10n.driveBackup, l10n),
+                            activeColor: AppColors.getSecondary(context),
+                            isAction: true,
+                          ),
+                          _buildListDivider(isDark),
+                          _buildListSetting(
+                            icon: Icons.table_view_rounded,
+                            title: l10n.exportExcel,
+                            onTap: () => _showComingSoon(l10n.exportExcel, l10n),
+                            activeColor: AppColors.getSecondary(context),
+                            isAction: true,
+                          ),
+                        ],
+                      ),
                     ),
 
                     const SizedBox(height: 40),
@@ -196,19 +213,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       key: _supportKey,
                     ),
                     const SizedBox(height: 12),
-                    _buildFloatingSetting(
-                      icon: Icons.support_agent_rounded,
-                      title: l10n.contact,
-                      onTap: _launchEmail,
-                      activeColor: AppColors.getPrimary(context),
-                      isAction: true,
-                    ),
-                    _buildFloatingSetting(
-                      icon: Icons.info_outline_rounded,
-                      title: l10n.about,
-                      trailing: "v1.0.0",
-                      onTap: () => _showAboutDialog(l10n),
-                      activeColor: AppColors.getPrimary(context),
+                    PrecisionCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        children: [
+                          _buildListSetting(
+                            icon: Icons.support_agent_rounded,
+                            title: l10n.contact,
+                            onTap: _launchEmail,
+                            activeColor: AppColors.getPrimary(context),
+                            isAction: true,
+                          ),
+                          _buildListDivider(isDark),
+                          _buildListSetting(
+                            icon: Icons.info_outline_rounded,
+                            title: l10n.about,
+                            trailing: "v1.0.0",
+                            onTap: () => _showAboutDialog(l10n),
+                            activeColor: AppColors.getPrimary(context),
+                          ),
+                        ],
+                      ),
                     ),
 
                     const SizedBox(height: 120),
@@ -314,35 +339,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }) {
     return Container(
       key: key,
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.only(top: 32, bottom: 8, left: 4),
       width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title.toUpperCase(),
-            style: TextStyle(
-              color: activeColor.withValues(alpha: 0.8),
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 2.0,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            width: 20,
-            height: 2,
-            decoration: BoxDecoration(
-              color: activeColor.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(1),
-            ),
-          ),
-        ],
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          color: Colors.grey.withValues(alpha: 0.5),
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.5,
+        ),
       ),
     );
   }
 
-  Widget _buildFloatingSetting({
+  Widget _buildListDivider(bool isDark) {
+    return Divider(
+      height: 1,
+      indent: 68,
+      endIndent: 16,
+      color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+    );
+  }
+
+  Widget _buildListSetting({
     required IconData icon,
     required String title,
     String? trailing,
@@ -350,97 +370,65 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     required Color activeColor,
     bool isAction = false,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(top: 8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: InkWell(
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.all(16),
+    return PrecisionClickable(
+      onTap: onTap,
+      color: Colors.transparent,
+      pressedColor: activeColor.withValues(alpha: 0.1),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: AppColors.getSurface(
-                  context,
-                ).withValues(alpha: isAction ? 0.08 : 0.03),
-                borderRadius: BorderRadius.circular(24),
+                color: activeColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.05),
-                  width: 0.8,
+                  color: activeColor.withValues(alpha: 0.15),
+                  width: 1,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: activeColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(16), // Squirclish
-                      border: Border.all(
-                        color: activeColor.withValues(alpha: 0.15),
-                        width: 1,
-                      ),
-                    ),
-                    child: FluidAnimatedIcon(
-                      isActive: true, // Sabit ikonlar için giriş animasyonu tetiklesin
-                      activeIcon: icon,
-                      inactiveIcon: icon,
-                      color: activeColor,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        color: AppColors.getTextPrimary(context),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  if (trailing != null)
-                    Text(
-                      trailing,
-                      style: TextStyle(
-                        color: activeColor,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  if (trailing == null && !isAction)
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: AppColors.getTextSecondary(
-                        context,
-                      ).withValues(alpha: 0.3),
-                    ),
-                  if (isAction)
-                    Icon(
-                      Icons.arrow_outward_rounded,
-                      color: activeColor.withValues(alpha: 0.5),
-                      size: 18,
-                    ),
-                ],
+              child: Icon(icon, color: activeColor, size: 22),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: AppColors.getTextPrimary(context),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-          ),
+            if (trailing != null)
+              Text(
+                trailing,
+                style: TextStyle(
+                  color: activeColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            if (trailing == null && !isAction)
+              Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.getTextSecondary(context).withValues(alpha: 0.3),
+              ),
+            if (isAction)
+              Icon(
+                Icons.arrow_outward_rounded,
+                color: activeColor.withValues(alpha: 0.5),
+                size: 18,
+              ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildFloatingToggle({
+  Widget _buildListToggle({
     required IconData icon,
     required String title,
     required bool value,
@@ -449,74 +437,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     IconData? activeIcon,
     IconData? inactiveIcon,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(top: 8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            padding: const EdgeInsets.all(16),
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: AppColors.getSurface(context).withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(24),
+              color: activeColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.05),
-                width: 0.8,
+                color: activeColor.withValues(alpha: 0.15),
+                width: 1,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: activeColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(16), // Squirclish
-                    border: Border.all(
-                      color: activeColor.withValues(alpha: 0.15),
-                      width: 1,
-                    ),
-                  ),
-                  child: activeIcon != null && inactiveIcon != null
-                      ? FluidAnimatedIcon(
-                          isActive: value,
-                          activeIcon: activeIcon,
-                          inactiveIcon: inactiveIcon,
-                          color: activeColor,
-                          size: 22,
-                        )
-                      : Icon(icon, color: activeColor, size: 22),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      color: AppColors.getTextPrimary(context),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                FluidSwitch(
-                  value: value,
-                  activeColor: activeColor,
-                  onChanged: onChanged,
-                  activeIcon: activeIcon,
-                  inactiveIcon: inactiveIcon,
-                ),
-              ],
+            child: Icon(icon, color: activeColor, size: 22),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: AppColors.getTextPrimary(context),
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-        ),
+          FluidSwitch(
+            value: value,
+            activeColor: activeColor,
+            onChanged: onChanged,
+            activeIcon: activeIcon,
+            inactiveIcon: inactiveIcon,
+          ),
+        ],
       ),
     );
   }
@@ -734,48 +690,77 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          const SizedBox(height: 10),
+          // SELECTOR (No outer box)
           SizedBox(
-            height: 180,
-            child: CupertinoPicker(
-              itemExtent: 45,
-              onSelectedItemChanged: (i) => tempIndex = i,
-              scrollController: FixedExtentScrollController(
-                initialItem: tempIndex,
-              ),
-              children: languages
-                  .map(
-                    (l) => Center(
-                      child: Text(
-                        l,
-                        style: TextStyle(
-                          color: AppColors.getTextPrimary(context),
-                          fontWeight: FontWeight.w600,
-                        ),
+            height: 240,
+            child: Stack(
+              children: [
+                // Center Highlight (Glass Indicator)
+                Center(
+                  child: Container(
+                    height: 54,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        width: 1,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                  )
-                  .toList(),
+                  ),
+                ),
+                CupertinoPicker(
+                  itemExtent: 54,
+                  backgroundColor: Colors.transparent,
+                  useMagnifier: true,
+                  magnification: 1.1,
+                  diameterRatio: 1.1,
+                  onSelectedItemChanged: (i) => tempIndex = i,
+                  scrollController: FixedExtentScrollController(
+                    initialItem: tempIndex,
+                  ),
+                  selectionOverlay: const SizedBox.shrink(),
+                  children: languages
+                      .map(
+                        (l) => Center(
+                          child: Text(
+                            l,
+                            style: TextStyle(
+                              color: AppColors.getTextPrimary(context),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 20),
-          FluidButton(
+          const SizedBox(height: 32),
+          // PREMIUM ACTION BUTTON
+          PrecisionButton(
+            label: l10n.save,
             onTap: () {
               ref
                   .read(settingsProvider.notifier)
                   .setLanguage(_getLanguageCode(languages[tempIndex]));
               Navigator.pop(context);
             },
-            width: double.infinity,
-            color: activeColor,
-            child: Text(
-              l10n.save,
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                color: Colors.black,
-              ),
-            ),
+            activeColor: activeColor,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
         ],
       ),
     );

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/theme/app_constants.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../shared/widgets/neu_container.dart';
+import '../../../shared/widgets/fluid_sheet.dart';
+import '../../../shared/widgets/precision_clickable.dart';
+import '../../../shared/widgets/precision_card.dart';
 
 class TransactionPeriodData {
   final int periodType;
@@ -71,367 +74,201 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
     l10n.september, l10n.october, l10n.november, l10n.december,
   ];
 
-  String _getPeriodName(AppLocalizations l10n, int type) {
-    switch (type) {
-      case 1: return l10n.week;
-      case 2: return l10n.month;
-      case 3: return l10n.year;
-      case 4: return l10n.every2Weeks;
-      case 5: return l10n.every3Weeks;
-      case 6: return l10n.every3Months;
-      case 7: return l10n.every6Months;
-      case 8: return l10n.day;
-      case 9: return l10n.every2Days;
-      case 10: return l10n.every3Days;
-      default: return "";
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            _buildPeriodCategoryBtn(l10n.oneTime, 0, null),
-            const SizedBox(width: 4),
-            _buildPeriodCategoryBtn(l10n.day, 8, 'gun'),
-            const SizedBox(width: 4),
-            _buildPeriodCategoryBtn(l10n.week, 1, 'hafta'),
-            const SizedBox(width: 4),
-            _buildPeriodCategoryBtn(l10n.month, 2, 'ay'),
-            const SizedBox(width: 4),
-            _buildPeriodCategoryBtn(l10n.yearly, 3, null),
-          ],
-        ),
-        
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 400),
-          switchInCurve: Curves.easeOutBack,
-          switchOutCurve: Curves.easeIn,
-          transitionBuilder: (child, animation) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.0, 0.2),
-                  end: Offset.zero,
-                ).animate(animation),
-                child: child,
-              ),
-            );
-          },
-          child: SizedBox(
-            key: ValueKey('period_detail_$_periodType'),
-            height: _periodType == 0 ? 0 : 130, // Dönem seçenekleri için alan tahsisi
-            child: SingleChildScrollView(
-              physics: const NeverScrollableScrollPhysics(),
-              child: Column(
-                children: [
-                  if (_periodType == 1 || [4, 5].contains(_periodType)) ...[
-                    const SizedBox(height: AppSizes.paddingMedium),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          l10n.dayOfWeek,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.getTextPrimary(context),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            int tempDayIndex = _selectedDay - 1;
-                            showModalBottomSheet(
-                              context: context,
-                              backgroundColor: Colors.transparent,
-                              builder: (pickerContext) {
-                                return StatefulBuilder(
-                                  builder: (context, setPickerState) {
-                                    return Container(
-                                      height: 300,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.getBackground(context),
-                                        borderRadius: const BorderRadius.vertical(
-                                          top: Radius.circular(AppSizes.radiusLarge),
-                                        ),
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.all(AppSizes.paddingMedium),
-                                            child: Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                              children: [
-                                                TextButton(
-                                                  onPressed: () => Navigator.pop(pickerContext),
-                                                  child: Text(
-                                                    l10n.cancel,
-                                                    style: TextStyle(color: AppColors.getError(context)),
-                                                  ),
-                                                ),
-                                                Text(
-                                                  l10n.selectDay,
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 16,
-                                                    color: AppColors.getTextPrimary(context),
-                                                  ),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      _selectedDay = tempDayIndex + 1;
-                                                    });
-                                                    _notifyChanges();
-                                                    Navigator.pop(pickerContext);
-                                                  },
-                                                  child: const Text(
-                                                    "OK",
-                                                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: ListWheelScrollView.useDelegate(
-                                              itemExtent: 40,
-                                              perspective: 0.005,
-                                              physics: const FixedExtentScrollPhysics(),
-                                              onSelectedItemChanged: (index) {
-                                                setPickerState(() => tempDayIndex = index);
-                                              },
-                                              controller: FixedExtentScrollController(initialItem: tempDayIndex),
-                                              childDelegate: ListWheelChildBuilderDelegate(
-                                                childCount: 7,
-                                                builder: (context, index) {
-                                                  final isSelected = index == tempDayIndex;
-                                                  return Center(
-                                                    child: Text(
-                                                      _getWeekDays(l10n)[index],
-                                                      style: TextStyle(
-                                                        fontSize: isSelected ? 24 : 18,
-                                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                                        color: isSelected ? AppColors.getPrimary(context) : AppColors.getTextSecondary(context),
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: AppColors.getBackground(context),
-                              borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
-                              border: Border.all(color: AppColors.getInnerSurface(context), width: 1.5),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.calendar_view_week_rounded, size: 16, color: AppColors.getTextPrimary(context)),
-                                const SizedBox(width: 8),
-                                Text(
-                                  _getWeekDays(l10n)[_selectedDay - 1],
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.getTextPrimary(context)),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return PrecisionCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          // --- ESNEK PERİYOT ŞERİDİ (INLINE EXPANSION) ---
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.event_repeat_rounded,
+                      size: 20,
+                      color: AppColors.getPrimary(context).withValues(alpha: 0.7),
                     ),
-                  ] else if ([2, 3, 6, 7].contains(_periodType)) ...[
-                    const SizedBox(height: AppSizes.paddingMedium),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          [2, 6, 7].contains(_periodType) ? l10n.dayOfMonth : l10n.dayOfYear,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.getTextPrimary(context),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            int tempDay = _selectedDateForRecurrence.day;
-                            int tempMonth = _selectedDateForRecurrence.month;
-                            showModalBottomSheet(
-                              context: context,
-                              backgroundColor: Colors.transparent,
-                              builder: (pickerContext) {
-                                return StatefulBuilder(
-                                  builder: (context, setPickerState) {
-                                    return Container(
-                                      height: 300,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.getBackground(context),
-                                        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusLarge)),
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.all(AppSizes.paddingMedium),
-                                            child: Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                              children: [
-                                                TextButton(
-                                                  onPressed: () => Navigator.pop(pickerContext),
-                                                  child: Text(l10n.cancel, style: TextStyle(color: AppColors.getError(context))),
-                                                ),
-                                                Text(
-                                                  l10n.selectDate,
-                                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.getTextPrimary(context)),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      _selectedDateForRecurrence = DateTime(_selectedDateForRecurrence.year, tempMonth, tempDay);
-                                                      _selectedDay = tempDay;
-                                                    });
-                                                    _notifyChanges();
-                                                    Navigator.pop(pickerContext);
-                                                  },
-                                                  child: const Text("OK", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: Row(
-                                              children: [
-                                                Expanded(
-                                                  child: ListWheelScrollView.useDelegate(
-                                                    itemExtent: 40,
-                                                    perspective: 0.005,
-                                                    physics: const FixedExtentScrollPhysics(),
-                                                    onSelectedItemChanged: (index) {
-                                                      setPickerState(() => tempDay = index + 1);
-                                                    },
-                                                    controller: FixedExtentScrollController(initialItem: tempDay - 1),
-                                                    childDelegate: ListWheelChildBuilderDelegate(
-                                                      childCount: 31,
-                                                      builder: (context, index) {
-                                                        final isSelected = (index + 1) == tempDay;
-                                                        return Center(
-                                                          child: Text(
-                                                            (index + 1).toString(),
-                                                            style: TextStyle(fontSize: isSelected ? 24 : 18, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? AppColors.primary : AppColors.getTextSecondary(context)),
-                                                          ),
-                                                        );
-                                                      },
-                                                    ),
-                                                  ),
-                                                ),
-                                                if (_periodType == 3)
-                                                  Expanded(
-                                                    flex: 2,
-                                                    child: ListWheelScrollView.useDelegate(
-                                                      itemExtent: 40,
-                                                      perspective: 0.005,
-                                                      physics: const FixedExtentScrollPhysics(),
-                                                      onSelectedItemChanged: (index) {
-                                                        setPickerState(() => tempMonth = index + 1);
-                                                      },
-                                                      controller: FixedExtentScrollController(initialItem: tempMonth - 1),
-                                                      childDelegate: ListWheelChildBuilderDelegate(
-                                                        childCount: 12,
-                                                        builder: (context, index) {
-                                                          final isSelected = (index + 1) == tempMonth;
-                                                          return Center(
-                                                            child: Text(
-                                                              _getMonths(l10n)[index],
-                                                              style: TextStyle(fontSize: isSelected ? 22 : 16, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? AppColors.primary : AppColors.getTextSecondary(context)),
-                                                            ),
-                                                          );
-                                                        },
-                                                      ),
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: AppColors.getBackground(context),
-                              borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
-                              border: Border.all(color: AppColors.getSurface(context), width: 1.5),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.calendar_month_rounded, size: 16, color: AppColors.primary),
-                                const SizedBox(width: 8),
-                                Text(
-                                  _periodType == 3
-                                      ? "${_selectedDateForRecurrence.day} ${_getMonths(l10n)[_selectedDateForRecurrence.month - 1]}"
-                                      : "${l10n.dayOf} ${_selectedDateForRecurrence.day}",
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.getTextPrimary(context)),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                    const SizedBox(width: 12),
+                    Text(
+                      l10n.period.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.getTextPrimary(context).withValues(alpha: 0.8),
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ],
-                  if (_periodType != 0) ...[
-                    const SizedBox(height: AppSizes.paddingMedium),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  height: 44, // Alt seçeneklerin inline sığabilmesi için biraz daha uzun
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final List<Map<String, dynamic>> cats = [
+                        {'label': l10n.oneTime, 'type': 0, 'cat': null},
+                        {'label': l10n.day, 'type': 8, 'cat': 'gun'},
+                        {'label': l10n.week, 'type': 1, 'cat': 'hafta'},
+                        {'label': l10n.month, 'type': 2, 'cat': 'ay'},
+                        {'label': l10n.yearly, 'type': 3, 'cat': null},
+                      ];
+
+                      const double spacing = 4.0;
+                      final double totalWidth = constraints.maxWidth;
+                      final double availableWidth = totalWidth - (spacing * (cats.length - 1));
+
+                      // --- KARAKTER BAZLI HASSAS AĞIRLIK (CHAR-WEIGHTING) ---
+                      double getWeight(int i) {
+                        final c = cats[i];
+                        final bool isSelected = (c['cat'] == null)
+                            ? (_periodType == c['type'] && _expandedPeriodCategory == null)
+                            : (_expandedPeriodCategory == c['cat']);
+                        
+                        if (!isSelected) return 1.1;
+
+                        final String labelText = c['label'] as String;
+                        // Karakter sayısına göre esneklik ekle (Her harf için 0.15 ek yük)
+                        final double charWeight = labelText.length * 0.15;
+
+                        if (c['cat'] != null) {
+                          // Seçenekli olanlar (Gün/Hafta/Ay) + Karakter farkı
+                          return 3.1 + charWeight;
+                        } else {
+                          // Sabit metinler (Tek Seferlik/Yıllık) + Karakter farkı
+                          return 0.7 + charWeight;
+                        }
+                      }
+
+                      double totalWeight = 0;
+                      for (int i = 0; i < cats.length; i++) {
+                        totalWeight += getWeight(i);
+                      }
+
+                      // Genişlikleri ve sol pozisyonları hesapla
+                      List<double> widths = [];
+                      List<double> lefts = [];
+                      double currentLeft = 0;
+
+                      for (int i = 0; i < cats.length; i++) {
+                        double w = (getWeight(i) / totalWeight) * availableWidth;
+                        widths.add(w);
+                        lefts.add(currentLeft);
+                        currentLeft += w + spacing;
+                      }
+
+                      return Stack(
+                        children: List.generate(cats.length, (index) {
+                          return AnimatedPositioned(
+                            duration: const Duration(milliseconds: 700),
+                            curve: Curves.easeInOutQuart,
+                            left: lefts[index],
+                            width: widths[index],
+                            top: 0,
+                            bottom: 0,
+                            child: _buildAnimatedCategoryBtnInner(cats[index]),
+                          );
+                        }),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // AYIRICI
+          if (_periodType != 0)
+            Divider(
+              height: 1,
+              thickness: 0.5,
+              indent: 16,
+              endIndent: 16,
+              color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+            ),
+
+          // 3. SATIR: DETAY SEÇİCİ (GÜN/TARİH)
+          if (_periodType != 0)
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              child: Column(
+                children: [
+                  if (_periodType == 1 || [4, 5].contains(_periodType)) 
+                    _buildStandardRow(
+                      l10n.dayOfWeek,
+                      _getWeekDays(l10n)[_selectedDay - 1],
+                      Icons.calendar_view_week_rounded,
+                      () => _showWeekDayPicker(l10n),
+                    ),
+                  if ([2, 3, 6, 7, 9, 10].contains(_periodType))
+                    _buildStandardRow(
+                      [2, 6, 7, 9, 10].contains(_periodType) ? l10n.dayOfMonth : l10n.dayOfYear,
+                      _periodType == 3
+                          ? "${_selectedDateForRecurrence.day} ${_getMonths(l10n)[_selectedDateForRecurrence.month - 1]}"
+                          : "${l10n.dayOf} ${_selectedDateForRecurrence.day}",
+                      Icons.calendar_month_rounded,
+                      () => _showDatePicker(l10n),
+                    ),
+                  
+                  // AYIRICI (Süre öncesi)
+                  Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    indent: 16,
+                    endIndent: 16,
+                    color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+                  ),
+
+                  // 4. SATIR: BİTİŞ SÜRESİ
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
                       children: [
+                        Icon(
+                          Icons.timer_rounded,
+                          size: 20,
+                          color: AppColors.getPrimary(context).withValues(alpha: 0.7),
+                        ),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 l10n.duration,
-                                style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.getTextPrimary(context)),
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.getTextPrimary(context),
+                                ),
                               ),
                               Text(
-                                _duration == 0
-                                    ? l10n.repeatsIndefinitely
-                                    : '$_duration ${_getPeriodName(l10n, _periodType)} ${l10n.endsAfter}',
+                                _duration == 0 ? l10n.repeatsIndefinitely : '$_duration ${l10n.endsAfter}',
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  color: _duration == 0 ? AppColors.getTextSecondary(context) : AppColors.getPrimary(context),
+                                  fontSize: 11,
+                                  color: AppColors.getTextSecondary(context).withValues(alpha: 0.6),
                                 ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 2,
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
                         Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildDurationBtn(Icons.remove, () {
+                            _buildDurationBtn(Icons.remove_rounded, () {
                               if (_duration > 0) {
-                                setState(() => _duration--);
+                                setState(() { _duration--; });
                                 _notifyChanges();
                               }
                             }),
@@ -439,15 +276,20 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
                             SizedBox(
                               width: 32,
                               child: Center(
-                                child: _duration == 0
-                                    ? Icon(Icons.all_inclusive_rounded, color: AppColors.getTextPrimary(context), size: 20)
-                                    : Text(_duration.toString(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                child: Text(
+                                  _duration == 0 ? "∞" : _duration.toString(),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.getPrimary(context),
+                                  ),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),
-                            _buildDurationBtn(Icons.add, () {
+                            _buildDurationBtn(Icons.add_rounded, () {
                               if (_duration < 120) {
-                                setState(() => _duration++);
+                                setState(() { _duration++; });
                                 _notifyChanges();
                               }
                             }),
@@ -455,91 +297,140 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ],
               ),
             ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildPeriodCategoryBtn(String label, int defaultValue, String? category) {
-    final l10n = AppLocalizations.of(context)!;
-    final bool isThisExpanded = (category == null)
-        ? (_periodType == defaultValue && _expandedPeriodCategory == null)
-        : (_expandedPeriodCategory == category);
-
-    final bool isAnyOtherExpanded = _expandedPeriodCategory != null && _expandedPeriodCategory != category;
-    final String abb = label.isNotEmpty ? label[0].toUpperCase() : "";
-
-    int flexValue = 2;
-    if (_expandedPeriodCategory != null) {
-      flexValue = isThisExpanded ? 7 : 2;
-    }
-
-    return Expanded(
-      flex: flexValue,
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            if (category == null) {
-              _periodType = defaultValue;
-              _expandedPeriodCategory = null;
-              _duration = 0;
-              _selectedDay = 1;
-            } else {
-              if (_expandedPeriodCategory != category) {
-                _expandedPeriodCategory = category;
-                _periodType = defaultValue;
-              }
-            }
-          });
-          _notifyChanges();
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-          height: 32,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: isThisExpanded ? AppColors.getPrimary(context).withValues(alpha: 0.1) : AppColors.getSurface(context).withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-            border: Border.all(
-              color: isThisExpanded ? AppColors.getPrimary(context).withValues(alpha: 0.6) : AppColors.getDarkShadow(context).withValues(alpha: 0.15),
-              width: 0.8,
+  Widget _buildStandardRow(String label, String value, IconData icon, VoidCallback onTap) {
+    return PrecisionClickable(
+      onTap: onTap,
+      color: Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: AppColors.getPrimary(context).withValues(alpha: 0.7)),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.getTextPrimary(context),
             ),
           ),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const NeverScrollableScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+          const Spacer(),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: AppColors.getPrimary(context),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.getPrimary(context).withValues(alpha: 0.5)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnimatedCategoryBtnInner(Map<String, dynamic> catData) {
+    final l10n = AppLocalizations.of(context)!;
+    final String label = catData['label'];
+    final int type = catData['type'];
+    final String? category = catData['cat'];
+
+    final bool isThisExpanded = (category == null)
+        ? (_periodType == type && _expandedPeriodCategory == null)
+        : (_expandedPeriodCategory == category);
+
+    final bool isAnyOtherExpanded = _expandedPeriodCategory != null && !isThisExpanded;
+    final String abb = label.isNotEmpty ? label[0].toUpperCase() : "";
+
+    return PrecisionClickable(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() {
+          if (category == null) {
+            _periodType = type;
+            _expandedPeriodCategory = null;
+            _duration = 0;
+            _selectedDay = 1;
+          } else {
+            if (_expandedPeriodCategory != category) {
+              _expandedPeriodCategory = category;
+              _periodType = type;
+            }
+          }
+        });
+        _notifyChanges();
+      },
+      color: Colors.transparent,
+      padding: EdgeInsets.zero,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOutQuart,
+        alignment: Alignment.centerLeft, // Yazı hep solda kalsın, sağa doğru genişlesin
+        decoration: BoxDecoration(
+          color: isThisExpanded 
+              ? AppColors.getPrimary(context).withValues(alpha: 0.15) 
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isThisExpanded 
+                ? AppColors.getPrimary(context).withValues(alpha: 0.2) 
+                : Colors.transparent,
+            width: 1,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Center(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const NeverScrollableScrollPhysics(),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  const SizedBox(width: 8),
                   AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
+                    duration: const Duration(milliseconds: 250),
                     child: Text(
                       (isAnyOtherExpanded) ? abb : label,
                       key: ValueKey((isAnyOtherExpanded) ? abb : label),
                       maxLines: 1,
                       style: TextStyle(
-                        fontSize: (isAnyOtherExpanded) ? 12 : 9.5,
-                        fontWeight: isThisExpanded ? FontWeight.bold : FontWeight.w600,
-                        color: isThisExpanded ? AppColors.getPrimary(context) : AppColors.getTextSecondary(context).withValues(alpha: 0.7),
-                        letterSpacing: -0.3,
+                        fontSize: 11,
+                        fontWeight: isThisExpanded ? FontWeight.w900 : FontWeight.w600,
+                        color: isThisExpanded ? AppColors.getPrimary(context) : AppColors.getTextSecondary(context).withValues(alpha: 0.6),
+                        letterSpacing: -0.5,
                       ),
                     ),
                   ),
-                  if (isThisExpanded && category != null) ...[
-                    const SizedBox(width: 8),
-                    Container(width: 1, height: 12, color: AppColors.getPrimary(context).withValues(alpha: 0.15)),
-                    const SizedBox(width: 4),
-                    _buildSubPeriodInlineOptions(category, l10n),
-                  ],
+                  
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 550),
+                    curve: Curves.easeInOutQuart,
+                    alignment: Alignment.centerLeft,
+                    child: (isThisExpanded && category != null)
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(width: 6),
+                            Container(width: 1, height: 12, color: AppColors.getPrimary(context).withValues(alpha: 0.3)),
+                            const SizedBox(width: 4),
+                            _buildSubPeriodInlineOptions(category, l10n),
+                          ],
+                        )
+                      : const SizedBox.shrink(),
+                  ),
+                  const SizedBox(width: 8),
                 ],
               ),
             ),
@@ -554,21 +445,21 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
     if (category == 'gun') {
       final d = l10n.day[0].toUpperCase();
       options = [
-        _buildPeriodBtnSheet(d, 8),
+        _buildPeriodBtnSheet('1$d', 8),
         _buildPeriodBtnSheet('2$d', 9),
         _buildPeriodBtnSheet('3$d', 10),
       ];
     } else if (category == 'hafta') {
       final h = l10n.week[0].toUpperCase();
       options = [
-        _buildPeriodBtnSheet(h, 1),
+        _buildPeriodBtnSheet('1$h', 1),
         _buildPeriodBtnSheet('2$h', 4),
         _buildPeriodBtnSheet('3$h', 5),
       ];
     } else if (category == 'ay') {
       final a = l10n.month[0].toUpperCase();
       options = [
-        _buildPeriodBtnSheet(a, 2),
+        _buildPeriodBtnSheet('1$a', 2),
         _buildPeriodBtnSheet('3$a', 6),
         _buildPeriodBtnSheet('6$a', 7),
       ];
@@ -582,43 +473,114 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
 
   Widget _buildPeriodBtnSheet(String label, int type) {
     final bool isActive = _periodType == type;
-    return GestureDetector(
+    return PrecisionClickable(
       onTap: () {
+        HapticFeedback.lightImpact();
         setState(() => _periodType = type);
         _notifyChanges();
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: isActive ? AppColors.getPrimary(context).withValues(alpha: 0.08) : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-          border: Border.all(color: isActive ? AppColors.getPrimary(context).withValues(alpha: 0.3) : Colors.transparent, width: 0.8),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
-            color: isActive ? AppColors.getPrimary(context) : AppColors.getTextSecondary(context).withValues(alpha: 0.6),
-          ),
+      color: isActive ? AppColors.getPrimary(context).withValues(alpha: 0.2) : Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+      borderRadius: BorderRadius.circular(6),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 9.5,
+          fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
+          color: isActive ? AppColors.getPrimary(context) : AppColors.getTextSecondary(context).withValues(alpha: 0.8),
         ),
       ),
     );
   }
 
   Widget _buildDurationBtn(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
+    return PrecisionClickable(
       onTap: onTap,
-      child: NeuContainer(
-        width: 36,
-        height: 36,
-        padding: EdgeInsets.zero,
-        borderRadius: AppSizes.radiusRound,
-        child: Center(
-          child: Icon(icon, size: 20, color: AppColors.getTextPrimary(context)),
-        ),
+      width: 32,
+      height: 32,
+      color: AppColors.getPrimary(context).withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(8),
+      child: Icon(icon, size: 18, color: AppColors.getPrimary(context)),
+    );
+  }
+
+  void _showWeekDayPicker(AppLocalizations l10n) {
+    int tempDayIndex = _selectedDay - 1;
+    FluidSheet.show(
+      context: context,
+      title: l10n.selectDay,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildWheelPicker(7, tempDayIndex, (idx) => tempDayIndex = idx, (idx) => _getWeekDays(l10n)[idx]),
+          const SizedBox(height: 8),
+          _buildSheetOkBtn(() {
+            setState(() => _selectedDay = tempDayIndex + 1);
+            _notifyChanges();
+            Navigator.pop(context);
+          }),
+        ],
       ),
     );
+  }
+
+  void _showDatePicker(AppLocalizations l10n) {
+    int tempDay = _selectedDateForRecurrence.day;
+    int tempMonth = _selectedDateForRecurrence.month;
+    FluidSheet.show(
+      context: context,
+      title: l10n.selectDate,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: 200,
+            child: Row(
+              children: [
+                Expanded(child: _buildWheelPicker(31, tempDay - 1, (idx) => tempDay = idx + 1, (idx) => (idx + 1).toString(), fixedHeight: true)),
+                if (_periodType == 3)
+                  Expanded(flex: 2, child: _buildWheelPicker(12, tempMonth - 1, (idx) => tempMonth = idx + 1, (idx) => _getMonths(l10n)[idx], fixedHeight: true)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildSheetOkBtn(() {
+            setState(() {
+              _selectedDateForRecurrence = DateTime(_selectedDateForRecurrence.year, tempMonth, tempDay);
+              _selectedDay = tempDay;
+            });
+            _notifyChanges();
+            Navigator.pop(context);
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSheetOkBtn(VoidCallback onTap) {
+    return PrecisionClickable(
+      onTap: () { onTap(); HapticFeedback.mediumImpact(); },
+      width: double.infinity,
+      color: AppColors.getPrimary(context),
+      borderRadius: BorderRadius.circular(AppSizes.radiusDefault),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: const Text("Tamam", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+    );
+  }
+
+  Widget _buildWheelPicker(int count, int initial, ValueChanged<int> onSelect, String Function(int) labelMap, {bool fixedHeight = false}) {
+    final picker = ListWheelScrollView.useDelegate(
+      itemExtent: 50,
+      perspective: 0.005,
+      diameterRatio: 1.2,
+      physics: const FixedExtentScrollPhysics(),
+      onSelectedItemChanged: onSelect,
+      controller: FixedExtentScrollController(initialItem: initial),
+      childDelegate: ListWheelChildBuilderDelegate(
+        childCount: count,
+        builder: (context, index) => Center(child: Text(labelMap(index), style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.getPrimary(context)))),
+      ),
+    );
+    return fixedHeight ? picker : SizedBox(height: 200, child: picker);
   }
 }

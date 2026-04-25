@@ -38,11 +38,8 @@ class _PrecisionClickableState extends State<PrecisionClickable> {
 
   @override
   Widget build(BuildContext context) {
-    // Eğer pressedColor verilmişse onu kullan, yoksa parlama efekti için beyaz overlay kullan
-    final backgroundColor = _isPressed && widget.pressedColor != null
-        ? widget.pressedColor
-        : widget.color ?? Colors.transparent;
-
+    final bool hasPressedColor = widget.pressedColor != null;
+    
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) => setState(() => _isPressed = false),
@@ -54,25 +51,33 @@ class _PrecisionClickableState extends State<PrecisionClickable> {
       child: AnimatedScale(
         scale: _isPressed ? widget.scaleOnPress : 1.0,
         duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOutCubic,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.easeOutCubic,
           width: widget.width,
           height: widget.height,
           padding: widget.padding,
           decoration: BoxDecoration(
-            color: backgroundColor,
+            color: _isPressed && hasPressedColor 
+                ? widget.pressedColor 
+                : (widget.color ?? Colors.transparent),
             borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
           ),
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Eğer pressedColor yoksa ama flash isteniyorsa eski usul overlay
-              if (widget.showFlash && _isPressed && widget.pressedColor == null)
+              // Flash Overlay (Always present, but opacity animated to prevent layout jumps)
+              if (widget.showFlash && !hasPressedColor)
                 Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
-                      borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 100),
+                    opacity: _isPressed ? 1.0 : 0.0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15), // Reduced alpha for better blending
+                        borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),

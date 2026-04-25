@@ -36,19 +36,20 @@ class TransactionCategorySelector extends StatelessWidget {
 
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // --- ANA MODEL SATIRI (Yatay Scroll) ---
+        // --- ANA KATEGORİ ŞERİDİ (Yatay) ---
         SizedBox(
-          height: 105,
+          height: 110,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSizes.paddingMedium,
-            ),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
             itemCount: categories.length,
             itemBuilder: (context, index) {
               final cat = categories[index];
               final isSelected = index == safeSelectedIndex;
+              final catColor = cat['color'] as Color;
 
               // Seçili alt model varsa, onun bilgilerini göster
               final bool showSubInfo =
@@ -58,18 +59,10 @@ class TransactionCategorySelector extends StatelessWidget {
                       ((cat['subModels'] as List?)?.length ?? 0);
 
               final displayIcon = showSubInfo
-                  ? (cat['subModels']
-                            as List<
-                              Map<String, dynamic>
-                            >)[selectedSubModelIndex]['icon']
-                        as IconData
+                  ? (cat['subModels'] as List)[selectedSubModelIndex]['icon'] as IconData
                   : cat['icon'] as IconData;
               final displayName = showSubInfo
-                  ? (cat['subModels']
-                            as List<
-                              Map<String, dynamic>
-                            >)[selectedSubModelIndex]['name']
-                        as String
+                  ? (cat['subModels'] as List)[selectedSubModelIndex]['name'] as String
                   : cat['name'] as String;
 
               return GestureDetector(
@@ -79,10 +72,8 @@ class TransactionCategorySelector extends StatelessWidget {
                   int newSub = selectedSubModelIndex;
 
                   if (isSelected && (cat['subModels'] as List?)?.isNotEmpty == true) {
-                    // Aynı kategoriye tekrar tıklama → aç/kapat
                     newExp = isExpanded ? -1 : safeSelectedIndex;
                   } else {
-                    // Farklı kategori seçimi
                     newSel = index;
                     newSub = -1;
                     newExp = -1;
@@ -90,124 +81,90 @@ class TransactionCategorySelector extends StatelessWidget {
                   onChanged(newSel, newSub, newExp);
                 },
                 child: Padding(
-                  padding: const EdgeInsets.only(right: AppSizes.paddingMedium),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeOutCubic,
-                    width: isSelected ? 92 : 78,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(
-                        AppSizes.radiusDefault,
-                      ),
-                      color: isSelected
-                          ? AppColors.getInnerSurface(context)
-                          : isDark
-                          ? AppColors.getSurface(context)
-                          : Colors.white.withValues(alpha: 0.5), 
-                      border: isSelected
-                          ? Border.all(
-                              color: AppColors.getAccentDeep(
-                                context,
-                                cat['color'] as Color,
-                              ).withValues(alpha: 0.4),
-                              width: 1.5,
-                            )
-                          : null,
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: AppColors.getAccentDeep(
-                                  context,
-                                  cat['color'] as Color,
-                                ).withValues(alpha: 0.15),
-                                blurRadius: 12,
-                                spreadRadius: 0,
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AnimatedScale(
+                        scale: isSelected ? 1.1 : 1.0,
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeOutBack,
+                        child: AnimatedRotation(
+                          turns: isSelected ? 0.02 : 0.0, // Hafif bir eğim animasyonu
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.elasticOut,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isSelected
+                                  ? catColor.withValues(alpha: 0.15)
+                                  : (isDark ? Colors.white : Colors.black).withValues(alpha: 0.03),
+                              border: Border.all(
+                                color: isSelected
+                                    ? catColor.withValues(alpha: 0.4)
+                                    : (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+                                width: 1.5,
                               ),
-                            ]
-                          : [
-                              BoxShadow(
-                                color: AppColors.getDarkShadow(context),
-                                offset: const Offset(4, 4),
-                                blurRadius: 8,
-                              ),
-                              BoxShadow(
-                                color: AppColors.getLightShadow(context),
-                                offset: const Offset(-3, -3),
-                                blurRadius: 8,
-                              ),
-                            ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4.0,
-                        vertical: 8.0,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: catColor.withValues(alpha: 0.2),
+                                        blurRadius: 15,
+                                        spreadRadius: -2,
+                                      ),
+                                    ]
+                                  : [],
+                            ),
                             child: Icon(
                               displayIcon,
-                              key: ValueKey(
-                                'icon-${showSubInfo ? (cat['subModels'] as List)[selectedSubModelIndex]['id'] : cat['id']}',
-                              ),
                               color: isSelected
-                                  ? AppColors.getAccentDeep(
-                                      context,
-                                      cat['color'] as Color,
-                                    )
-                                  : AppColors.getTextSecondary(context),
+                                  ? AppColors.getAccentDeep(context, catColor)
+                                  : AppColors.getTextSecondary(context).withValues(alpha: 0.5),
                               size: isSelected ? 28 : 24,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child: Container(
-                              key: ValueKey(
-                                'text-${showSubInfo ? (cat['subModels'] as List)[selectedSubModelIndex]['id'] : cat['id']}',
-                              ),
-                              height: 34,
-                              alignment: Alignment.center,
-                              child: Text(
-                                displayName,
-                                style: TextStyle(
-                                  fontSize: 10.0,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  color: isSelected
-                                      ? AppColors.getTextPrimary(context)
-                                      : AppColors.getTextSecondary(context),
-                                  height: 1.0,
-                                ),
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                softWrap: true,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ),
-                          if (isSelected && (cat['subModels'] as List?)?.isNotEmpty == true)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: AnimatedRotation(
-                                turns: isExpanded ? 0.5 : 0.0,
-                                duration: const Duration(milliseconds: 200),
-                                child: Icon(
-                                  Icons.expand_more_rounded,
-                                  size: 14,
-                                  color: AppColors.getAccentDeep(
-                                    context,
-                                    cat['color'] as Color,
-                                  ).withValues(alpha: 0.7),
-                                ),
-                              ),
-                            ),
-                        ],
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: 70,
+                        child: Text(
+                          displayName,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                            color: isSelected
+                                ? AppColors.getTextPrimary(context)
+                                : AppColors.getTextSecondary(context).withValues(alpha: 0.8),
+                            letterSpacing: -0.2,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      // Hizalama için her zaman aynı yükseklikte bir alan bırakıyoruz
+                      SizedBox(
+                        height: 16,
+                        child: (cat['subModels'] as List?)?.isNotEmpty == true
+                            ? AnimatedRotation(
+                                turns: isExpanded ? 0.5 : 0.0,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOutCubic,
+                                child: Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  size: 14,
+                                  color: isSelected 
+                                      ? catColor 
+                                      : AppColors.getTextSecondary(context).withValues(alpha: 0.3),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -215,93 +172,80 @@ class TransactionCategorySelector extends StatelessWidget {
           ),
         ),
 
-        // --- ALT MODEL SATIRI ---
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
+        // --- ALT KATEGORİ ŞERİDİ ---
+        AnimatedSize(
+          duration: const Duration(milliseconds: 400),
           curve: Curves.easeOutCubic,
-          height: isExpanded && hasSubModels ? 48 : 0,
-          child: AnimatedOpacity(
-            opacity: isExpanded && hasSubModels ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 200),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.paddingMedium,
-                vertical: 6,
-              ),
-              child: Row(
-                children: List.generate(subModels.length, (subIndex) {
-                  final sub = subModels[subIndex];
-                  final isSubSelected = subIndex == selectedSubModelIndex;
-                  final Color parentColor = selectedCat['color'] as Color;
+          child: isExpanded && hasSubModels
+              ? AnimatedOpacity(
+                  duration: const Duration(milliseconds: 300),
+                  opacity: isExpanded ? 1.0 : 0.0,
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 8, bottom: 8),
+                    height: 36,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
+                      itemCount: subModels.length,
+                      itemBuilder: (context, subIndex) {
+                        final sub = subModels[subIndex];
+                        final isSubSelected = subIndex == selectedSubModelIndex;
+                        final Color parentColor = selectedCat['color'] as Color;
 
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: GestureDetector(
-                      onTap: () {
-                        final newSub = isSubSelected ? -1 : subIndex;
-                        onChanged(safeSelectedIndex, newSub, expandedCategoryIndex);
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSubSelected
-                              ? parentColor.withValues(alpha: 0.15)
-                              : AppColors.getSurface(context),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isSubSelected
-                                ? parentColor.withValues(alpha: 0.5)
-                                : isDark
-                                ? AppColors.getDarkShadow(context).withValues(alpha: 0.3)
-                                : AppColors.getDarkShadow(context).withValues(alpha: 0.6),
-                            width: 1,
-                          ),
-                          boxShadow: isSubSelected
-                              ? [
-                                  BoxShadow(
-                                    color: parentColor.withValues(alpha: 0.1),
-                                    blurRadius: 8,
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              sub['icon'] as IconData,
-                              size: 14,
-                              color: isSubSelected
-                                  ? parentColor
-                                  : AppColors.getTextSecondary(context),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              sub['name'] as String,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: isSubSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.w500,
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: GestureDetector(
+                            onTap: () {
+                              final newSub = isSubSelected ? -1 : subIndex;
+                              onChanged(safeSelectedIndex, newSub, expandedCategoryIndex);
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
                                 color: isSubSelected
-                                    ? AppColors.getTextPrimary(context)
-                                    : AppColors.getTextSecondary(context),
+                                    ? parentColor.withValues(alpha: 0.2)
+                                    : (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(AppSizes.radiusRound),
+                                border: Border.all(
+                                  color: isSubSelected
+                                      ? parentColor.withValues(alpha: 0.5)
+                                      : Colors.transparent,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    sub['icon'] as IconData,
+                                    size: 14,
+                                    color: isSubSelected
+                                        ? parentColor
+                                        : AppColors.getTextSecondary(context),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    sub['name'] as String,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: isSubSelected ? FontWeight.w900 : FontWeight.w600,
+                                      color: isSubSelected
+                                          ? AppColors.getTextPrimary(context)
+                                          : AppColors.getTextSecondary(context),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                }),
-              ),
-            ),
-          ),
+                  ),
+                )
+              : const SizedBox.shrink(),
         ),
       ],
     );

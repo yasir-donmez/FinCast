@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_constants.dart';
 import 'fluid_container.dart';
+import 'precision_button.dart';
 
 class FluidDialog extends StatelessWidget {
   final Widget? icon;
@@ -196,34 +197,25 @@ class FluidDialogButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final Color color;
+  final bool isPrimary;
 
   const FluidDialogButton({
     super.key,
     required this.label,
     required this.onTap,
     required this.color,
+    this.isPrimary = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return PrecisionButton(
+      label: label,
       onTap: onTap,
-      child: FluidContainer(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        borderRadius: 16,
-        color: color.withValues(alpha: 0.15),
-        borderWidth: 1.5,
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w900,
-              fontSize: 14,
-            ),
-          ),
-        ),
-      ),
+      isPrimary: isPrimary,
+      activeColor: color,
+      height: 50,
+      fontSize: 14,
     );
   }
 }

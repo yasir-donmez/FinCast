@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
-import 'dart:math' as math;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_constants.dart';
@@ -8,53 +6,26 @@ import '../../../core/database/database_service.dart';
 import '../../../core/database/models/vault.dart';
 import '../../../core/utils/icon_utils.dart';
 import '../../../core/utils/currency_utils.dart';
-import '../../../shared/widgets/fluid_container.dart';
-import '../../../shared/widgets/fluid_button.dart';
-import '../../../shared/widgets/fluid_dialog.dart';
 import '../../../core/providers/db_providers.dart';
 import '../../../l10n/app_localizations.dart';
 import '../vaults_providers.dart';
-import '../../auth/widgets/liquid_wave.dart';
 import '../../../shared/widgets/fluid_switch.dart';
 import '../../../shared/widgets/fluid_tab_selector.dart';
 import '../../../shared/widgets/precision_card.dart';
 
-enum ManagementTab { vaults, transactions }
+enum VisibilityTab { vaults, transactions }
 
-class VisibilityManagementSheet extends ConsumerStatefulWidget {
-  final bool startInAddMode;
-  const VisibilityManagementSheet({super.key, this.startInAddMode = false});
+class VaultVisibilitySheet extends ConsumerStatefulWidget {
+  const VaultVisibilitySheet({super.key});
 
   @override
-  ConsumerState<VisibilityManagementSheet> createState() => _VisibilityManagementSheetState();
+  ConsumerState<VaultVisibilitySheet> createState() => _VaultVisibilitySheetState();
 }
 
-class _VisibilityManagementSheetState extends ConsumerState<VisibilityManagementSheet> with TickerProviderStateMixin {
-  late bool _isAdding;
-  ManagementTab _activeTab = ManagementTab.vaults;
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _balanceController = TextEditingController();
-  late AnimationController _waveController;
+class _VaultVisibilitySheetState extends ConsumerState<VaultVisibilitySheet> {
+  VisibilityTab _activeTab = VisibilityTab.vaults;
 
-  @override
-  void initState() {
-    super.initState();
-    _isAdding = widget.startInAddMode;
-    _waveController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _balanceController.dispose();
-    _waveController.dispose();
-    super.dispose();
-  }
-
-  void _switchTab(ManagementTab tab) {
+  void _switchTab(VisibilityTab tab) {
     if (_activeTab == tab) return;
     HapticFeedback.mediumImpact();
     setState(() => _activeTab = tab);
@@ -68,65 +39,24 @@ class _VisibilityManagementSheetState extends ConsumerState<VisibilityManagement
     final allTransactions = transactions.toList();
     
     final activeColor = AppColors.getPrimary(context);
-    final secondaryColor = AppColors.getSecondary(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scalingFactor = (MediaQuery.of(context).size.height / 812.0).clamp(0.85, 1.0);
     
-    final screenHeight = MediaQuery.of(context).size.height;
-    final scalingFactor = (screenHeight / 812.0).clamp(0.85, 1.0);
-    
-    return Stack(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Positioned.fill(
-          child: IgnorePointer(
-            child: LiquidWave(
-              controller: _waveController,
-              color: secondaryColor,
-              isTriggered: true,
-            ),
-          ),
+        FluidTabSelector(
+          tabs: const ['Kasalar', 'İşlemler'],
+          selectedIndex: _activeTab == VisibilityTab.vaults ? 0 : 1,
+          onTabChanged: (index) => _switchTab(index == 0 ? VisibilityTab.vaults : VisibilityTab.transactions),
+          scalingFactor: scalingFactor,
         ),
-
-        AnimatedSize(
+        const SizedBox(height: 12),
+        AnimatedSwitcher(
           duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOutCubic,
-          alignment: Alignment.topCenter,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!_isAdding) 
-                FluidTabSelector(
-                  tabs: const ['Kasalar', 'İşlemler'],
-                  selectedIndex: _activeTab == ManagementTab.vaults ? 0 : 1,
-                  onTabChanged: (index) => _switchTab(index == 0 ? ManagementTab.vaults : ManagementTab.transactions),
-                  scalingFactor: scalingFactor,
-                ),
-              
-              const SizedBox(height: 12),
-
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 400),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                transitionBuilder: (child, animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0, 0.05), 
-                        end: Offset.zero
-                      ).animate(animation),
-                      child: child,
-                    ),
-                  );
-                },
-                child: _isAdding 
-                  ? _buildAddVaultView(context, activeColor, isDark, scalingFactor)
-                  : (_activeTab == ManagementTab.vaults 
-                      ? _buildVaultListView(context, vaults, activeColor, isDark, scalingFactor)
-                      : _buildTransactionListView(context, allTransactions, activeColor, isDark, scalingFactor, l10n)),
-              ),
-            ],
-          ),
+          child: _activeTab == VisibilityTab.vaults 
+              ? _buildVaultListView(context, vaults, activeColor, isDark, scalingFactor)
+              : _buildTransactionListView(context, allTransactions, activeColor, isDark, scalingFactor, l10n),
         ),
       ],
     );
@@ -139,7 +69,7 @@ class _VisibilityManagementSheetState extends ConsumerState<VisibilityManagement
       children: [
         if (vaults.isNotEmpty)
           ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45 * scalingFactor),
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.5 * scalingFactor),
             child: ListView.separated(
               shrinkWrap: true,
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8 * scalingFactor),
@@ -163,7 +93,7 @@ class _VisibilityManagementSheetState extends ConsumerState<VisibilityManagement
       children: [
         if (txs.isNotEmpty)
           ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45 * scalingFactor),
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.5 * scalingFactor),
             child: ListView.separated(
               shrinkWrap: true,
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8 * scalingFactor),
@@ -316,87 +246,6 @@ class _VisibilityManagementSheetState extends ConsumerState<VisibilityManagement
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildAddVaultView(BuildContext context, Color activeColor, bool isDark, double scalingFactor) {
-    return Column(
-      key: const ValueKey('add_view'),
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(height: 12 * scalingFactor),
-        FluidContainer(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4 * scalingFactor),
-          borderRadius: 24 * scalingFactor,
-          isGlass: true,
-          color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.04),
-          child: TextField(
-            controller: _nameController,
-            autofocus: true,
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17 * scalingFactor),
-            decoration: InputDecoration(
-              icon: Icon(Icons.drive_file_rename_outline_rounded, color: activeColor.withValues(alpha: 0.5), size: 22 * scalingFactor),
-              hintText: 'Kasa Adı (örn. Birikim)',
-              hintStyle: TextStyle(fontWeight: FontWeight.w500, color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.2), fontSize: 15 * scalingFactor),
-              border: InputBorder.none,
-            ),
-          ),
-        ),
-        SizedBox(height: 16 * scalingFactor),
-        FluidContainer(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4 * scalingFactor),
-          borderRadius: 24 * scalingFactor,
-          isGlass: true,
-          color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.04),
-          child: TextField(
-            controller: _balanceController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-            ],
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17 * scalingFactor),
-            decoration: InputDecoration(
-              icon: Icon(Icons.payments_rounded, color: activeColor.withValues(alpha: 0.5), size: 22 * scalingFactor),
-              hintText: 'Başlangıç Bakiyesi',
-              suffixText: '₺',
-              suffixStyle: TextStyle(fontWeight: FontWeight.w900, color: activeColor, fontSize: 15 * scalingFactor),
-              hintStyle: TextStyle(fontWeight: FontWeight.w500, color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.2), fontSize: 15 * scalingFactor),
-              border: InputBorder.none,
-            ),
-          ),
-        ),
-        SizedBox(height: 32 * scalingFactor),
-        FluidButton(
-          onTap: () async {
-            if (_nameController.text.isNotEmpty) {
-              final double? initialBalance = double.tryParse(_balanceController.text.replaceAll(',', '.'));
-              
-              final newVault = Vault()
-                ..name = _nameController.text
-                ..currency = 'TRY'
-                ..balance = initialBalance ?? 0.0
-                ..showOnDashboard = true;
-              
-              await DatabaseService.addVault(newVault);
-              _nameController.clear();
-              _balanceController.clear();
-              if (context.mounted) Navigator.pop(context);
-            }
-          },
-          color: activeColor,
-          width: double.infinity,
-          height: 60 * scalingFactor,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.add_task_rounded, color: Colors.white, size: 20 * scalingFactor),
-              SizedBox(width: 8 * scalingFactor),
-              Text('Kasa Oluştur', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15 * scalingFactor)),
-            ],
-          ),
-        ),
-        SizedBox(height: 24 * scalingFactor),
-      ],
     );
   }
 }

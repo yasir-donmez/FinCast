@@ -7,7 +7,7 @@ import '../../core/database/database_service.dart';
 import '../../core/database/models/financial_goal.dart';
 import 'ai_service.dart';
 import '../../shared/widgets/premium_glass_card.dart';
-import '../../shared/widgets/precision_clickable.dart';
+import '../../shared/widgets/precision_button.dart';
 import '../../l10n/app_localizations.dart';
 import 'optimization_providers.dart';
 
@@ -845,41 +845,25 @@ class _AnalysisDetailScreenState extends State<AnalysisDetailScreen> {
             children: [
               // Hayır Butonu
               Expanded(
-                child: PrecisionClickable(
+                child: PrecisionButton(
+                  label: l10n.no,
                   onTap: () => _submitFeedback(false),
-                  color: Colors.transparent,
-                  pressedColor: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(100),
+                  isPrimary: false,
                   height: 48,
-                  child: Text(
-                    l10n.no,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.getTextSecondary(context).withValues(alpha: 0.6),
-                      letterSpacing: 1.0,
-                    ),
-                  ),
+                  fontSize: 14,
+                  letterSpacing: 1.0,
                 ),
               ),
               const SizedBox(width: 12),
               // Evet Butonu
               Expanded(
-                child: PrecisionClickable(
+                child: PrecisionButton(
+                  label: l10n.yes,
                   onTap: () => _submitFeedback(true),
-                  color: Colors.transparent,
-                  pressedColor: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(100),
+                  isPrimary: true,
                   height: 48,
-                  child: Text(
-                    l10n.yes,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.getPrimary(context),
-                      letterSpacing: 1.0,
-                    ),
-                  ),
+                  fontSize: 14,
+                  letterSpacing: 1.0,
                 ),
               ),
             ],

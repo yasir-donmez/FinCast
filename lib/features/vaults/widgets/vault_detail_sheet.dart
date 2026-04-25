@@ -6,12 +6,12 @@ import '../../../core/database/database_service.dart';
 import '../../../core/database/models/vault.dart';
 import '../../../core/providers/db_providers.dart';
 import '../../../core/utils/currency_utils.dart';
-import '../../../shared/widgets/fluid_container.dart';
+import '../../../core/utils/icon_utils.dart';
 import '../../../shared/widgets/fluid_switch.dart';
-import '../../../shared/widgets/fluid_animated_icon.dart';
 import '../../../shared/widgets/fluid_tab_selector.dart';
 import '../../../shared/widgets/precision_card.dart';
-import '../../../shared/widgets/precision_clickable.dart';
+import '../../../shared/widgets/precision_input.dart';
+import '../../../shared/widgets/precision_icon_button.dart';
 import '../vaults_providers.dart';
 
 enum VaultDetailTab { transactions, manage }
@@ -108,78 +108,126 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
             children: [
               Expanded(
                 child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 350),
-                switchInCurve: Curves.easeOutBack,
-                switchOutCurve: Curves.easeInCubic,
-                transitionBuilder: (child, animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: ScaleTransition(
-                      scale: Tween<double>(begin: 0.95, end: 1.0).animate(animation),
-                      child: child,
-                    ),
-                  );
-                },
-                child: _isEditingName
-                    ? TextField(
-                        key: const ValueKey('edit_name'),
-                        controller: _nameController,
-                        autofocus: true,
-                        style: TextStyle(fontSize: 22 * scalingFactor, fontWeight: FontWeight.w900),
-                        decoration: InputDecoration(
-                          hintText: 'Kasa Adı',
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.check_rounded, color: Colors.green),
-                            onPressed: () async {
-                              if (_nameController.text.trim().isNotEmpty) {
-                                vault.name = _nameController.text.trim();
-                                await DatabaseService.updateVault(vault);
-                              }
-                              setState(() => _isEditingName = false);
-                            },
-                          ),
-                          border: InputBorder.none,
-                        ),
-                        onSubmitted: (val) async {
-                           if (val.trim().isNotEmpty) {
-                              vault.name = val.trim();
-                              await DatabaseService.updateVault(vault);
-                            }
-                            setState(() => _isEditingName = false);
-                        },
-                      )
-                    : GestureDetector(
-                        key: const ValueKey('view_name'),
-                        onTap: () {
-                          _nameController.text = vault.name;
-                          setState(() => _isEditingName = true);
-                          HapticFeedback.lightImpact();
-                        },
-                        child: Row(
+                  duration: const Duration(milliseconds: 300),
+                  child: _isEditingName
+                      ? Row(
+                          key: const ValueKey('editing_row'),
                           children: [
-                            Text(
-                              vault.name,
-                              style: TextStyle(
-                                fontSize: 22 * scalingFactor, 
-                                fontWeight: FontWeight.w900, 
-                                letterSpacing: -0.5
+                            Expanded(
+                              child: PrecisionInput(
+                                controller: _nameController,
+                                hintText: 'Kasa Adı',
+                                icon: Icons.drive_file_rename_outline_rounded,
+                                autofocus: true,
+                                scalingFactor: scalingFactor,
+                                onSubmitted: () async {
+                                  if (_nameController.text.trim().isNotEmpty) {
+                                    vault.name = _nameController.text.trim();
+                                    await DatabaseService.updateVault(vault);
+                                  }
+                                  setState(() => _isEditingName = false);
+                                },
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            const Icon(Icons.edit_rounded, size: 18, color: Colors.grey),
+                            const SizedBox(width: 16),
+                            PrecisionIconButton(
+                              icon: Icons.check_rounded,
+                              onTap: () async {
+                                if (_nameController.text.trim().isNotEmpty) {
+                                  vault.name = _nameController.text.trim();
+                                  await DatabaseService.updateVault(vault);
+                                }
+                                setState(() => _isEditingName = false);
+                              },
+                              color: Colors.green,
+                              padding: 12,
+                              size: 22,
+                              borderRadius: 14,
+                            ),
+                            const SizedBox(width: 12),
+                            PrecisionIconButton(
+                              icon: Icons.delete_sweep_rounded,
+                              onTap: () => _confirmDeleteVault(context, vault),
+                              color: AppColors.error,
+                              size: 22,
+                              padding: 12,
+                              borderRadius: 14,
+                            ),
                           ],
+                        )
+                      : SizedBox(
+                          key: const ValueKey('viewing_row'),
+                          height: 50 * scalingFactor,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: PrecisionCard(
+                                  key: const ValueKey('view_name_card'),
+                                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0 * scalingFactor),
+                                  backgroundColor: Colors.transparent,
+                                  borderColor: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () {
+                                      _nameController.text = vault.name;
+                                      setState(() => _isEditingName = true);
+                                      HapticFeedback.lightImpact();
+                                    },
+                                    child: Row(
+                                      children: [
+                                        AnimatedPadding(
+                                          duration: const Duration(milliseconds: 200),
+                                          padding: const EdgeInsets.only(left: 0),
+                                          curve: Curves.easeOutBack,
+                                          child: Icon(
+                                            IconUtils.getIcon(vault.iconCode ?? vault.name),
+                                            color: activeColor.withValues(alpha: 0.4),
+                                            size: 22 * scalingFactor,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Text(
+                                            vault.name,
+                                            style: TextStyle(
+                                              fontSize: 17 * scalingFactor, 
+                                              fontWeight: FontWeight.w800, 
+                                              letterSpacing: -0.5,
+                                              color: AppColors.getTextPrimary(context),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              PrecisionIconButton(
+                                icon: Icons.edit_rounded,
+                                onTap: () {
+                                  _nameController.text = vault.name;
+                                  setState(() => _isEditingName = true);
+                                  HapticFeedback.lightImpact();
+                                },
+                                color: Colors.grey,
+                                backgroundColor: Colors.grey.withValues(alpha: 0.1),
+                                padding: 12,
+                                size: 22,
+                                borderRadius: 14,
+                              ),
+                              const SizedBox(width: 12),
+                              PrecisionIconButton(
+                                icon: Icons.delete_sweep_rounded,
+                                onTap: () => _confirmDeleteVault(context, vault),
+                                color: AppColors.error,
+                                size: 22,
+                                padding: 12,
+                                borderRadius: 14,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-              ),
-              ),
-              PrecisionClickable(
-                onTap: () => _confirmDeleteVault(context, vault),
-                color: AppColors.error.withValues(alpha: 0.1),
-                pressedColor: Colors.white.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(12),
-                padding: const EdgeInsets.all(8),
-                scaleOnPress: 0.9,
-                child: Icon(Icons.delete_sweep_rounded, color: AppColors.error, size: 24),
+                ),
               ),
             ],
           ),
@@ -356,7 +404,7 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
     );
 
     if (confirm == true) {
-      await DatabaseService.deleteVault(vault.id!);
+      await DatabaseService.deleteVault(vault.id);
       if (context.mounted) Navigator.pop(context);
     }
   }

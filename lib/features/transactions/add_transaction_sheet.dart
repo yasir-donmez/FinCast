@@ -15,9 +15,8 @@ import 'widgets/transaction_category_selector.dart';
 import 'widgets/transaction_vault_selector.dart';
 import 'widgets/transaction_period_selector.dart';
 import '../../shared/widgets/fluid_switch.dart';
-import '../../shared/widgets/fluid_button.dart';
-import '../../shared/widgets/precision_clickable.dart';
 import '../../shared/widgets/precision_card.dart';
+import '../../shared/widgets/precision_button.dart';
 
 class AddTransactionSheet extends ConsumerStatefulWidget {
   final int? initialId;
@@ -239,6 +238,111 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
             amountFocusNode: _amountFocusNode,
           ),
 
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
+            child: PrecisionCard(
+              scalingFactor: scalingFactor,
+              padding: EdgeInsets.zero, // İç padding'i kendimiz yöneteceğiz
+              child: Column(
+                children: [
+                  // --- ESNEK TUTAR SATIRI ---
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.linear_scale_rounded, 
+                              size: 20, 
+                              color: AppColors.getPrimary(context).withValues(alpha: 0.7),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              l10n.flexibleAmount,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.getTextPrimary(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                        FluidSwitch(
+                          value: _isFlexibleAmount,
+                          activeColor: AppColors.getPrimary(context),
+                          activeIcon: Icons.pause_rounded,
+                          inactiveIcon: Icons.stop_rounded,
+                          scalingFactor: scalingFactor * 0.9,
+                          onChanged: (val) {
+                            HapticFeedback.mediumImpact();
+                            setState(() {
+                              _isFlexibleAmount = val;
+                              if (!val) {
+                                _amountFocusNode.requestFocus();
+                              }
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // --- AYIRICI ÇİZGİ ---
+                  Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    indent: 16,
+                    endIndent: 16,
+                    color: (Theme.of(context).brightness == Brightness.dark 
+                        ? Colors.white 
+                        : Colors.black).withValues(alpha: 0.08),
+                  ),
+
+                  // --- KASA SEÇİM SATIRI ---
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.account_balance_wallet_rounded, 
+                              size: 20, 
+                              color: AppColors.getPrimary(context).withValues(alpha: 0.7),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              l10n.vault.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.getTextPrimary(context).withValues(alpha: 0.8),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                        TransactionVaultSelector(
+                          vaults: _vaults,
+                          selectedVaultIds: _selectedVaultIds,
+                          onChanged: (ids) {
+                            HapticFeedback.lightImpact();
+                            setState(() {
+                              _selectedVaultIds = ids;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           const SizedBox(height: AppSizes.paddingLarge),
 
           TransactionCategorySelector(
@@ -263,64 +367,6 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TransactionVaultSelector(
-                  vaults: _vaults,
-                  selectedVaultIds: _selectedVaultIds,
-                  onChanged: (ids) {
-                    HapticFeedback.lightImpact();
-                    setState(() {
-                      _selectedVaultIds = ids;
-                    });
-                  },
-                ),
-                
-                const SizedBox(height: AppSizes.paddingLarge),
-
-                PrecisionCard(
-                  scalingFactor: scalingFactor,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.tune_rounded, 
-                            size: 20, 
-                            color: AppColors.getPrimary(context).withValues(alpha: 0.7),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            l10n.flexibleAmount,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.getTextPrimary(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                      FluidSwitch(
-                        value: _isFlexibleAmount,
-                        activeColor: AppColors.getPrimary(context),
-                        activeIcon: Icons.check_rounded,
-                        inactiveIcon: Icons.close_rounded,
-                        scalingFactor: scalingFactor * 0.9,
-                        onChanged: (val) {
-                          HapticFeedback.mediumImpact();
-                          setState(() {
-                            _isFlexibleAmount = val;
-                            if (!val) {
-                              _amountFocusNode.requestFocus();
-                            }
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: AppSizes.paddingLarge),
 
                 Text(
                   l10n.recurrencePeriod.toUpperCase(),
@@ -342,39 +388,26 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                   },
                 ),
 
-                const SizedBox(height: 48),
+                const SizedBox(height: 16),
               ],
             ),
           ),
 
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSizes.paddingMedium, 
-              vertical: AppSizes.paddingLarge
+            padding: const EdgeInsets.fromLTRB(
+              AppSizes.paddingMedium, 
+              0,
+              AppSizes.paddingMedium,
+              AppSizes.paddingLarge
             ),
-            child: SizedBox(
-              width: double.infinity,
-              child: PrecisionClickable(
-                onTap: () {
-                  FocusManager.instance.primaryFocus?.unfocus();
-                  _saveTransaction();
-                },
-                height: 64,
-                color: Colors.transparent,
-                pressedColor: AppColors.getPrimary(context).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(100),
-                child: Center(
-                  child: Text(
-                    l10n.save.toUpperCase(), 
-                    style: TextStyle(
-                      color: AppColors.getPrimary(context),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                ),
-              ),
+            child: PrecisionButton(
+              label: l10n.save,
+              onTap: () {
+                FocusManager.instance.primaryFocus?.unfocus();
+                _saveTransaction();
+              },
+              activeColor: AppColors.getPrimary(context),
+              height: 64,
             ),
           ),
           const SizedBox(height: 32),
