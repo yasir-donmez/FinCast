@@ -159,4 +159,3 @@ class TransactionAmountInput extends StatelessWidget {
     );
   }
 }
-

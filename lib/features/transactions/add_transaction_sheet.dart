@@ -15,7 +15,7 @@ import 'widgets/transaction_amount_input.dart';
 import 'widgets/transaction_category_data.dart';
 import 'widgets/transaction_category_selector.dart';
 import 'widgets/transaction_period_selector.dart';
-import '../../shared/widgets/fluid_switch.dart';
+import '../../shared/widgets/precision_toggle.dart';
 import '../../shared/widgets/precision_card.dart';
 import '../../shared/widgets/precision_input.dart';
 import '../../shared/widgets/precision_button.dart';
@@ -329,7 +329,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                       ),
                     ],
                   ),
-                  FluidSwitch(
+                  PrecisionToggle(
                     value: _isFlexibleAmount,
                     activeColor: AppColors.getPrimary(context),
                     activeIcon: Icons.pause_rounded,

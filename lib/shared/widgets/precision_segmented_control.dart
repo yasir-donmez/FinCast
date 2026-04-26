@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class FluidTabSelector extends StatelessWidget {
+class PrecisionSegmentedControl extends StatelessWidget {
   final List<String> tabs;
   final int selectedIndex;
   final Function(int) onTabChanged;
   final double scalingFactor;
   final Color? activeColor;
 
-  const FluidTabSelector({
+  const PrecisionSegmentedControl({
     super.key,
     required this.tabs,
     required this.selectedIndex,

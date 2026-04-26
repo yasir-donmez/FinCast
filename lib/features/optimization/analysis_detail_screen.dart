@@ -6,7 +6,7 @@ import '../../core/theme/app_constants.dart';
 import '../../core/database/database_service.dart';
 import '../../core/database/models/financial_goal.dart';
 import 'ai_service.dart';
-import '../../shared/widgets/premium_glass_card.dart';
+import '../../shared/widgets/precision_glass_card.dart';
 import '../../shared/widgets/precision_button.dart';
 import '../../l10n/app_localizations.dart';
 import 'optimization_providers.dart';
@@ -717,7 +717,7 @@ class _AnalysisDetailScreenState extends State<AnalysisDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        PremiumGlassCard(
+        PrecisionGlassCard(
           padding: const EdgeInsets.all(24),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -766,7 +766,7 @@ class _AnalysisDetailScreenState extends State<AnalysisDetailScreen> {
   Widget _buildCutRowFluid(CutSuggestion cut, AppLocalizations l10n) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      child: PremiumGlassCard(
+      child: PrecisionGlassCard(
         padding: const EdgeInsets.all(20),
         child: Row(
           children: [
@@ -827,7 +827,7 @@ class _AnalysisDetailScreenState extends State<AnalysisDetailScreen> {
   }
 
   Widget _buildFeedbackSectionFluid(AppLocalizations l10n) {
-    return PremiumGlassCard(
+    return PrecisionGlassCard(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
       child: Column(
         children: [
@@ -875,7 +875,7 @@ class _AnalysisDetailScreenState extends State<AnalysisDetailScreen> {
 
   Widget _buildApprovalConfirmedFluid(AppLocalizations l10n) {
     final approved = _userApproval == true;
-    return PremiumGlassCard(
+    return PrecisionGlassCard(
       color:
           (approved
                   ? AppColors.getSuccess(context)

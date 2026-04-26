@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'precision_clickable.dart';
+import 'precision_action.dart';
 
 /// FinCast Standart Tasarımlı İkon Butonu.
-/// PrecisionClickable kullanarak premium tıklama hissiyatı ve standart görsel yapı sunar.
+/// PrecisionAction kullanarak premium tıklama hissiyatı ve standart görsel yapı sunar.
 class PrecisionIconButton extends StatelessWidget {
   final IconData? icon;
   final Widget? child;
@@ -30,7 +30,7 @@ class PrecisionIconButton extends StatelessWidget {
     final themeColor = color ?? Theme.of(context).primaryColor;
     final bg = backgroundColor ?? themeColor.withValues(alpha: 0.1);
 
-    return PrecisionClickable(
+    return PrecisionAction(
       onTap: onTap,
       color: bg,
       pressedColor: themeColor.withValues(alpha: 0.2),

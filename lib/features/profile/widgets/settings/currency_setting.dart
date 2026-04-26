@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/settings_provider.dart';
 import '../../../../core/theme/app_constants.dart';
-import '../../../../shared/widgets/fluid_sheet.dart';
+import '../../../../shared/widgets/precision_sheet.dart';
 import '../../../../shared/widgets/precision_picker.dart';
 import '../../../../shared/widgets/precision_button.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -36,7 +36,9 @@ class CurrencySetting extends ConsumerWidget {
     int initialIndex = currencies.indexOf(currentSymbol);
     if (initialIndex == -1) initialIndex = 0;
 
-    FluidSheet.show(
+    int tempIndex = initialIndex;
+
+    PrecisionSheet.show(
       context: context,
       title: l10n.selectCurrency,
       child: Column(
@@ -45,15 +47,15 @@ class CurrencySetting extends ConsumerWidget {
           PrecisionPicker.strings(
             items: currencies,
             initialItem: initialIndex,
-            onSelectedItemChanged: (index) {
-              HapticFeedback.selectionClick();
-              ref.read(settingsProvider.notifier).setCurrency(currencies[index]);
-            },
+            onSelectedItemChanged: (index) => tempIndex = index,
           ),
           const SizedBox(height: 32),
           PrecisionButton(
             label: l10n.ok,
-            onTap: () => Navigator.pop(context),
+            onTap: () {
+              ref.read(settingsProvider.notifier).setCurrency(currencies[tempIndex]);
+              Navigator.pop(context);
+            },
             activeColor: activeColor,
           ),
         ],

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_constants.dart';
-import '../../../shared/widgets/precision_clickable.dart';
-import '../../../shared/widgets/fluid_switch.dart';
+import '../../../shared/widgets/precision_action.dart';
+import '../../../shared/widgets/precision_toggle.dart';
 
 class ProfileListItems {
   static Widget buildSectionTitle(String title, Color activeColor, {Key? key}) {
@@ -42,7 +42,7 @@ class ProfileListItems {
     required BuildContext context,
     bool isAction = false,
   }) {
-    return PrecisionClickable(
+    return PrecisionAction(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -138,7 +138,7 @@ class ProfileListItems {
               ),
             ),
           ),
-          FluidSwitch(
+          PrecisionToggle(
             value: value,
             onChanged: onChanged,
             activeColor: activeColor,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_constants.dart';
 
-class FluidAnimatedIcon extends StatelessWidget {
+class PrecisionAnimatedIcon extends StatelessWidget {
   final IconData activeIcon;
   final IconData inactiveIcon;
   final bool isActive;
@@ -9,7 +9,7 @@ class FluidAnimatedIcon extends StatelessWidget {
   final double size;
   final Duration duration;
 
-  const FluidAnimatedIcon({
+  const PrecisionAnimatedIcon({
     super.key,
     required this.activeIcon,
     required this.inactiveIcon,

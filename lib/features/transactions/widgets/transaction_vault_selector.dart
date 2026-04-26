@@ -117,4 +117,3 @@ class _TransactionVaultSelectorState extends State<TransactionVaultSelector> {
     );
   }
 }
-

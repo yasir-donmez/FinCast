@@ -9,18 +9,21 @@ import '../../core/database/database_service.dart';
 import '../../core/database/models/financial_goal.dart';
 import '../../core/database/models/transaction_record.dart';
 import '../../core/database/models/vault.dart';
-import '../../shared/widgets/fluid_container.dart';
-import '../../shared/widgets/fluid_button.dart';
-import '../../shared/widgets/fluid_sheet.dart';
+import '../../shared/widgets/precision_surface.dart';
+
+import '../../shared/widgets/precision_sheet.dart';
 import 'optimization_providers.dart';
 import 'ai_service.dart';
 import 'analysis_detail_screen.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/services/subscription_service.dart';
 import '../subscription/widgets/pro_upgrade_sheet.dart';
-import '../../shared/widgets/membership_orb.dart';
-import '../../shared/widgets/fluid_animated_icon.dart';
-import '../../shared/widgets/premium_glass_card.dart';
+import '../../shared/widgets/precision_membership_orb.dart';
+import '../../shared/widgets/precision_animated_icon.dart';
+import '../../shared/widgets/precision_glass_card.dart';
+import '../../shared/widgets/precision_button.dart';
+
+import '../../shared/widgets/precision_picker.dart';
 
 /// Hedef Odaklı Tasarruf Planlayıcı & AI Finansal Koç
 class OptimizationScreen extends ConsumerStatefulWidget {
@@ -188,48 +191,72 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
   }
 
   void _showManualAmountEntry() {
+    final l10n = AppLocalizations.of(context)!;
+    final formatter = NumberFormat.decimalPattern('tr_TR');
     final controller = TextEditingController(
-      text: _targetAmount.toInt().toString(),
+      text: formatter.format(_targetAmount.toInt()),
     );
-    FluidSheet.show(
+    
+    PrecisionSheet.show(
       context: context,
-      title: AppLocalizations.of(context)!.amount,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              autofocus: true,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.getTextPrimary(context),
-              ),
-              decoration: InputDecoration(
-                suffixText: '₺',
-                filled: true,
-                fillColor: AppColors.getInnerSurface(context),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
+      title: l10n.amount,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          PrecisionGlassCard(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  '₺',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.getPrimary(context).withValues(alpha: 0.4),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                IntrinsicWidth(
+                  child: TextField(
+                    controller: controller,
+                    keyboardType: TextInputType.number,
+                    autofocus: true,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      _ThousandsSeparatorFormatter(),
+                    ],
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.getTextPrimary(context),
+                      letterSpacing: -1,
+                    ),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                      isDense: true,
+                      hintText: '0',
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            FluidButton(
-              onTap: () {
-                final val = double.tryParse(controller.text);
-                if (val != null) {
-                  setState(() => _targetAmount = val.clamp(0, 2000000));
-                }
-                Navigator.pop(context);
-              },
-              child: Text(AppLocalizations.of(context)!.save),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 24),
+          PrecisionButton(
+            label: l10n.save,
+            onTap: () {
+              final val = double.tryParse(controller.text.replaceAll('.', ''));
+              if (val != null) {
+                setState(() => _targetAmount = val.clamp(0, 2000000));
+              }
+              Navigator.pop(context);
+            },
+          ),
+          const SizedBox(height: 12),
+        ],
       ),
     );
   }
@@ -347,14 +374,14 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
     final displayText = _personaText ?? savedPersona;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    return PremiumGlassCard(
+    return PrecisionGlassCard(
       padding: EdgeInsets.symmetric(
         horizontal: screenWidth * 0.05,
         vertical: 20,
       ),
       child: Row(
         children: [
-          MembershipOrb(color: AppColors.getPrimary(context), size: 56),
+          PrecisionMembershipOrb(color: AppColors.getPrimary(context), size: 56),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -395,7 +422,7 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
         : txs.where((t) => t.vaultIds.contains(_scopeVaultId)).toList();
     final relevant = scopedTxs.where((t) => t.periodType != 0).toList();
 
-    return PremiumGlassCard(
+    return PrecisionGlassCard(
       padding: EdgeInsets.zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -410,7 +437,7 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  FluidAnimatedIcon(
+                  PrecisionAnimatedIcon(
                     isActive: _showPreselect,
                     activeIcon: Icons.layers_rounded,
                     inactiveIcon: Icons.tune_rounded,
@@ -499,42 +526,44 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
   }
 
   void _showVaultPicker(List<Vault> vaults, AppLocalizations l10n) {
-    FluidSheet.show(
+    final List<String> pickerItems = [l10n.allVaults, ...vaults.map((v) => v.name)];
+    
+    // Mevcut seçimin index'ini bul
+    int initialIdx = _scopeVaultId == null 
+        ? 0 
+        : vaults.indexWhere((v) => v.id == _scopeVaultId) + 1;
+    if (initialIdx < 0) initialIdx = 0;
+
+    int tempIdx = initialIdx;
+
+    PrecisionSheet.show(
       context: context,
       title: l10n.scopeLabel,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ListTile(
-            title: Text(
-              l10n.allVaults,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            leading: Icon(
-              Icons.all_inclusive,
-              color: AppColors.getPrimary(context),
-            ),
+          PrecisionPicker.strings(
+            items: pickerItems,
+            initialItem: initialIdx,
+            onSelectedItemChanged: (index) {
+              tempIdx = index;
+            },
+          ),
+          const SizedBox(height: 24),
+          PrecisionButton(
+            label: l10n.ok,
             onTap: () {
-              setState(() => _scopeVaultId = null);
+              setState(() {
+                if (tempIdx == 0) {
+                  _scopeVaultId = null;
+                } else {
+                  _scopeVaultId = vaults[tempIdx - 1].id;
+                }
+              });
               Navigator.pop(context);
             },
           ),
-          ...vaults.map(
-            (v) => ListTile(
-              title: Text(
-                v.name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              leading: Icon(
-                Icons.account_balance_wallet_rounded,
-                color: AppColors.getPrimary(context),
-              ),
-              onTap: () {
-                setState(() => _scopeVaultId = v.id);
-                Navigator.pop(context);
-              },
-            ),
-          ),
+          const SizedBox(height: 12),
         ],
       ),
     );
@@ -709,7 +738,7 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
   Widget _buildHistoryCardFluid(FinancialGoal g, AppLocalizations l10n) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      child: PremiumGlassCard(
+      child: PrecisionGlassCard(
         padding: EdgeInsets.zero,
         child: InkWell(
           onTap: () {
@@ -824,7 +853,7 @@ class _AnalysisCockpit extends StatelessWidget {
           stops: const [0.0, 1.0],
         ),
       ),
-      child: FluidContainer(
+      child: PrecisionSurface(
         padding: const EdgeInsets.all(20),
         isGlass: true,
         borderRadius: 32,
@@ -836,7 +865,7 @@ class _AnalysisCockpit extends StatelessWidget {
                 Expanded(
                   child: GestureDetector(
                     onTap: onAmountTap,
-                  child: PremiumGlassCard(
+                  child: PrecisionGlassCard(
                     padding: const EdgeInsets.symmetric(
                       vertical: 16,
                       horizontal: 20,
@@ -882,7 +911,6 @@ class _AnalysisCockpit extends StatelessWidget {
               children: [
                 Expanded(
                   child: _GlassChip(
-                    icon: Icons.calendar_today_rounded,
                     label: DateFormat('MMM yyyy').format(targetDate),
                     onTap: onDateTap,
                   ),
@@ -890,7 +918,6 @@ class _AnalysisCockpit extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _GlassChip(
-                    icon: Icons.account_balance_wallet_rounded,
                     label: vaultName,
                     onTap: onVaultTap,
                   ),
@@ -905,11 +932,9 @@ class _AnalysisCockpit extends StatelessWidget {
 }
 
 class _GlassChip extends StatelessWidget {
-  final IconData icon;
   final String label;
   final VoidCallback onTap;
   const _GlassChip({
-    required this.icon,
     required this.label,
     required this.onTap,
   });
@@ -917,26 +942,17 @@ class _GlassChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: PremiumGlassCard(
+      child: PrecisionGlassCard(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 18, color: AppColors.getPrimary(context)),
-            if (label.isNotEmpty) ...[
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  label,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ],
+        child: Center(
+          child: Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         ),
       ),
     );
@@ -1222,4 +1238,26 @@ class _WaterDropPainterForButton extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class _ThousandsSeparatorFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.isEmpty) return newValue;
+    
+    // Sadece rakamları al
+    String chars = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (chars.isEmpty) return const TextEditingValue();
+
+    final n = int.tryParse(chars);
+    if (n == null) return oldValue;
+
+    final formatter = NumberFormat.decimalPattern('tr_TR');
+    final newText = formatter.format(n);
+
+    return TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newText.length),
+    );
+  }
 }

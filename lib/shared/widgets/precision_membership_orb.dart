@@ -3,13 +3,13 @@ import 'dart:math' as math;
 
 /// FinCast Premium Üyelik Küresi (Premium Orb)
 /// Animasyonlu, akışkan ve gerçekçi cam görünümlü bir küre sunar.
-class MembershipOrb extends StatefulWidget {
+class PrecisionMembershipOrb extends StatefulWidget {
   final Color color;
   final double size;
   final double morphFactor;
   final double wobbleValue; // External override if needed
 
-  const MembershipOrb({
+  const PrecisionMembershipOrb({
     super.key,
     required this.color,
     this.size = 50,
@@ -18,10 +18,10 @@ class MembershipOrb extends StatefulWidget {
   });
 
   @override
-  State<MembershipOrb> createState() => _MembershipOrbState();
+  State<PrecisionMembershipOrb> createState() => _PrecisionMembershipOrbState();
 }
 
-class _MembershipOrbState extends State<MembershipOrb> with SingleTickerProviderStateMixin {
+class _PrecisionMembershipOrbState extends State<PrecisionMembershipOrb> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override

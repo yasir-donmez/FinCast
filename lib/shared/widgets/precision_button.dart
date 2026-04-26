@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_constants.dart';
-import 'precision_clickable.dart';
+import 'precision_action.dart';
 
 /// FinCast Standart "Ghost & Precision" Butonu.
 /// Arka planı olmayan, sadece metin ve vurgulu parlamadan oluşan premium buton.
@@ -37,7 +37,7 @@ class PrecisionButton extends StatelessWidget {
         ? (activeColor ?? AppColors.getPrimary(context)) 
         : Colors.white.withValues(alpha: 0.9);
 
-    return PrecisionClickable(
+    return PrecisionAction(
       onTap: onTap,
       width: width ?? double.infinity,
       height: height,

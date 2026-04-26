@@ -4,7 +4,7 @@ import '../../core/theme/app_constants.dart';
 import 'precision_button.dart';
 
 /// FinCast "Precision" Serisi Diyalog.
-/// FluidSheet tasarım diliyle uyumlu, temiz ve premium bir onay ekranı.
+/// PrecisionSheet tasarım diliyle uyumlu, temiz ve premium bir onay ekranı.
 class PrecisionDialog extends StatelessWidget {
   final String title;
   final String content;

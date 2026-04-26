@@ -3,7 +3,7 @@ import 'dart:ui';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/theme/app_constants.dart';
 import '../../../core/utils/currency_utils.dart';
-import '../../../shared/widgets/premium_glass_card.dart';
+import '../../../shared/widgets/precision_glass_card.dart';
 import '../vaults_providers.dart';
 
 class IntegratedVaultCard extends StatelessWidget {
@@ -64,7 +64,7 @@ class IntegratedVaultCard extends StatelessWidget {
               Positioned.fill(
                 child: Opacity(
                   opacity: decorationOpacity,
-                  child: PremiumGlassCard(
+                  child: PrecisionGlassCard(
                     borderRadius: cardRadius,
                     isGlass: true,
                     child: const SizedBox.expand(),

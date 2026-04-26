@@ -7,12 +7,12 @@ import '../../../core/database/models/vault.dart';
 import '../../../core/providers/db_providers.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../core/utils/icon_utils.dart';
-import '../../../shared/widgets/fluid_switch.dart';
-import '../../../shared/widgets/fluid_tab_selector.dart';
+import '../../../shared/widgets/precision_toggle.dart';
+import '../../../shared/widgets/precision_segmented_control.dart';
 import '../../../shared/widgets/precision_card.dart';
 import '../../../shared/widgets/precision_input.dart';
 import '../../../shared/widgets/precision_icon_button.dart';
-import '../../../shared/widgets/fluid_animated_icon.dart';
+import '../../../shared/widgets/precision_animated_icon.dart';
 import '../../../shared/widgets/precision_dialog.dart';
 import '../../../l10n/app_localizations.dart';
 import '../vaults_providers.dart';
@@ -73,7 +73,7 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        FluidTabSelector(
+        PrecisionSegmentedControl(
           tabs: const ['İşlemler', 'Yönet'],
           selectedIndex: _activeTab == VaultDetailTab.transactions ? 0 : 1,
           onTabChanged: (index) => _switchTab(index == 0 ? VaultDetailTab.transactions : VaultDetailTab.manage),
@@ -186,7 +186,7 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
                       backgroundColor: (_isEditingName ? Colors.green : Colors.grey).withValues(alpha: 0.1),
                       padding: 12,
                       borderRadius: 14,
-                      child: FluidAnimatedIcon(
+                      child: PrecisionAnimatedIcon(
                         activeIcon: Icons.check_rounded,
                         inactiveIcon: Icons.edit_rounded,
                         isActive: _isEditingName,
@@ -295,7 +295,7 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
                       Expanded(
                         child: Text(tx.name, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14 * scalingFactor)),
                       ),
-                      FluidSwitch(
+                      PrecisionToggle(
                         value: isSelected,
                         activeColor: activeColor,
                         activeIcon: Icons.check_rounded,

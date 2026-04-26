@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/app_constants.dart';
-import 'fluid_animated_icon.dart';
+import 'precision_animated_icon.dart';
 
-class FluidSwitch extends StatefulWidget {
+class PrecisionToggle extends StatefulWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
   final Color? activeColor;
@@ -12,7 +12,7 @@ class FluidSwitch extends StatefulWidget {
   final IconData? inactiveIcon;
   final double scalingFactor;
 
-  const FluidSwitch({
+  const PrecisionToggle({
     super.key,
     required this.value,
     required this.onChanged,
@@ -24,10 +24,10 @@ class FluidSwitch extends StatefulWidget {
   });
 
   @override
-  State<FluidSwitch> createState() => _FluidSwitchState();
+  State<PrecisionToggle> createState() => _PrecisionToggleState();
 }
 
-class _FluidSwitchState extends State<FluidSwitch> with SingleTickerProviderStateMixin {
+class _PrecisionToggleState extends State<PrecisionToggle> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _moveAnimation;
   late Animation<double> _stretchAnimation;
@@ -54,7 +54,7 @@ class _FluidSwitchState extends State<FluidSwitch> with SingleTickerProviderStat
   }
 
   @override
-  void didUpdateWidget(FluidSwitch oldWidget) {
+  void didUpdateWidget(PrecisionToggle oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.value != oldWidget.value) {
       if (widget.value) {
@@ -153,7 +153,7 @@ class _FluidSwitchState extends State<FluidSwitch> with SingleTickerProviderStat
                       ],
                     ),
                     child: Center(
-                      child: FluidAnimatedIcon(
+                      child: PrecisionAnimatedIcon(
                         isActive: widget.value,
                         activeIcon: widget.activeIcon ?? Icons.check_rounded,
                         inactiveIcon: widget.inactiveIcon ?? Icons.close_rounded,

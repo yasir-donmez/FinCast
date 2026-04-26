@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class PrecisionClickable extends StatefulWidget {
+class PrecisionAction extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;
   final Color? color;
@@ -14,7 +14,7 @@ class PrecisionClickable extends StatefulWidget {
   final double scaleOnPress;
   final bool useHaptic;
 
-  const PrecisionClickable({
+  const PrecisionAction({
     super.key,
     required this.child,
     required this.onTap,
@@ -30,10 +30,10 @@ class PrecisionClickable extends StatefulWidget {
   });
 
   @override
-  State<PrecisionClickable> createState() => _PrecisionClickableState();
+  State<PrecisionAction> createState() => _PrecisionActionState();
 }
 
-class _PrecisionClickableState extends State<PrecisionClickable> {
+class _PrecisionActionState extends State<PrecisionAction> {
   bool _isPressed = false;
 
   @override

@@ -9,8 +9,8 @@ import '../../../core/utils/currency_utils.dart';
 import '../../../core/providers/db_providers.dart';
 import '../../../l10n/app_localizations.dart';
 import '../vaults_providers.dart';
-import '../../../shared/widgets/fluid_switch.dart';
-import '../../../shared/widgets/fluid_tab_selector.dart';
+import '../../../shared/widgets/precision_toggle.dart';
+import '../../../shared/widgets/precision_segmented_control.dart';
 import '../../../shared/widgets/precision_card.dart';
 
 enum VisibilityTab { vaults, transactions }
@@ -45,7 +45,7 @@ class _VaultVisibilitySheetState extends ConsumerState<VaultVisibilitySheet> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        FluidTabSelector(
+        PrecisionSegmentedControl(
           tabs: const ['Kasalar', 'İşlemler'],
           selectedIndex: _activeTab == VisibilityTab.vaults ? 0 : 1,
           onTabChanged: (index) => _switchTab(index == 0 ? VisibilityTab.vaults : VisibilityTab.transactions),
@@ -168,7 +168,7 @@ class _VaultVisibilitySheetState extends ConsumerState<VaultVisibilitySheet> {
               ],
             ),
           ),
-          FluidSwitch(
+          PrecisionToggle(
             value: vault.showOnDashboard,
             activeColor: activeColor,
             activeIcon: Icons.visibility_rounded,
@@ -228,7 +228,7 @@ class _VaultVisibilitySheetState extends ConsumerState<VaultVisibilitySheet> {
               ],
             ),
           ),
-          FluidSwitch(
+          PrecisionToggle(
             value: tx.showOnDashboard,
             activeColor: activeColor,
             activeIcon: Icons.visibility_rounded,

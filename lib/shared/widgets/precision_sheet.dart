@@ -4,7 +4,7 @@ import '../../core/theme/app_constants.dart';
 
 /// FinCast Standart Organik Açılır Ekran (Fluid Sheet).
 /// Tüm popup ve modal ekranlar bu bileşeni kullanarak standartlaşır.
-class FluidSheet extends StatelessWidget {
+class PrecisionSheet extends StatelessWidget {
   final Widget child;
   final String? title;
   final List<Widget>? actions;
@@ -12,7 +12,7 @@ class FluidSheet extends StatelessWidget {
   final bool showHandle;
   final bool isFullScreen;
 
-  const FluidSheet({
+  const PrecisionSheet({
     super.key,
     required this.child,
     this.title,
@@ -44,7 +44,7 @@ class FluidSheet extends StatelessWidget {
         vsync: Navigator.of(context),
         duration: const Duration(milliseconds: 400),
       ),
-      builder: (context) => FluidSheet(
+      builder: (context) => PrecisionSheet(
         title: title,
         actions: actions,
         height: height,
@@ -61,8 +61,10 @@ class FluidSheet extends StatelessWidget {
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
     final surfaceColor = AppColors.getSurface(context);
     
-    return Padding(
+    return AnimatedPadding(
       padding: EdgeInsets.only(bottom: bottomPadding),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [

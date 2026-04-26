@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_constants.dart';
 
-class CarvedContainer extends StatelessWidget {
+class PrecisionInset extends StatelessWidget {
   final double size;
   final Widget child;
-  const CarvedContainer({super.key, required this.size, required this.child});
+  const PrecisionInset({super.key, required this.size, required this.child});
 
   @override
   Widget build(BuildContext context) {

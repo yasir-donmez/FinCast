@@ -6,20 +6,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/theme/app_constants.dart';
 import '../../l10n/app_localizations.dart';
-import 'fluid_switch.dart';
+import 'precision_toggle.dart';
 
 // Global key for screenshot boundary
 // Global key is imported from settings_provider
 
-class ThemeRevealButton extends ConsumerStatefulWidget {
+class PrecisionThemeToggle extends ConsumerStatefulWidget {
   final Color activeColor;
-  const ThemeRevealButton({super.key, required this.activeColor});
+  const PrecisionThemeToggle({super.key, required this.activeColor});
 
   @override
-  ConsumerState<ThemeRevealButton> createState() => _ThemeRevealButtonState();
+  ConsumerState<PrecisionThemeToggle> createState() => _PrecisionThemeToggleState();
 }
 
-class _ThemeRevealButtonState extends ConsumerState<ThemeRevealButton> with TickerProviderStateMixin {
+class _PrecisionThemeToggleState extends ConsumerState<PrecisionThemeToggle> with TickerProviderStateMixin {
   late AnimationController _controller;
   OverlayEntry? _overlayEntry;
   ui.Image? _screenshot;
@@ -133,7 +133,7 @@ class _ThemeRevealButtonState extends ConsumerState<ThemeRevealButton> with Tick
               ),
             ),
           ),
-          FluidSwitch(
+          PrecisionToggle(
             key: _switchKey,
             value: isDark,
             activeColor: widget.activeColor,

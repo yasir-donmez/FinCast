@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 /// FinCast "Akışkan Çift Yüzlü Kart" (Fluid 3D Flip Card).
 /// Giriş ve Kayıt formlarını kartın ön ve arka yüzünde taşıyan, 
 /// 3D döndürme animasyonuna sahip premium bileşen.
-class FluidFlipCard extends StatefulWidget {
+class PrecisionFlipCard extends StatefulWidget {
   final bool isFront;
   final Widget front;
   final Widget back;
 
-  const FluidFlipCard({
+  const PrecisionFlipCard({
     super.key,
     required this.isFront,
     required this.front,
@@ -17,10 +17,10 @@ class FluidFlipCard extends StatefulWidget {
   });
 
   @override
-  State<FluidFlipCard> createState() => _FluidFlipCardState();
+  State<PrecisionFlipCard> createState() => _PrecisionFlipCardState();
 }
 
-class _FluidFlipCardState extends State<FluidFlipCard> with SingleTickerProviderStateMixin {
+class _PrecisionFlipCardState extends State<PrecisionFlipCard> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
@@ -40,7 +40,7 @@ class _FluidFlipCardState extends State<FluidFlipCard> with SingleTickerProvider
   }
 
   @override
-  void didUpdateWidget(FluidFlipCard oldWidget) {
+  void didUpdateWidget(PrecisionFlipCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isFront != oldWidget.isFront) {
       if (widget.isFront) {

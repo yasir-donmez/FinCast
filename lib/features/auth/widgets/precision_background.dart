@@ -4,20 +4,20 @@ import '../../../core/theme/app_constants.dart';
 
 /// FinCast "Sıvı Ruh" Arka Planı (Liquid Spirit Background).
 /// Arkada yavaşça süzülen, organik formda renkli blob'lar (leke) oluşturur.
-class LiquidBackground extends StatefulWidget {
+class PrecisionBackground extends StatefulWidget {
   final Widget? child;
   final bool useSystemBackground;
-  const LiquidBackground({
+  const PrecisionBackground({
     super.key, 
     this.child,
     this.useSystemBackground = true,
   });
 
   @override
-  State<LiquidBackground> createState() => _LiquidBackgroundState();
+  State<PrecisionBackground> createState() => _PrecisionBackgroundState();
 }
 
-class _LiquidBackgroundState extends State<LiquidBackground>
+class _PrecisionBackgroundState extends State<PrecisionBackground>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 

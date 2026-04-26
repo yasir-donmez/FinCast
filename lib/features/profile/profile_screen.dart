@@ -4,11 +4,11 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/services/subscription_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_constants.dart';
-import '../../shared/widgets/fluid_sheet.dart';
+import '../../shared/widgets/precision_sheet.dart';
 import '../../shared/widgets/precision_dialog.dart';
 import '../dashboard/dashboard_providers.dart';
 import '../../shared/widgets/precision_card.dart';
-import '../../shared/widgets/theme_reveal_button.dart';
+import '../../shared/widgets/precision_theme_toggle.dart';
 
 // Modular Widgets
 import 'widgets/etched_liquid_text.dart';
@@ -121,7 +121,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       padding: EdgeInsets.zero,
                       child: Column(
                         children: [
-                          ThemeRevealButton(activeColor: activeColor),
+                          PrecisionThemeToggle(activeColor: activeColor),
                           ProfileListItems.buildDivider(isDark),
                           const LanguageSetting(),
                           ProfileListItems.buildDivider(isDark),
@@ -222,7 +222,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   void _showAboutDialog(AppLocalizations l10n) {
     final activeColor = ref.read(rotaryColorProvider);
-    FluidSheet.show(
+    PrecisionSheet.show(
       context: context,
       title: 'FinCast',
       child: Column(

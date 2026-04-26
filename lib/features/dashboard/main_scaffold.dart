@@ -10,12 +10,12 @@ import 'dashboard_providers.dart';
 import '../vaults/vaults_screen.dart';
 import '../optimization/optimization_screen.dart';
 import '../profile/profile_screen.dart';
-import '../../shared/widgets/fluid_container.dart';
-import '../../shared/widgets/fluid_sheet.dart';
+import '../../shared/widgets/precision_surface.dart';
+import '../../shared/widgets/precision_sheet.dart';
 import 'package:flutter/rendering.dart';
 import '../../core/services/subscription_service.dart';
 import '../subscription/widgets/pro_upgrade_sheet.dart';
-import '../../shared/widgets/membership_orb.dart';
+import '../../shared/widgets/precision_membership_orb.dart';
 
 import 'dashboard_scroll_provider.dart';
 
@@ -76,7 +76,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
       }
     }
 
-    FluidSheet.show(
+    PrecisionSheet.show(
       context: context,
       isFullScreen: true,
       title: AppLocalizations.of(context)!.addTransaction,
@@ -130,7 +130,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
                           enabled: shouldShowButton && scaleFactor > 0.5,
                           child: Hero(
                             tag: 'pro_orb',
-                            child: MembershipOrb(
+                            child: PrecisionMembershipOrb(
                               color: activeColor,
                               size: 50,
                               morphFactor: scaleFactor,
@@ -169,7 +169,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
             child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: FluidContainer(
+              child: PrecisionSurface(
                 height: 76,
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 borderRadius: 38,

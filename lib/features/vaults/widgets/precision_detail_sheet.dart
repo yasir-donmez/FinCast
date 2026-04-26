@@ -6,7 +6,7 @@ import '../../../../core/theme/app_constants.dart';
 import '../../../../core/database/database_service.dart';
 import '../../../../core/database/models/vault.dart';
 import '../../../../core/database/models/transaction_record.dart';
-import '../../../../core/utils/currency_utils.dart';
+
 import '../../../../shared/widgets/precision_card.dart';
 import '../../../../shared/widgets/precision_button.dart';
 import '../../../../shared/widgets/precision_icon_button.dart';
@@ -14,14 +14,14 @@ import '../../../../shared/widgets/precision_dialog.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../vaults_providers.dart';
 
-class TransactionDetailSheet extends ConsumerStatefulWidget {
+class PrecisionDetailSheet extends ConsumerStatefulWidget {
   final TransactionUI transaction;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback? onRemoveFromVault;
   final bool isInVault;
 
-  const TransactionDetailSheet({
+  const PrecisionDetailSheet({
     super.key,
     required this.transaction,
     required this.onEdit,
@@ -31,10 +31,10 @@ class TransactionDetailSheet extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<TransactionDetailSheet> createState() => _TransactionDetailSheetState();
+  ConsumerState<PrecisionDetailSheet> createState() => _PrecisionDetailSheetState();
 }
 
-class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet> {
+class _PrecisionDetailSheetState extends ConsumerState<PrecisionDetailSheet> {
   List<Vault> _attachedVaults = [];
   TransactionRecord? _fullRecord;
 
@@ -86,7 +86,7 @@ class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet>
               alignment: Alignment.center,
               children: [
                 Container(
-                  width: 130 * sf, height: 130 * sf,
+                  width: 110 * sf, height: 110 * sf,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
@@ -95,115 +95,125 @@ class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet>
                   ),
                 ),
                 Container(
-                  width: 90 * sf, height: 90 * sf,
+                  width: 80 * sf, height: 80 * sf,
                   decoration: BoxDecoration(
                     color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.02),
-                    borderRadius: BorderRadius.circular(28 * sf),
+                    borderRadius: BorderRadius.circular(24 * sf),
                     border: Border.all(color: tx.color.withValues(alpha: 0.3), width: 0.5),
                   ),
-                  child: Icon(tx.icon, size: 40 * sf, color: tx.color),
+                  child: Icon(tx.icon, size: 36 * sf, color: tx.color),
                 ),
               ],
             ),
           ),
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
 
-        // TUTAR
-        Column(
-          children: [
-            if (hasFlexibleAmount) ...[
-              Text(
-                '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.minAmount!)} — ${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.maxAmount!)}',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.grey.withValues(alpha: 0.6), letterSpacing: 0.5),
+        // TUTAR (Dengeli ve Etiketli Layout)
+        Center(
+          child: hasFlexibleAmount
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildRangeValue('min', tx.minAmount!, tx.currency, sf, isDark),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16 * sf),
+                    child: Text(
+                      '${tx.currency ?? "₺"}${_formatFull(tx.amount == 0 ? ((tx.minAmount! + tx.maxAmount!) / 2) : tx.amount)}',
+                      style: TextStyle(
+                        fontSize: 40 * sf,
+                        fontWeight: FontWeight.w900,
+                        color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context),
+                        letterSpacing: -1.5,
+                      ),
+                    ),
+                  ),
+                  _buildRangeValue('max', tx.maxAmount!, tx.currency, sf, isDark),
+                ],
+              )
+            : Text(
+                '${tx.currency ?? "₺"}${_formatFull(tx.amount)}',
+                style: TextStyle(
+                  fontSize: 40 * sf,
+                  fontWeight: FontWeight.w900,
+                  color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context),
+                  letterSpacing: -2, height: 1,
+                ),
               ),
-              const SizedBox(height: 4),
-            ],
-            Text(
-              '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount((hasFlexibleAmount && tx.amount == 0) ? ((tx.minAmount! + tx.maxAmount!) / 2) : tx.amount)}',
-              style: TextStyle(
-                fontSize: 44 * sf,
-                fontWeight: FontWeight.w900,
-                color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context),
-                letterSpacing: -2, height: 1,
-              ),
-            ),
-            if (hasFlexibleAmount)
-              Text('ortalama tutar'.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.grey.withValues(alpha: 0.4), letterSpacing: 1)),
-          ],
         ),
 
-        SizedBox(height: 24 * sf),
+        SizedBox(height: 16 * sf),
 
         // 2. BİLGİ KARTLARI
         PrecisionCard(
           scalingFactor: sf,
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(12 * sf),
           child: Column(
             children: [
-              _buildInfoRow(context, icon: Icons.calendar_today_rounded, label: 'Eklendi', value: _fullRecord != null ? DateFormat('dd MMMM yyyy').format(_fullRecord!.date) : '-', color: Colors.blue),
-              const Divider(height: 24, thickness: 0.5),
+              _buildInfoRow(context, icon: Icons.calendar_today_rounded, label: 'Eklendi', value: _fullRecord != null ? DateFormat('dd MMM yyyy').format(_fullRecord!.date) : '-', color: Colors.blue),
+              Divider(height: 16 * sf, thickness: 0.5),
               _buildInfoRow(context, icon: Icons.replay_rounded, label: l10n.period, value: _getDetailedPeriodLabel(tx, l10n), color: Colors.purple),
               
               if (tx.periodType != 0) ...[
                 if (tx.recurrenceDuration != null && tx.recurrenceDuration! > 0) ...[
-                  const Divider(height: 24, thickness: 0.5),
+                  Divider(height: 16 * sf, thickness: 0.5),
                   _buildInfoRow(
                     context, 
                     icon: Icons.event_available_rounded, 
                     label: 'Bitiş Tarihi', 
-                    value: _calculateEndDate(tx) != null ? DateFormat('dd MMMM yyyy').format(_calculateEndDate(tx)!) : '-', 
+                    value: _calculateEndDate(tx) != null ? DateFormat('dd MMM yyyy').format(_calculateEndDate(tx)!) : '-', 
                     color: Colors.redAccent
                   ),
-                  const Divider(height: 24, thickness: 0.5),
+                ],
+                Divider(height: 16 * sf, thickness: 0.5),
+                _buildInfoRow(
+                  context, 
+                  icon: Icons.task_alt_rounded, 
+                  label: 'Gerçekleşen', 
+                  value: '${_calculatePassedOccurrences(tx)} Kez', 
+                  color: Colors.teal
+                ),
+                if (tx.recurrenceDuration != null && tx.recurrenceDuration! > 0) ...[
+                  Divider(height: 16 * sf, thickness: 0.5),
                   _buildInfoRow(
                     context, 
                     icon: Icons.hourglass_bottom_rounded, 
-                    label: 'Kalan Tekrar', 
+                    label: 'Kalan Sayısı', 
                     value: '${(tx.recurrenceDuration! - _calculatePassedOccurrences(tx)).clamp(0, tx.recurrenceDuration!)} Kez', 
                     color: Colors.deepOrange
-                  ),
-                ] else ...[
-                  const Divider(height: 24, thickness: 0.5),
-                  _buildInfoRow(
-                    context, 
-                    icon: Icons.task_alt_rounded, 
-                    label: 'Gerçekleşen', 
-                    value: '${_calculatePassedOccurrences(tx)} Kez', 
-                    color: Colors.teal
                   ),
                 ],
               ],
 
               if (tx.note != null && tx.note!.isNotEmpty) ...[
-                const Divider(height: 24, thickness: 0.5),
+                Divider(height: 16 * sf, thickness: 0.5),
                 _buildInfoRow(context, icon: Icons.notes_rounded, label: 'Not', value: tx.note!, color: Colors.amber),
               ]
             ],
           ),
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
 
         // 3. KASALAR
         if (_attachedVaults.isNotEmpty) ...[
-          Text(l10n.vaults.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.withValues(alpha: 0.5), letterSpacing: 1.5)),
-          const SizedBox(height: 8),
+          Text(l10n.vaults.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.grey.withValues(alpha: 0.5), letterSpacing: 1.5)),
+          const SizedBox(height: 4),
           ..._attachedVaults.map((vault) => Padding(
-            padding: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.only(bottom: 4),
             child: PrecisionCard(
               scalingFactor: sf,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(color: AppColors.getPrimary(context).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                    child: Icon(Icons.account_balance_wallet_rounded, size: 14, color: AppColors.getPrimary(context)),
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(color: AppColors.getPrimary(context).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                    child: Icon(Icons.account_balance_wallet_rounded, size: 12, color: AppColors.getPrimary(context)),
                   ),
-                  const SizedBox(width: 10),
-                  Text(vault.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                  const SizedBox(width: 8),
+                  Text(vault.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
                   const Spacer(),
                   PrecisionIconButton(
                     onTap: () async {
@@ -238,9 +248,9 @@ class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet>
                     icon: Icons.close_rounded,
                     color: AppColors.error,
                     backgroundColor: AppColors.error.withValues(alpha: 0.1),
-                    borderRadius: 10,
-                    size: 16,
-                    padding: 8,
+                    borderRadius: 8,
+                    size: 14,
+                    padding: 6,
                   ),
                 ],
               ),
@@ -248,7 +258,7 @@ class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet>
           )),
         ],
 
-        SizedBox(height: 32 * sf),
+        SizedBox(height: 16 * sf),
 
         // 4. AKSİYONLAR
         Row(
@@ -260,9 +270,9 @@ class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet>
                   Navigator.pop(context);
                   widget.onEdit();
                 },
-                height: 56 * sf,
-                fontSize: 14,
-                letterSpacing: 1.5,
+                height: 52 * sf,
+                fontSize: 13,
+                letterSpacing: 1.2,
               ),
             ),
             const SizedBox(width: 12),
@@ -271,13 +281,44 @@ class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet>
               icon: Icons.delete_sweep_rounded,
               color: AppColors.error,
               backgroundColor: AppColors.error.withValues(alpha: 0.1),
-              borderRadius: 20 * sf,
-              size: 24,
-              padding: 16,
+              borderRadius: 18 * sf,
+              size: 22,
+              padding: 14,
             ),
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  String _formatFull(double val) {
+    // Kısaltma yapmadan binlik ayırıcı ile göster (örn: 12.345)
+    final format = NumberFormat.decimalPattern('tr_TR');
+    return format.format(val.toInt());
+  }
+
+  Widget _buildRangeValue(String label, double value, String? currency, double sf, bool isDark) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 9 * sf,
+            fontWeight: FontWeight.w900,
+            color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.2),
+            letterSpacing: 1,
+          ),
+        ),
+        Text(
+          '${currency ?? "₺"}${_formatFull(value)}',
+          style: TextStyle(
+            fontSize: 14 * sf,
+            fontWeight: FontWeight.w700,
+            color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.3),
+          ),
+        ),
       ],
     );
   }
@@ -301,37 +342,52 @@ class _TransactionDetailSheetState extends ConsumerState<TransactionDetailSheet>
   int _calculatePassedOccurrences(TransactionUI tx) {
     if (tx.periodType == 0) return 0;
     
-    final now = DateTime.now();
-    final start = tx.date;
+    // Tarih bazlı karşılaştırma için saatleri sıfırlayalım (Date-only)
+    final now = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    final start = DateTime(tx.date.year, tx.date.month, tx.date.day);
+    
     if (now.isBefore(start)) return 0;
 
     final diffDays = now.difference(start).inDays;
+    int intervals = 0;
     
     switch (tx.periodType) {
-      case 1: return diffDays ~/ 7; // Haftalık
+      case 1: intervals = diffDays ~/ 7; break;
       case 2: // Aylık
-        int months = (now.year - start.year) * 12 + now.month - start.month;
-        if (now.day < start.day) months--;
-        return months < 0 ? 0 : months;
+        intervals = (now.year - start.year) * 12 + now.month - start.month;
+        if (now.day < start.day) intervals--;
+        break;
       case 3: // Yıllık
-        int years = now.year - start.year;
-        if (now.month < start.month || (now.month == start.month && now.day < start.day)) years--;
-        return years < 0 ? 0 : years;
-      case 4: return diffDays ~/ 14; // 2 Haftada bir
-      case 5: return diffDays ~/ 21; // 3 Haftada bir
+        intervals = now.year - start.year;
+        if (now.month < start.month || (now.month == start.month && now.day < start.day)) intervals--;
+        break;
+      case 4: intervals = diffDays ~/ 14; break;
+      case 5: intervals = diffDays ~/ 21; break;
       case 6: // 3 Ayda bir
         int months = (now.year - start.year) * 12 + now.month - start.month;
         if (now.day < start.day) months--;
-        return (months < 0 ? 0 : months) ~/ 3;
+        intervals = months ~/ 3;
+        break;
       case 7: // 6 Ayda bir
         int months = (now.year - start.year) * 12 + now.month - start.month;
         if (now.day < start.day) months--;
-        return (months < 0 ? 0 : months) ~/ 6;
-      case 8: return diffDays; // Her gün
-      case 9: return diffDays ~/ 2; // 2 Günde bir
-      case 10: return diffDays ~/ 3; // 3 Günde bir
-      default: return 0;
+        intervals = months ~/ 6;
+        break;
+      case 8: intervals = diffDays; break; // Günlük
+      case 9: intervals = diffDays ~/ 2; break;
+      case 10: intervals = diffDays ~/ 3; break;
+      default: intervals = 0;
     }
+    
+    // Gerçekleşen sayısı = tamamlanan aralıklar + başlangıçtaki ilk işlem (+1)
+    int passed = (intervals < 0 ? 0 : intervals) + 1;
+    
+    // Eğer bir süre sınırı varsa, gerçekleşen sayısı bu sınırı aşmamalı
+    if (tx.recurrenceDuration != null && tx.recurrenceDuration! > 0) {
+      if (passed > tx.recurrenceDuration!) passed = tx.recurrenceDuration!;
+    }
+    
+    return passed;
   }
 
   DateTime? _calculateEndDate(TransactionUI tx) {

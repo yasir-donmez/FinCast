@@ -6,7 +6,7 @@ import '../../../core/database/database_service.dart';
 import '../../../core/database/models/vault.dart';
 import '../../../shared/widgets/precision_input.dart';
 import '../../../shared/widgets/precision_button.dart';
-import '../../auth/widgets/liquid_wave.dart';
+import '../../auth/widgets/precision_wave.dart';
 
 class AddVaultSheet extends ConsumerStatefulWidget {
   const AddVaultSheet({super.key});
@@ -47,7 +47,7 @@ class _AddVaultSheetState extends ConsumerState<AddVaultSheet> with SingleTicker
       children: [
         Positioned.fill(
           child: IgnorePointer(
-            child: LiquidWave(
+            child: PrecisionWave(
               controller: _waveController,
               color: secondaryColor,
               isTriggered: true,

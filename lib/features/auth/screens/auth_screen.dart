@@ -5,10 +5,10 @@ import '../../../core/services/auth_service.dart';
 import '../../../core/theme/app_constants.dart';
 import '../../../shared/widgets/precision_button.dart';
 import '../../../shared/widgets/precision_input.dart';
-import '../../../shared/widgets/premium_glass_card.dart';
-import '../widgets/liquid_background.dart';
-import '../widgets/fluid_flip_card.dart';
-import '../widgets/liquid_wave.dart';
+import '../../../shared/widgets/precision_glass_card.dart';
+import '../widgets/precision_background.dart';
+import '../widgets/precision_flip_card.dart';
+import '../widgets/precision_wave.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -176,10 +176,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
     final double cardToBottomSpacer = screenHeight * 0.04;
 
     return Scaffold(
-      body: LiquidBackground(
+      body: PrecisionBackground(
         child: Stack(
           children: [
-            LiquidWave(
+            PrecisionWave(
               controller: _waveController,
               color: _isLogin ? AppColors.secondary : AppColors.primary,
               isTriggered: true,
@@ -196,14 +196,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
                       _buildHero(context, primaryColor, screenHeight),
                       SizedBox(height: heroToCardSpacer),
 
-                      PremiumGlassCard(
+                      PrecisionGlassCard(
                         padding: const EdgeInsets.all(24),
                         child: AnimatedSize(
                           duration: const Duration(milliseconds: 400),
                           curve: Curves.fastOutSlowIn,
                           clipBehavior: Clip.hardEdge,
                           alignment: Alignment.topCenter,
-                          child: FluidFlipCard(
+                          child: PrecisionFlipCard(
                             isFront: _isLogin,
                             front: _buildLoginForm(context, screenHeight),
                             back: _buildRegisterForm(context, screenHeight),

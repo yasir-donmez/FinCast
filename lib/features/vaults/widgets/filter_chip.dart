@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../shared/widgets/premium_glass_card.dart';
+import '../../../shared/widgets/precision_glass_card.dart';
 
 class VaultFilterChip extends StatelessWidget {
   final String label;
@@ -19,7 +19,7 @@ class VaultFilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: PremiumGlassCard(
+      child: PrecisionGlassCard(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         borderRadius: 16,
         isGlass: true,

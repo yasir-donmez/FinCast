@@ -4,18 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_constants.dart';
 import '../../core/database/database_service.dart';
-import '../../shared/widgets/fluid_sheet.dart';
+import '../../shared/widgets/precision_sheet.dart';
 import '../../shared/widgets/precision_dialog.dart';
-import '../../shared/widgets/carved_container.dart';
+import '../../shared/widgets/precision_inset.dart';
 import 'vaults_providers.dart';
-import 'widgets/transaction_card.dart';
+import 'widgets/precision_transaction_card.dart';
 import '../transactions/add_transaction_sheet.dart';
 import 'widgets/vault_visibility_sheet.dart';
 import 'widgets/add_vault_sheet.dart';
 import 'widgets/vault_detail_sheet.dart';
-import 'widgets/transaction_detail_sheet.dart';
+import 'widgets/precision_detail_sheet.dart';
 import '../dashboard/dashboard_providers.dart';
-import 'widgets/liquid_blob.dart';
+import 'widgets/precision_blob.dart';
 import 'widgets/header_delegate.dart';
 import 'widgets/filter_chip.dart';
 // Removed unused: import '../../shared/widgets/sliver_animation_spacer.dart';
@@ -89,7 +89,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
             Positioned(
               top: -50,
               left: -50,
-              child: LiquidBlob(
+              child: PrecisionBlob(
                 color: activeColor.withValues(alpha: 0.15),
                 size: 400,
               ),
@@ -97,7 +97,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
             Positioned(
               bottom: 100,
               right: -100,
-              child: LiquidBlob(
+              child: PrecisionBlob(
                 color: AppColors.getSecondary(context).withValues(alpha: 0.1),
                 size: 500,
               ),
@@ -245,7 +245,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                             tween: Tween(begin: 0.0, end: 1.0),
                             curve: Curves.elasticOut,
                             builder: (context, value, child) {
-                              return CarvedContainer(
+                              return PrecisionInset(
                                 size:
                                     100, // Biraz küçülttük ki daha rahat sığsın
                                 child: Transform.scale(
@@ -305,7 +305,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
                         return StaggeredEntryAnim(
                           key: ValueKey(tx.dbId ?? index),
                           index: index,
-                          child: TransactionCard(
+                          child: PrecisionTransactionCard(
                             transaction: tx,
                             onTap: () => _showTransactionDetail(context, tx),
                             onLongPress: () => _handleTransactionLongPress(context, ref, tx),
@@ -377,13 +377,13 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
         : categoryName;
 
     final selectedVaultId = ref.read(selectedVaultProvider);
-    FluidSheet.show(
+    PrecisionSheet.show(
       context: context,
       title: fullTitle,
-      child: TransactionDetailSheet(
+      child: PrecisionDetailSheet(
         transaction: tx,
         onEdit: () {
-          FluidSheet.show(
+          PrecisionSheet.show(
             context: context,
             title: AppLocalizations.of(context)!.edit,
             child: AddTransactionSheet(
@@ -456,13 +456,13 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
 
     final selectedVaultId = ref.read(selectedVaultProvider);
 
-    FluidSheet.show(
+    PrecisionSheet.show(
       context: context,
       title: tx.name,
-      child: TransactionDetailSheet(
+      child: PrecisionDetailSheet(
         transaction: tx,
         onEdit: () {
-          FluidSheet.show(
+          PrecisionSheet.show(
             context: context,
             title: AppLocalizations.of(context)!.edit,
             child: AddTransactionSheet(
@@ -526,7 +526,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
   }
 
   void _showVaultManagementSheet(BuildContext context) {
-    FluidSheet.show(
+    PrecisionSheet.show(
       context: context,
       title: AppLocalizations.of(context)!.visibilityManagement,
       child: const VaultVisibilitySheet(),
@@ -535,7 +535,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
 
   void _showAddVaultSheet(BuildContext context) {
     HapticFeedback.heavyImpact();
-    FluidSheet.show(
+    PrecisionSheet.show(
       context: context,
       title: 'Yeni Kasa',
       child: const AddVaultSheet(),
@@ -544,7 +544,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
 
   void _showVaultDetail(BuildContext context, String vaultId) {
     HapticFeedback.mediumImpact();
-    FluidSheet.show(
+    PrecisionSheet.show(
       context: context,
       title: 'Kasa Detayı',
       child: VaultDetailSheet(vaultId: vaultId),

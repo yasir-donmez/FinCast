@@ -4,25 +4,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/theme/app_constants.dart';
 import '../dashboard_providers.dart';
-import '../../../shared/widgets/fluid_container.dart';
-import '../../../shared/widgets/fluid_sheet.dart';
-import '../../../shared/widgets/fluid_button.dart';
+import '../../../shared/widgets/precision_surface.dart';
+import '../../../shared/widgets/precision_sheet.dart';
+import '../../../shared/widgets/precision_button.dart';
 import '../../../core/utils/icon_utils.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../core/database/database_service.dart';
 import '../../../core/providers/db_providers.dart';
 
-class ExpandableVaultGrid extends ConsumerStatefulWidget {
+class PrecisionVaultGrid extends ConsumerStatefulWidget {
   final List<DashboardItem> items;
 
-  const ExpandableVaultGrid({super.key, required this.items});
+  const PrecisionVaultGrid({super.key, required this.items});
 
   @override
-  ConsumerState<ExpandableVaultGrid> createState() =>
-      _ExpandableVaultGridState();
+  ConsumerState<PrecisionVaultGrid> createState() =>
+      _PrecisionVaultGridState();
 }
 
-class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
+class _PrecisionVaultGridState extends ConsumerState<PrecisionVaultGrid> {
   final Set<int> _selectedIndices =
       {}; // Sayfa başı veya satır başı bağımsız detay durumu
   late PageController _pageController;
@@ -473,7 +473,7 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppSizes.radiusLarge * 1.2),
         ),
-        child: FluidContainer(
+        child: PrecisionSurface(
           padding: EdgeInsets.zero,
           borderRadius: AppSizes.radiusLarge * 1.2,
           isGlass: true,
@@ -911,7 +911,7 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
   void _showLayoutSettings(DashboardItem item) {
     final l10n = AppLocalizations.of(context)!;
     HapticFeedback.heavyImpact();
-    FluidSheet.show(
+    PrecisionSheet.show(
       context: context,
       title: l10n.layoutAndSorting,
       child: Column(
@@ -928,36 +928,24 @@ class _ExpandableVaultGridState extends ConsumerState<ExpandableVaultGrid> {
             ],
           ),
           const SizedBox(height: 32),
-          FluidButton(
-            isSecondary: true,
+          PrecisionButton(
+            isPrimary: false,
             onTap: () {
               Navigator.pop(context);
               _moveVault(item, -1);
             },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.arrow_upward_rounded, size: 18),
-                const SizedBox(width: 8),
-                Text(l10n.moveForward),
-              ],
-            ),
+            leading: const Icon(Icons.arrow_upward_rounded, size: 18),
+            label: l10n.moveForward,
           ),
           const SizedBox(height: 12),
-          FluidButton(
-            isSecondary: true,
+          PrecisionButton(
+            isPrimary: false,
             onTap: () {
               Navigator.pop(context);
               _moveVault(item, 1);
             },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.arrow_downward_rounded, size: 18),
-                const SizedBox(width: 8),
-                Text(l10n.moveBackward),
-              ],
-            ),
+            leading: const Icon(Icons.arrow_downward_rounded, size: 18),
+            label: l10n.moveBackward,
           ),
           const SizedBox(height: 16),
         ],

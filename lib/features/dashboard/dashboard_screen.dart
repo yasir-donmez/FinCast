@@ -4,11 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_constants.dart';
 import '../../core/utils/currency_utils.dart';
 import '../../core/providers/db_providers.dart';
-import '../../shared/widgets/fluid_container.dart';
+import '../../shared/widgets/precision_surface.dart';
 import 'dashboard_providers.dart';
 import '../../core/providers/settings_provider.dart';
 import 'widgets/rotary_time_dial.dart';
-import 'widgets/expandable_vault_grid.dart';
+import 'widgets/precision_vault_grid.dart';
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -38,7 +38,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Positioned(
             top: -100,
             right: -50,
-            child: _LiquidBlob(
+            child: _PrecisionBlob(
               color: activeColor.withValues(alpha: 0.15),
               size: 300,
             ),
@@ -46,7 +46,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Positioned(
             bottom: 200,
             left: -100,
-            child: _LiquidBlob(
+            child: _PrecisionBlob(
               color: AppColors.getSecondary(context).withValues(alpha: 0.1),
               size: 400,
             ),
@@ -65,7 +65,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 // 1. Kasalar Alanı: Expanded flex ile alan yönetilir
                 Expanded(
                   flex: 40, 
-                  child: ExpandableVaultGrid(items: dashboardItems),
+                  child: PrecisionVaultGrid(items: dashboardItems),
                 ),
                 
                 const Spacer(flex: 2), // Nefes payı geri alındı (Flex: 2)
@@ -112,11 +112,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 }
 
 /// Arka planda süzülen sıvımsı renk kütlesi
-class _LiquidBlob extends StatelessWidget {
+class _PrecisionBlob extends StatelessWidget {
   final Color color;
   final double size;
 
-  const _LiquidBlob({required this.color, required this.size});
+  const _PrecisionBlob({required this.color, required this.size});
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +168,7 @@ class AnimatedCurrencySelector extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Sol: Para Birimi Simgesi (Sabit Boyut)
-          FluidContainer(
+          PrecisionSurface(
             width: 54,
             height: 54,
             padding: EdgeInsets.zero,

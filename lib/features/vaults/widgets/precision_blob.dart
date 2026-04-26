@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
-class LiquidBlob extends StatefulWidget {
+class PrecisionBlob extends StatefulWidget {
   final Color color;
   final double size;
-  const LiquidBlob({super.key, required this.color, required this.size});
+  const PrecisionBlob({super.key, required this.color, required this.size});
 
   @override
-  State<LiquidBlob> createState() => _LiquidBlobState();
+  State<PrecisionBlob> createState() => _PrecisionBlobState();
 }
 
-class _LiquidBlobState extends State<LiquidBlob> with SingleTickerProviderStateMixin {
+class _PrecisionBlobState extends State<PrecisionBlob> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override

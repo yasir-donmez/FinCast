@@ -1,112 +1,69 @@
-# FinCast Bileşen (Widget) Rehberi
+# FinCast Tasarım Sistemi (Precision Design System)
 
-Bu dosya, `lib/shared/widgets` klasöründeki ortak bileşenlerin ne işe yaradığını ve projede nerelerde kullanıldığını açıklar.
+Bu dosya, `lib/shared/widgets` klasöründeki profesyonel bileşenlerin ne işe yaradığını ve projede nerelerde kullanıldığını açıklar. Tüm bileşenler **Precision** (Hassasiyet) teması altında standartlaştırılmıştır.
 
 ## Ortak Bileşenler (`lib/shared/widgets`)
 
-### 1. CarvedContainer
-- **Ne İşe Yarar?**: "Oyulmuş" veya "gömülü" (neumorphic inset) efekti veren bir kapsayıcıdır. Nesnelerin arka planın içine gömülmüş gibi görünmesini sağlar.
-- **Nerede Kullanılır?**:
-  - `VaultsScreen` içinde boş işlem listesi gösterilirken kullanılan ikonun arka planında.
+### 1. PrecisionSurface
+- **Ne İşe Yarar?**: Tasarım sisteminin temel taşıdır. Glassmorphism (cam efekti), Squircle kavisler ve Soft-Depth (yumuşak derinlik) özelliklerini barındıran ana kapsayıcıdır.
+- **Eski Adı**: `FluidContainer`
 
-### 2. FluidAnimatedIcon
-- **Ne İşe Yarar?**: İki ikon arasında geçiş yaparken dönme, ölçeklenme ve şeffaflık animasyonları uygular.
-- **Nerede Kullanılır?**:
-  - `FluidSwitch` içinde durum değişimini görselleştirmek için.
+### 2. PrecisionSheet
+- **Ne İşe Yarar?**: Ekranın altından açılan, akıcı animasyonlu ve cam efektli paneldir. Klavye açıldığında otomatik olarak kendini yukarı kaydırır.
+- **Eski Adı**: `FluidSheet`
 
-### 3. FluidButton
-- **Ne İşe Yarar?**: Dokunulduğunda küçülen (scale) ve gölge derinliği değişen akışkan tasarımlı bir butondur. Cam (glassmorphism) efektini destekler.
-- **Nerede Kullanılır?**:
-  - Uygulama genelinde ana işlem butonlarında (örn: `AddTransactionSheet`).
+### 3. PrecisionToggle
+- **Ne İşe Yarar?**: "Jelly" (jöle) animasyonlu, dokunsal geri bildirimli modern açma/kapama anahtarıdır.
+- **Eski Adı**: `FluidSwitch`
 
-### 4. FluidContainer
-- **Ne İşe Yarar?**: Tasarım sisteminin temel taşıdır. Glassmorphism (cam efekti), Soft-Depth (yumuşak derinlik) ve Squircle (yuvarlatılmış kare) kavislerini birleştirir.
-- **Nerede Kullanılır?**:
-  - `FluidButton`, `FluidTextField`, `FluidDialog` gibi hemen hemen tüm modern bileşenlerin temelinde.
+### 4. PrecisionSegmentedControl
+- **Ne İşe Yarar?**: Birden fazla seçenek arasında kayan bir gösterge ile geçiş yapmayı sağlayan kontrol çubuğudur.
+- **Eski Adı**: `FluidTabSelector`
 
-### 5. FluidDialog
-- **Ne İşe Yarar?**: Estetik, cam efektli ve animasyonlu uyarı/onay pencereleri oluşturur.
-- **Nerede Kullanılır?**:
-  - İşlem silme onaylarında (`VaultsScreen`), hata mesajlarında ve genel kullanıcı bildirimlerinde.
+### 5. PrecisionButton
+- **Ne İşe Yarar?**: Minimalist, arka planı olmayan (ghost-style) premium butondur. Vurgu rengiyle parlar.
 
-### 6. FluidSheet
-- **Ne İşe Yarar?**: Ekranın altından açılan (bottom sheet) akışkan ve cam efektli panellerdir.
-- **Nerede Kullanılır?**:
-  - İşlem ekleme (`AddTransactionSheet`), Kasa detayları ve filtreleme ekranlarında.
+### 6. PrecisionAction
+- **Ne İşe Yarar?**: Herhangi bir nesneye tıklama özelliği, hafif küçülme ve parlama efekti ekleyen temel etkileşim sarmalayıcısıdır.
+- **Eski Adı**: `PrecisionClickable`
 
-### 7. FluidSwitch
-- **Ne İşe Yarar?**: "Jelly" (jöle) kıvamında animasyona sahip, dokunsal geri bildirimli (haptic) özel bir açma/kapama anahtarıdır.
-- **Nerede Kullanılır?**:
-  - Tema değişimi (`ThemeRevealButton`) ve ayarlardaki tüm switch'lerde.
+### 7. PrecisionGlassCard
+- **Ne İşe Yarar?**: Yüksek blur değerine sahip, premium cam efektli kart bileşenidir.
+- **Eski Adı**: `PremiumGlassCard`
 
-### 8. FluidTabSelector
-- **Ne İşe Yarar?**: İki veya daha fazla seçenek arasında kayan bir gösterge ile geçiş yapmayı sağlayan tab çubuğudur.
-- **Nerede Kullanılır?**:
-  - Gelir/Gider geçişlerinde (`TransactionTypeToggle`) ve period seçimlerinde.
-
-### 9. FluidTextField
+### 8. PrecisionInput
 - **Ne İşe Yarar?**: Odaklanıldığında parlayan, cam dokulu modern metin giriş alanıdır.
-- **Nerede Kullanılır?**:
-  - İsim, açıklama ve miktar girişlerinin yapıldığı formlarda.
 
-### 10. MembershipOrb
-- **Ne İşe Yarar?**: İçinde sıvı varmış gibi hareket eden, 3D görünümlü premium bir küre animasyonudur.
-- **Nerede Kullanılır?**:
-  - PRO/Premium üyelik tanıtım alanlarında (`DashboardScreen`).
+### 9. PrecisionPicker
+- **Ne İşe Yarar?**: "Slot Machine" tarzı dairesel seçim bileşenidir.
 
-### 11. NeuButton
-- **Ne İşe Yarar?**: Klasik neumorphic (fiziksel düğme gibi görünen) basılma etkili butondur.
-- **Nerede Kullanılır?**:
-  - Neumorphic tasarımlı nümerik klavyelerde (`NeumorphicNumpad`).
+### 10. PrecisionDialog
+- **Ne İşe Yarar?**: Ekranın ortasında beliren cam efektli onay ve uyarı pencereleridir.
 
-### 12. NeuContainer
-- **Ne İşe Yarar?**: Dışa çıkık (convex) veya içe çökük (concave/inner shadow) neumorphic alanlar oluşturur.
-- **Nerede Kullanılır?**:
-  - Eski nesil kart tasarımlarında ve fiziksel derinlik istenen alanlarda.
+### 11. PrecisionIconButton
+- **Ne İşe Yarar?**: Minimalist, sadece ikon ve parlamadan oluşan buton.
 
-### 13. NeuTextField
-- **Ne İşe Yarar?**: İçe çökük neumorphic zemin üzerine kurulmuş metin giriş alanıdır.
-- **Nerede Kullanılır?**:
-  - Neumorphic tasarım dilinin tercih edildiği giriş formlarında.
+### 12. PrecisionInset
+- **Ne İşe Yarar?**: İçeri gömülmüş (inner shadow) efekti veren neumorphic kapsayıcıdır.
+- **Eski Adı**: `CarvedContainer`
 
-### 14. PrecisionCard
-- **Ne İşe Yarar?**: Çok ince kenarlıklı, hafif cam efektli minimalist bir kart bileşenidir.
-- **Nerede Kullanılır?**:
-  - Ayarlar ekranı öğelerinde ve özet bilgilerinde (`ProfileScreen`).
+### 13. PrecisionThemeToggle
+- **Ne İşe Yarar?**: Tema değişimini dairesel bir "reveal" animasyonuyla gerçekleştiren özel kontrol.
+- **Eski Adı**: `ThemeRevealButton`
 
-### 15. PrecisionClickable
-- **Ne İşe Yarar?**: Herhangi bir widget'a tıklama özelliği, hafif küçülme efekti ve parlayıp sönme (flash) efekti ekler. `Stack` yapısı optimize edilmiştir.
-- **Nerede Kullanılır?**:
-  - Liste öğelerinde ve `PrecisionButton`'ın temelinde.
+### 14. PrecisionMembershipOrb
+- **Ne İşe Yarar?**: 3D görünümlü, hareketli premium küre animasyonu.
+- **Eski Adı**: `MembershipOrb`
 
-### 16. PrecisionButton
-- **Ne İşe Yarar?**: Uygulamanın yeni standart buton tarzıdır. Arka planı olmayan, sadece metin ve parlamadan oluşan (ghost-style) premium bir butondur.
-- **Özellikleri**: Olumlu aksiyonlar için renkli, olumsuz aksiyonlar için beyaz metin kullanır.
-- **Nerede Kullanılır?**:
-  - Tüm alt paneller (sheets) ve diyalog pencerelerinde.
-
-### 16. PremiumGlassCard
-- **Ne İşe Yarar?**: Yüksek bulanıklık (blur) değerine sahip, premium cam efektli karttır.
-- **Nerede Kullanılır?**:
-  - Dashboard üzerindeki ana kartlarda ve vurgulanmak istenen alanlarda.
-
-### 17. SliverAnimationSpacer
-- **Ne İşe Yarar?**: Kaydırılabilir listelerin (Sliver) altında boşluk oluşturarak, başlıkların (header) az içerik varken bile tam kapanmasını sağlar.
-- **Nerede Kullanılır?**:
-  - `CustomScrollView` kullanılan ana listelerin sonunda.
-
-### 18. ThemeRevealButton
-- **Ne İşe Yarar?**: Tema değişimini dairesel bir "maske silme" animasyonuyla (circular reveal) gerçekleştiren gelişmiş butondur.
-- **Nerede Kullanılır?**:
-  - Profil/Ayarlar ekranındaki tema değiştirme alanında.
+### 15. PrecisionAnimatedIcon
+- **Ne İşe Yarar?**: İki ikon arasında yumuşak rotasyon ve ölçeklenme ile geçiş yapar.
+- **Eski Adı**: `FluidAnimatedIcon`
 
 ---
 
 ## Özelliğe Özel Bileşenler
-
-Buna ek olarak, her özelliğin kendi klasöründe (`lib/features/.../widgets`) o özelliğe özel bileşenler bulunur:
-- **Vaults**: `TransactionCard`, `VaultDetailSheet`, `LiquidBlob`.
-- **Transactions**: `FluidNumpad`, `TransactionAmountInput`, `TransactionVaultSelector`.
-- **Optimization**: `AiInsightCard`, `LiquidConstraintTube`.
-- **Dashboard**: `ExpandableVaultGrid`.
-- **Auth**: `FluidFlipCard`.
+- **Vaults**: `PrecisionTransactionCard`, `PrecisionDetailSheet`, `PrecisionBlob`.
+- **Transactions**: `PrecisionAmountInput`.
+- **Optimization**: `PrecisionInsightCard`, `PrecisionReactorButton`, `PrecisionConstraintTube`.
+- **Dashboard**: `PrecisionVaultGrid`.
+- **Auth**: `PrecisionFlipCard`, `PrecisionBackground`, `PrecisionWave`.

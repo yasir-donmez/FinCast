@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_constants.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../shared/widgets/fluid_sheet.dart';
-import '../../../shared/widgets/precision_clickable.dart';
+import '../../../shared/widgets/precision_sheet.dart';
+import '../../../shared/widgets/precision_action.dart';
 import '../../../shared/widgets/precision_picker.dart';
 import '../../../shared/widgets/precision_button.dart';
 
@@ -320,7 +320,7 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
   }
 
   Widget _buildStandardRow(String label, String value, IconData icon, VoidCallback onTap) {
-    return PrecisionClickable(
+    return PrecisionAction(
       onTap: onTap,
       color: Colors.transparent,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -365,7 +365,7 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
     final bool isAnyOtherExpanded = _expandedPeriodCategory != null && !isThisExpanded;
     final String abb = label.isNotEmpty ? label[0].toUpperCase() : "";
 
-    return PrecisionClickable(
+    return PrecisionAction(
       onTap: () {
         HapticFeedback.selectionClick();
         setState(() {
@@ -486,7 +486,7 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
 
   Widget _buildPeriodBtnSheet(String label, int type) {
     final bool isActive = _periodType == type;
-    return PrecisionClickable(
+    return PrecisionAction(
       onTap: () {
         HapticFeedback.lightImpact();
         setState(() => _periodType = type);
@@ -507,7 +507,7 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
   }
 
   Widget _buildDurationBtn(IconData icon, VoidCallback onTap) {
-    return PrecisionClickable(
+    return PrecisionAction(
       onTap: onTap,
       width: 32,
       height: 32,
@@ -519,7 +519,7 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
 
   void _showWeekDayPicker(AppLocalizations l10n) {
     int tempDayIndex = _selectedDay - 1;
-    FluidSheet.show(
+    PrecisionSheet.show(
       context: context,
       title: l10n.selectDay,
       child: Column(
@@ -548,7 +548,7 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
   void _showDatePicker(AppLocalizations l10n) {
     int tempDay = _selectedDateForRecurrence.day;
     int tempMonth = _selectedDateForRecurrence.month;
-    FluidSheet.show(
+    PrecisionSheet.show(
       context: context,
       title: l10n.selectDate,
       child: Column(

@@ -5,7 +5,7 @@ import '../../core/theme/app_constants.dart';
 /// FinCast Yeni Nesil "Sıvı & Organik" Kapsayıcı (Fluid Container).
 /// Geleneksel Neumorphism'den uzaklaşıp, Squircle kavisler, 
 /// Soft-Depth (Yumuşak Derinlik) ve Glassmorphism dokusunu birleştirir.
-class FluidContainer extends StatelessWidget {
+class PrecisionSurface extends StatelessWidget {
   final Widget child;
   final double? width;
   final double? height;
@@ -18,9 +18,9 @@ class FluidContainer extends StatelessWidget {
   final List<BoxShadow>? extraShadows;
   final double blur;
   final double? borderWidth;
-  final Color? borderColor; // Yeni: Özel çerçeve rengi
+  final Color? borderColor;
 
-  const FluidContainer({
+  const PrecisionSurface({
     super.key,
     required this.child,
     this.width,

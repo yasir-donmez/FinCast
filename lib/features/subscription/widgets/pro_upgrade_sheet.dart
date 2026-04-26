@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_constants.dart';
 import '../../../core/services/subscription_service.dart';
-import '../../../shared/widgets/fluid_button.dart';
-import '../../../shared/widgets/fluid_sheet.dart';
-import '../../../shared/widgets/membership_orb.dart';
+import '../../../shared/widgets/precision_action.dart';
+import '../../../shared/widgets/precision_sheet.dart';
+import '../../../shared/widgets/precision_membership_orb.dart';
 
 /// FinCast "Pro Üyelik" (Paywall) Sayfası.
 class ProUpgradeSheet extends ConsumerWidget {
   const ProUpgradeSheet({super.key});
 
   static void show(BuildContext context) {
-    FluidSheet.show(
+    PrecisionSheet.show(
       context: context,
       child: const ProUpgradeSheet(),
     );
@@ -44,7 +44,7 @@ class ProUpgradeSheet extends ConsumerWidget {
                 children: [
                   Hero(
                     tag: 'pro_orb',
-                    child: MembershipOrb(
+                    child: PrecisionMembershipOrb(
                       color: primaryColor,
                       size: isSmallScreen ? 36 : 44,
                     ),
@@ -195,16 +195,15 @@ class ProUpgradeSheet extends ConsumerWidget {
   }) {
     final primaryColor = AppColors.getPrimary(context);
     
-    return FluidButton(
+    return PrecisionAction(
       onTap: () {
         if (!isCurrent && ref != null) {
           ref.read(subscriptionServiceProvider).setProStatus(true);
           Navigator.pop(context);
         }
       },
-      isSecondary: true,
       width: double.infinity,
-      padding: EdgeInsets.zero,
+      borderRadius: BorderRadius.circular(22),
       child: Stack(
         clipBehavior: Clip.none,
         children: [

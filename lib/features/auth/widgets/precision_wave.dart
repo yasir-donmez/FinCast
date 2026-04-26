@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 
 /// FinCast "Sıvı Geçiş Dalgası" (Liquid Transition Wave).
 /// Ekranın bir köşesinden başlayıp tüm ekranı kaplayan enerjik bir renk dalgası.
-class LiquidWave extends StatefulWidget {
+class PrecisionWave extends StatefulWidget {
   final AnimationController controller;
   final Color color;
   final bool isTriggered;
 
-  const LiquidWave({
+  const PrecisionWave({
     super.key,
     required this.controller,
     required this.color,
@@ -16,10 +16,10 @@ class LiquidWave extends StatefulWidget {
   });
 
   @override
-  State<LiquidWave> createState() => _LiquidWaveState();
+  State<PrecisionWave> createState() => _PrecisionWaveState();
 }
 
-class _LiquidWaveState extends State<LiquidWave> {
+class _PrecisionWaveState extends State<PrecisionWave> {
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
