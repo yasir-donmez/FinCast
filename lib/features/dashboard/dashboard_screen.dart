@@ -8,7 +8,7 @@ import '../../shared/widgets/precision_surface.dart';
 import 'dashboard_providers.dart';
 import '../../core/providers/settings_provider.dart';
 import 'widgets/rotary_time_dial.dart';
-import 'widgets/precision_vault_grid.dart';
+import 'widgets/dashboard_widget_board.dart';
 
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -21,7 +21,6 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
-    final dashboardItems = ref.watch(dashboardItemsProvider);
     final totalBalance = ref.watch(displayBalanceProvider);
     final bonus = ref.watch(simulationBonusProvider);
     final minBalance = ref.watch(netMinBalanceProvider) + bonus;
@@ -62,11 +61,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               children: [
                 const SizedBox(height: AppSizes.paddingSmall),
                 
-                // 1. Kasalar Alanı: Expanded flex ile alan yönetilir
-                Expanded(
-                  flex: 40, 
-                  child: PrecisionVaultGrid(items: dashboardItems),
-                ),
+                // 1. Widget Board (Yeni Modüler Alan)
+                const DashboardWidgetBoard(),
                 
                 const Spacer(flex: 2), // Nefes payı geri alındı (Flex: 2)
 

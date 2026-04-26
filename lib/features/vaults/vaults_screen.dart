@@ -10,7 +10,7 @@ import '../../shared/widgets/precision_inset.dart';
 import 'vaults_providers.dart';
 import 'widgets/precision_transaction_card.dart';
 import '../transactions/add_transaction_sheet.dart';
-import 'widgets/vault_visibility_sheet.dart';
+import '../dashboard/widgets/dashboard_widget_manager_sheet.dart';
 import 'widgets/add_vault_sheet.dart';
 import 'widgets/vault_detail_sheet.dart';
 import 'widgets/precision_detail_sheet.dart';
@@ -528,8 +528,8 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
   void _showVaultManagementSheet(BuildContext context) {
     PrecisionSheet.show(
       context: context,
-      title: AppLocalizations.of(context)!.visibilityManagement,
-      child: const VaultVisibilitySheet(),
+      title: 'Pano Düzenle', // AppLocalizations'dan alınabilir ancak şimdilik sabit metin uygun.
+      child: const DashboardWidgetManagerSheet(),
     );
   }
 

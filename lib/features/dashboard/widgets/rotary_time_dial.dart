@@ -67,8 +67,7 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> with SingleTick
       _currentAngle += delta;
       if (_currentAngle < 0) _currentAngle = 0;
 
-      double turns = _currentAngle / (2 * pi);
-      final activeColor = _getSmoothColor(turns);
+      final activeColor = _getFixedColor();
       
       if (ref.read(rotaryColorProvider) != activeColor) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -105,20 +104,8 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> with SingleTick
     });
   }
 
-  Color _getSmoothColor(double turns) {
-    if (turns <= 1.0) {
-      return Color.lerp(AppColors.primary, const Color(0xFF34C759), turns) ?? AppColors.primary;
-    }
-    final List<Color> rainbow = [
-      const Color(0xFF34C759), const Color(0xFFFFCC00), const Color(0xFFFF9500),
-      const Color(0xFFFF2D55), const Color(0xFFAF52DE), AppColors.primary, const Color(0xFF34C759),
-    ];
-    double progress = (turns - 1.0) % 1.0;
-    progress = progress * (rainbow.length - 1);
-    int lower = progress.floor().clamp(0, rainbow.length - 2);
-    int upper = lower + 1;
-    double fraction = progress - lower;
-    return Color.lerp(rainbow[lower], rainbow[upper], fraction) ?? rainbow.first;
+  Color _getFixedColor() {
+    return AppColors.primary;
   }
 
   String _getTimeLabel(double currentAngle) {
@@ -142,7 +129,7 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> with SingleTick
   @override
   Widget build(BuildContext context) {
     final timeLabel = _getTimeLabel(_currentAngle);
-    final activeColor = _getSmoothColor(_currentAngle / (2 * pi));
+    final activeColor = _getFixedColor();
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -197,7 +184,7 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> with SingleTick
                       ref.read(simulationBonusProvider.notifier).state = extraMultiplier;
                       
                       // Renk geçişini de sıfırlama sırasında senkronize et
-                      final activeColor = _getSmoothColor(_currentAngle / (2 * pi));
+                      final activeColor = _getFixedColor();
                       if (ref.read(rotaryColorProvider) != activeColor) {
                         ref.read(rotaryColorProvider.notifier).state = activeColor;
                       }

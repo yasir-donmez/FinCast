@@ -24,6 +24,7 @@ import '../../shared/widgets/precision_glass_card.dart';
 import '../../shared/widgets/precision_button.dart';
 
 import '../../shared/widgets/precision_picker.dart';
+import '../../shared/widgets/fluid_triple_toggle.dart';
 
 /// Hedef Odaklı Tasarruf Planlayıcı & AI Finansal Koç
 class OptimizationScreen extends ConsumerStatefulWidget {
@@ -605,8 +606,18 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
             ),
           ),
           const SizedBox(width: 12),
-          _fluidTripleToggle(
+          FluidTripleToggle(
+            icons: const [
+              Icons.lock_rounded,
+              Icons.drag_handle_rounded,
+              Icons.auto_fix_high_rounded,
+            ],
             selectedIndex: selectedIndex,
+            activeColors: [
+              AppColors.error,
+              AppColors.getTextSecondary(context).withValues(alpha: 0.6),
+              const Color(0xFF00E5FF),
+            ],
             onChanged: (index) {
               setState(() {
                 if (index == 0) {
@@ -621,86 +632,6 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
                 }
               });
             },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _fluidTripleToggle({
-    required int selectedIndex,
-    required ValueChanged<int> onChanged,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final List<IconData> icons = [
-      Icons.lock_rounded,
-      Icons.drag_handle_rounded,
-      Icons.auto_fix_high_rounded,
-    ];
-
-    // Renkler: Kırmızı (Lock), Gri (Eşit), Cyan (Magic)
-    final Color activeColor = selectedIndex == 0
-        ? AppColors.error
-        : (selectedIndex == 2
-            ? const Color(0xFF00E5FF)
-            : AppColors.getTextSecondary(context).withValues(alpha: 0.6));
-
-    // Sabit Matematik: Toplam 116px (108 iç alan + 8 padding)
-    const double segmentWidth = 36.0;
-    const double padding = 4.0;
-
-    return Container(
-      width: (segmentWidth * 3) + (padding * 2),
-      height: 40,
-      padding: const EdgeInsets.all(padding),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Mükemmel Hizalanmış Daire Gösterge
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 350),
-            curve: Curves.easeOutBack,
-            left: (selectedIndex * segmentWidth),
-            child: Container(
-              width: segmentWidth,
-              height: 32,
-              decoration: BoxDecoration(
-                color: selectedIndex == 1 
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : activeColor.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          // İkonlar (Daireyle Tam Senkron)
-          Row(
-            children: List.generate(3, (index) {
-              final isSelected = selectedIndex == index;
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  onChanged(index);
-                },
-                behavior: HitTestBehavior.opaque,
-                child: SizedBox(
-                  width: segmentWidth,
-                  height: 32,
-                  child: Center(
-                    child: Icon(
-                      icons[index],
-                      size: 18,
-                      color: isSelected
-                          ? activeColor
-                          : AppColors.getTextSecondary(context).withValues(alpha: 0.4),
-                    ),
-                  ),
-                ),
-              );
-            }),
           ),
         ],
       ),
