@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_constants.dart';
 import '../../../shared/widgets/precision_segmented_control.dart';
 import '../../../shared/widgets/precision_card.dart';
+import '../../../shared/widgets/precision_selector_field.dart';
 import '../../../shared/widgets/fluid_triple_toggle.dart';
 import '../providers/widget_layout_provider.dart';
 import 'dashboard_widget.dart'; // for DashboardWidgetSize
@@ -169,59 +170,59 @@ class _DashboardWidgetManagerSheetState extends ConsumerState<DashboardWidgetMan
               ),
             ],
           ),
-          SizedBox(height: 12 * scalingFactor),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12 * scalingFactor, vertical: 4 * scalingFactor),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8 * scalingFactor),
-                    border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int>(
-                      isExpanded: true,
-                      value: pageIndex,
-                      icon: Icon(Icons.arrow_drop_down_rounded, size: 20 * scalingFactor),
-                      items: List.generate(totalPages + 1, (index) {
-                        return DropdownMenuItem(
-                          value: index,
-                          child: Text(
-                            index == totalPages ? 'Yeni Sayfa' : 'Sayfa ${index + 1}',
-                            style: TextStyle(fontSize: 13 * scalingFactor, fontWeight: FontWeight.w600),
-                          ),
-                        );
-                      }),
-                      onChanged: (newVal) {
-                        if (newVal != null && newVal != pageIndex) {
-                          HapticFeedback.lightImpact();
-                          ref.read(widgetLayoutProvider.notifier).changeWidgetPage(widget.id, newVal);
-                        }
-                      },
+          const Divider(height: 1),
+          PrecisionSelectorField(
+            icon: Icons.layers_rounded,
+            label: 'Sayfa',
+            pickerWidth: 160,
+            items: const ['1', '2', '3', '4'],
+            selectedIndex: pageIndex.clamp(0, 3),
+            scalingFactor: scalingFactor,
+            onChanged: (newIdx) {
+              ref.read(widgetLayoutProvider.notifier).changeWidgetPage(widget.id, newIdx);
+            },
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 4 * scalingFactor),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.aspect_ratio_rounded,
+                  size: 18 * scalingFactor,
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+                ),
+                SizedBox(width: 12 * scalingFactor),
+                Expanded(
+                  child: Text(
+                    'BOYUT',
+                    style: TextStyle(
+                      fontSize: 11 * scalingFactor,
+                      fontWeight: FontWeight.w900,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                      letterSpacing: 1.0,
                     ),
                   ),
                 ),
-              ),
-              SizedBox(width: 12 * scalingFactor),
-              FluidTripleToggle(
-                labels: const ['S', 'W', 'L'],
-                selectedIndex: widget.size == DashboardWidgetSize.small ? 0 : widget.size == DashboardWidgetSize.wide ? 1 : 2,
-                activeColors: [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.primary,
-                ],
-                scalingFactor: scalingFactor,
-                onChanged: (index) {
-                  HapticFeedback.mediumImpact();
-                  final newSize = index == 0 ? DashboardWidgetSize.small : index == 1 ? DashboardWidgetSize.wide : DashboardWidgetSize.large;
-                  ref.read(widgetLayoutProvider.notifier).setWidgetSizeById(widget.id, newSize);
-                },
-              ),
-            ],
+                FluidTripleToggle(
+                  labels: const ['S', 'W', 'L'],
+                  selectedIndex: widget.size == DashboardWidgetSize.small ? 0 : widget.size == DashboardWidgetSize.wide ? 1 : 2,
+                  activeColors: [
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.primary,
+                  ],
+                  scalingFactor: scalingFactor,
+                  onChanged: (index) {
+                    HapticFeedback.mediumImpact();
+                    final newSize = index == 0 ? DashboardWidgetSize.small : index == 1 ? DashboardWidgetSize.wide : DashboardWidgetSize.large;
+                    ref.read(widgetLayoutProvider.notifier).setWidgetSizeById(widget.id, newSize);
+                  },
+                ),
+              ],
+            ),
           ),
+          const Divider(height: 1),
         ],
       ),
     );

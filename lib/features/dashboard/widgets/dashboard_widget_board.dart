@@ -28,7 +28,10 @@ class _DashboardWidgetBoardState extends ConsumerState<DashboardWidgetBoard> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = ref.watch(widgetLayoutProvider);
+    final allPages = ref.watch(widgetLayoutProvider);
+    // Boş olmayan sayfaları filtrele, eğer hiç dolu sayfa yoksa en az bir boş sayfa göster
+    final pages = allPages.where((p) => p.isNotEmpty).toList();
+    if (pages.isEmpty) pages.add([]);
 
     return LayoutBuilder(
       builder: (context, constraints) {
