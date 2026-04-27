@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/database/models/vault.dart';
-import '../../../shared/widgets/precision_inline_picker.dart';
+import '../../../shared/widgets/precision_picker_field.dart';
 
 class TransactionVaultSelector extends StatefulWidget {
   final List<Vault> vaults;
   final List<int> selectedVaultIds;
   final ValueChanged<List<int>> onChanged;
+  final double scalingFactor;
 
   const TransactionVaultSelector({
     super.key,
     required this.vaults,
     required this.selectedVaultIds,
     required this.onChanged,
+    this.scalingFactor = 1.0,
   });
 
   @override
@@ -20,25 +22,6 @@ class TransactionVaultSelector extends StatefulWidget {
 }
 
 class _TransactionVaultSelectorState extends State<TransactionVaultSelector> {
-  late FixedExtentScrollController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    final List<Vault?> vaultOptions = [null, ...widget.vaults];
-    int index = vaultOptions.indexWhere(
-      (v) => widget.selectedVaultIds.contains(v?.id),
-    );
-    if (index == -1) index = 0;
-    _controller = FixedExtentScrollController(initialItem: index);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final vaults = widget.vaults;
@@ -54,9 +37,12 @@ class _TransactionVaultSelectorState extends State<TransactionVaultSelector> {
     );
     if (currentIndex == -1) currentIndex = 0;
 
-    return PrecisionInlinePicker(
+    return PrecisionPickerField(
+      icon: Icons.account_balance_wallet_rounded,
+      label: l10n.vault,
       items: vaultOptions.map((v) => v?.name ?? l10n.allLabel).toList(),
       selectedIndex: currentIndex,
+      scalingFactor: widget.scalingFactor,
       onChanged: (index) {
         final vault = vaultOptions[index];
         if (vault == null) {
@@ -65,7 +51,6 @@ class _TransactionVaultSelectorState extends State<TransactionVaultSelector> {
           onChanged([vault.id]);
         }
       },
-      width: 120,
     );
   }
 }

@@ -528,7 +528,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
   void _showVaultManagementSheet(BuildContext context) {
     PrecisionSheet.show(
       context: context,
-      title: 'Pano Düzenle', // AppLocalizations'dan alınabilir ancak şimdilik sabit metin uygun.
+      title: 'Dashboard Edit', // Sade ve şık başlık
       child: const DashboardWidgetManagerSheet(),
     );
   }

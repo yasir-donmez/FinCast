@@ -4,7 +4,7 @@ import 'dashboard_widget.dart';
 import '../../../core/providers/db_providers.dart';
 import '../../../core/database/models/transaction_record.dart';
 import '../../../core/utils/currency_utils.dart';
-import '../../../shared/widgets/mini_segmented_control.dart';
+import '../../../shared/widgets/precision_mini_segmented_control.dart';
 
 class SpendingGiantsWidget extends ConsumerStatefulWidget {
   final DashboardWidgetSize size;
@@ -151,7 +151,7 @@ class _SpendingGiantsWidgetState extends ConsumerState<SpendingGiantsWidget> {
   }
 
   Widget _buildFilterTabs() {
-    return MiniSegmentedControl(
+    return PrecisionMiniSegmentedControl(
       items: const ['HAFTA', 'AY', 'YIL'],
       selectedIndex: _selectedFilterIndex,
       onChanged: (index) {

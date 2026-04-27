@@ -24,7 +24,7 @@ import '../../shared/widgets/precision_glass_card.dart';
 import '../../shared/widgets/precision_button.dart';
 
 import '../../shared/widgets/precision_picker.dart';
-import '../../shared/widgets/fluid_triple_toggle.dart';
+import '../../shared/widgets/precision_multi_toggle.dart';
 
 /// Hedef Odaklı Tasarruf Planlayıcı & AI Finansal Koç
 class OptimizationScreen extends ConsumerStatefulWidget {
@@ -606,7 +606,7 @@ class _OptimizationScreenState extends ConsumerState<OptimizationScreen>
             ),
           ),
           const SizedBox(width: 12),
-          FluidTripleToggle(
+          PrecisionMultiToggle(
             icons: const [
               Icons.lock_rounded,
               Icons.drag_handle_rounded,

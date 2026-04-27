@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-class MiniSegmentedControl extends StatelessWidget {
+class PrecisionMiniSegmentedControl extends StatelessWidget {
   final List<String> items;
   final int selectedIndex;
   final Function(int) onChanged;
   final double scalingFactor;
 
-  const MiniSegmentedControl({
+  const PrecisionMiniSegmentedControl({
     super.key,
     required this.items,
     required this.selectedIndex,

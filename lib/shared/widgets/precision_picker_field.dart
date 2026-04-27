@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'precision_fluid_segmented_control.dart';
+import 'precision_inline_picker.dart';
 
-class PrecisionSelectorField extends StatelessWidget {
+/// Precision Tasarım Sistemi'nin tekerlekli (wheel) seçici alan bileşeni.
+/// PrecisionSelectorField ile aynı yapıya sahiptir ancak sağ tarafta PrecisionInlinePicker kullanır.
+class PrecisionPickerField extends StatelessWidget {
   final IconData icon;
   final String label;
   final List<String> items;
@@ -10,7 +12,7 @@ class PrecisionSelectorField extends StatelessWidget {
   final double scalingFactor;
   final double pickerWidth;
 
-  const PrecisionSelectorField({
+  const PrecisionPickerField({
     super.key,
     required this.icon,
     required this.label,
@@ -24,7 +26,7 @@ class PrecisionSelectorField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4 * scalingFactor),
+      padding: EdgeInsets.symmetric(horizontal: 16 * scalingFactor, vertical: 8 * scalingFactor),
       child: Row(
         children: [
           Icon(
@@ -35,7 +37,7 @@ class PrecisionSelectorField extends StatelessWidget {
           SizedBox(width: 12 * scalingFactor),
           Expanded(
             child: Text(
-              label,
+              label.toUpperCase(),
               style: TextStyle(
                 fontSize: 11 * scalingFactor,
                 fontWeight: FontWeight.w900,
@@ -46,11 +48,14 @@ class PrecisionSelectorField extends StatelessWidget {
           ),
           SizedBox(
             width: pickerWidth * scalingFactor,
-            child: PrecisionFluidSegmentedControl(
+            height: 44 * scalingFactor,
+            child: PrecisionInlinePicker(
               items: items,
               selectedIndex: selectedIndex,
               onChanged: onChanged,
               scalingFactor: scalingFactor,
+              width: pickerWidth,
+              height: 44 * scalingFactor,
             ),
           ),
         ],

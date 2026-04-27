@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/theme/app_constants.dart';
-import '../../../shared/widgets/precision_card.dart';
+import '../../../shared/widgets/precision_input.dart';
 import '../../../l10n/app_localizations.dart';
 
 class TransactionAmountInput extends StatelessWidget {
@@ -49,32 +50,16 @@ class TransactionAmountInput extends StatelessWidget {
       height: 100,
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
-      child: TextFormField(
+      child: PrecisionInput(
         controller: amountController,
-        focusNode: amountFocusNode,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        hintText: "0",
+        icon: Icons.attach_money_rounded,
+        keyboardType: TextInputType.number,
+        inputFormatters: [_ThousandsSeparatorFormatter()],
         textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 56,
-          fontWeight: FontWeight.w900,
-          color: AppColors.getTextPrimary(context),
-          letterSpacing: -2.0,
-        ),
-        cursorColor: AppColors.getPrimary(context),
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          hintText: "0",
-          hintStyle: TextStyle(
-            color: AppColors.getTextSecondary(context).withValues(alpha: 0.2),
-          ),
-          prefixText: currency,
-          prefixStyle: TextStyle(
-            fontSize: 48,
-            fontWeight: FontWeight.w900,
-            color: AppColors.getPrimary(context).withValues(alpha: 0.5),
-            letterSpacing: -1.0,
-          ),
-        ),
+        fontSize: 56,
+        suffixText: currency,
+        showBackground: false,
       ),
     );
   }
@@ -112,50 +97,51 @@ class TransactionAmountInput extends StatelessWidget {
     String label,
     TextEditingController controller,
   ) {
-    return PrecisionCard(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              fontSize: 10,
-              color: AppColors.getPrimary(context).withValues(alpha: 0.7),
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.0,
-            ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 10,
+            color: AppColors.getPrimary(context).withValues(alpha: 0.7),
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.0,
           ),
-          const SizedBox(height: 4),
-          TextFormField(
-            controller: controller,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              color: AppColors.getTextPrimary(context),
-              letterSpacing: -0.5,
-            ),
-            cursorColor: AppColors.getPrimary(context),
-            decoration: InputDecoration(
-              isDense: true,
-              contentPadding: EdgeInsets.zero,
-              border: InputBorder.none,
-              hintText: "0",
-              hintStyle: TextStyle(
-                color: AppColors.getTextSecondary(context).withValues(alpha: 0.2),
-              ),
-              prefixText: "$currency ",
-              prefixStyle: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-                color: AppColors.getPrimary(context).withValues(alpha: 0.4),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 4),
+        PrecisionInput(
+          controller: controller,
+          hintText: "0",
+          icon: Icons.attach_money_rounded,
+          keyboardType: TextInputType.number,
+          inputFormatters: [_ThousandsSeparatorFormatter()],
+          textAlign: TextAlign.center,
+          fontSize: 24,
+          suffixText: currency,
+          showBackground: false,
+        ),
+      ],
+    );
+  }
+}
+
+class _ThousandsSeparatorFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    if (newValue.text.isEmpty) return newValue;
+
+    // Sadece sayıları al
+    String text = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (text.isEmpty) return newValue.copyWith(text: '');
+
+    // Binlik ayırıcı ekle (.)
+    final reg = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
+    String formatted = text.replaceAllMapped(reg, (Match m) => '${m[1]}.');
+
+    return newValue.copyWith(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

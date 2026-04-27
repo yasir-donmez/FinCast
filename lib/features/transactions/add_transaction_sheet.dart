@@ -378,48 +378,13 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
               child: Column(
                 children: [
                   // KASA
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 140, // Sabit genişlik ile alt alta hizalama
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.account_balance_wallet_rounded, 
-                                size: 20, 
-                                color: AppColors.getPrimary(context).withValues(alpha: 0.7),
-                              ),
-                              const SizedBox(width: 12),
-                              Flexible(
-                                child: Text(
-                                  l10n.vault.toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.getTextPrimary(context).withValues(alpha: 0.8),
-                                    letterSpacing: 0.5,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TransactionVaultSelector(
-                            vaults: _vaults,
-                            selectedVaultIds: _selectedVaultIds,
-                            onChanged: (ids) {
-                              setState(() => _selectedVaultIds = ids);
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
+                  TransactionVaultSelector(
+                    vaults: _vaults,
+                    selectedVaultIds: _selectedVaultIds,
+                    scalingFactor: scalingFactor,
+                    onChanged: (ids) {
+                      setState(() => _selectedVaultIds = ids);
+                    },
                   ),
                   Divider(
                     height: 1,
@@ -431,47 +396,12 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                         : Colors.black).withValues(alpha: 0.08),
                   ),
                   // PARA BİRİMİ
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 140, // Sabit genişlik ile üsttekiyle aynı hizalama
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.currency_exchange_rounded, 
-                                size: 20, 
-                                color: AppColors.getPrimary(context).withValues(alpha: 0.7),
-                              ),
-                              const SizedBox(width: 12),
-                              Flexible(
-                                child: Text(
-                                  l10n.currency.toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.getTextPrimary(context).withValues(alpha: 0.8),
-                                    letterSpacing: 0.5,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TransactionCurrencySelector(
-                            selectedCurrency: _selectedCurrency,
-                            onChanged: (val) {
-                              setState(() => _selectedCurrency = val);
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
+                  TransactionCurrencySelector(
+                    selectedCurrency: _selectedCurrency,
+                    scalingFactor: scalingFactor,
+                    onChanged: (val) {
+                      setState(() => _selectedCurrency = val);
+                    },
                   ),
                 ],
               ),
@@ -525,6 +455,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                           const SizedBox(height: 12),
                           TransactionPeriodSelector(
                             initialData: _periodData,
+                            scalingFactor: scalingFactor,
                             onChanged: (data) {
                               HapticFeedback.mediumImpact();
                               setState(() => _periodData = data);

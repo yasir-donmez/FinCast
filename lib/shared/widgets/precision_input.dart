@@ -31,10 +31,16 @@ class PrecisionInput extends StatefulWidget {
     this.onSubmitted,
     this.obscureText = false,
     this.errorText,
+    this.textAlign = TextAlign.start,
+    this.showBackground = true,
+    this.fontSize,
   });
 
   final bool obscureText;
   final String? errorText;
+  final TextAlign textAlign;
+  final bool showBackground;
+  final double? fontSize;
 
   @override
   State<PrecisionInput> createState() => _PrecisionInputState();
@@ -83,52 +89,12 @@ class _PrecisionInputState extends State<PrecisionInput> with SingleTickerProvid
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          PrecisionCard(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 2 * widget.scalingFactor),
-            child: TextField(
-              controller: widget.controller,
-              focusNode: _focusNode,
-              autofocus: widget.autofocus,
-              keyboardType: widget.keyboardType,
-              inputFormatters: widget.inputFormatters,
-              obscureText: widget.obscureText,
-              cursorColor: activeColor,
-              onSubmitted: (_) => widget.onSubmitted?.call(),
-              style: TextStyle(
-                fontWeight: FontWeight.w800, 
-                fontSize: 17 * widget.scalingFactor,
-                color: AppColors.getTextPrimary(context),
-              ),
-              decoration: InputDecoration(
-                icon: AnimatedPadding(
-                  duration: const Duration(milliseconds: 200),
-                  padding: EdgeInsets.only(left: _isFocused ? 4 : 0),
-                  curve: Curves.easeOutBack,
-                  child: Icon(
-                    widget.icon, 
-                    color: activeColor.withValues(alpha: _isFocused ? 0.9 : 0.4), 
-                    size: 22 * widget.scalingFactor
-                  ),
-                ),
-                hintText: widget.hintText,
-                hintStyle: TextStyle(
-                  fontWeight: FontWeight.w500, 
-                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.2), 
-                  fontSize: 15 * widget.scalingFactor
-                ),
-                suffixText: widget.suffixText,
-                suffixStyle: TextStyle(
-                  fontWeight: FontWeight.w900, 
-                  color: activeColor.withValues(alpha: _isFocused ? 0.9 : 0.4), 
-                  fontSize: 15 * widget.scalingFactor
-                ),
-                suffixIcon: widget.suffix,
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 8 * widget.scalingFactor),
-              ),
-            ),
-          ),
+          widget.showBackground 
+            ? PrecisionCard(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 2 * widget.scalingFactor),
+                child: _buildTextField(activeColor, isDark),
+              )
+            : _buildTextField(activeColor, isDark),
           // Hata Mesajı Bölümü - Daha şık ve animasyonlu
           AnimatedSize(
             duration: const Duration(milliseconds: 400),
@@ -164,6 +130,62 @@ class _PrecisionInputState extends State<PrecisionInput> with SingleTickerProvid
                 : const SizedBox.shrink(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTextField(Color activeColor, bool isDark) {
+    return TextField(
+      controller: widget.controller,
+      focusNode: _focusNode,
+      autofocus: widget.autofocus,
+      keyboardType: widget.keyboardType,
+      inputFormatters: widget.inputFormatters,
+      obscureText: widget.obscureText,
+      textAlign: widget.textAlign,
+      cursorColor: activeColor,
+      onSubmitted: (_) => widget.onSubmitted?.call(),
+      style: TextStyle(
+        fontWeight: FontWeight.w900, 
+        fontSize: widget.fontSize ?? (17 * widget.scalingFactor),
+        color: AppColors.getTextPrimary(context),
+        letterSpacing: widget.textAlign == TextAlign.center ? -1.0 : null,
+      ),
+      decoration: InputDecoration(
+        icon: widget.textAlign == TextAlign.center 
+          ? null 
+          : AnimatedPadding(
+              duration: const Duration(milliseconds: 200),
+              padding: EdgeInsets.only(left: _isFocused ? 4 : 0),
+              curve: Curves.easeOutBack,
+              child: Icon(
+                widget.icon, 
+                color: activeColor.withValues(alpha: _isFocused ? 0.9 : 0.4), 
+                size: 22 * widget.scalingFactor
+              ),
+            ),
+        hintText: widget.hintText,
+        hintStyle: TextStyle(
+          fontWeight: FontWeight.w500, 
+          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.2), 
+          fontSize: (widget.fontSize != null ? widget.fontSize! * 0.8 : 15 * widget.scalingFactor)
+        ),
+        prefixText: widget.textAlign == TextAlign.center ? widget.suffixText : null, // Center ise prefix olarak kullanabiliyoruz
+        prefixStyle: TextStyle(
+          fontWeight: FontWeight.w900, 
+          color: activeColor.withValues(alpha: 0.4), 
+          fontSize: (widget.fontSize != null ? widget.fontSize! * 0.8 : 15 * widget.scalingFactor)
+        ),
+        suffixText: widget.textAlign == TextAlign.center ? null : widget.suffixText,
+        suffixStyle: TextStyle(
+          fontWeight: FontWeight.w900, 
+          color: activeColor.withValues(alpha: _isFocused ? 0.9 : 0.4), 
+          fontSize: 15 * widget.scalingFactor
+        ),
+        suffixIcon: widget.suffix,
+        border: InputBorder.none,
+        isDense: true,
+        contentPadding: EdgeInsets.symmetric(vertical: 8 * widget.scalingFactor),
       ),
     );
   }

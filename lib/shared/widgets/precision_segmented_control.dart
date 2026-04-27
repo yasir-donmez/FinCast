@@ -40,7 +40,7 @@ class PrecisionSegmentedControl extends StatelessWidget {
             curve: Curves.easeInOutBack,
             alignment: selectedIndex == 0 ? Alignment.centerLeft : Alignment.centerRight,
             child: FractionallySizedBox(
-              widthFactor: 1 / tabs.length,
+              widthFactor: tabs.isEmpty ? 0 : 1 / tabs.length,
               child: Container(
                 height: 42 * scalingFactor,
                 margin: const EdgeInsets.symmetric(horizontal: 4),

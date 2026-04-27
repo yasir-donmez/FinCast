@@ -6,6 +6,7 @@ class PrecisionInlinePicker extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onChanged;
   final double width;
+  final double? height;
   final double scalingFactor;
 
   const PrecisionInlinePicker({
@@ -14,6 +15,7 @@ class PrecisionInlinePicker extends StatefulWidget {
     required this.selectedIndex,
     required this.onChanged,
     this.width = 120.0,
+    this.height,
     this.scalingFactor = 1.0,
   });
 
@@ -48,8 +50,11 @@ class _PrecisionInlinePickerState extends State<PrecisionInlinePicker> {
   Widget build(BuildContext context) {
     final activeColor = Theme.of(context).colorScheme.primary;
 
+    final actualHeight = widget.height ?? (64 * widget.scalingFactor);
+    final itemExtent = actualHeight / 2;
+
     return SizedBox(
-      height: 64 * widget.scalingFactor,
+      height: actualHeight,
       width: widget.width * widget.scalingFactor,
       child: Stack(
         alignment: Alignment.center,
@@ -57,7 +62,7 @@ class _PrecisionInlinePickerState extends State<PrecisionInlinePicker> {
           // Vurgu Çizgileri
           Container(
             width: widget.width * widget.scalingFactor,
-            height: 34 * widget.scalingFactor,
+            height: (actualHeight * 0.55),
             decoration: BoxDecoration(
               border: Border(
                 top: BorderSide(color: activeColor.withValues(alpha: 0.1), width: 0.8),
@@ -68,7 +73,7 @@ class _PrecisionInlinePickerState extends State<PrecisionInlinePicker> {
           
           ListWheelScrollView.useDelegate(
             controller: _controller,
-            itemExtent: 32 * widget.scalingFactor,
+            itemExtent: itemExtent,
             physics: const FixedExtentScrollPhysics(),
             perspective: 0.006,
             diameterRatio: 1.0,

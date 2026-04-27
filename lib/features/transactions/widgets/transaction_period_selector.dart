@@ -6,6 +6,7 @@ import '../../../shared/widgets/precision_sheet.dart';
 import '../../../shared/widgets/precision_action.dart';
 import '../../../shared/widgets/precision_picker.dart';
 import '../../../shared/widgets/precision_button.dart';
+import '../../../shared/widgets/precision_icon_button.dart';
 
 class TransactionPeriodData {
   final int periodType;
@@ -26,11 +27,13 @@ class TransactionPeriodData {
 class TransactionPeriodSelector extends StatefulWidget {
   final TransactionPeriodData initialData;
   final ValueChanged<TransactionPeriodData> onChanged;
+  final double scalingFactor;
 
   const TransactionPeriodSelector({
     super.key,
     required this.initialData,
     required this.onChanged,
+    this.scalingFactor = 1.0,
   });
 
   @override
@@ -43,6 +46,7 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
   late int _selectedDay;
   late DateTime _selectedDateForRecurrence;
   late int _duration;
+  int _prevDuration = 0;
 
   @override
   void initState() {
@@ -64,6 +68,7 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
     _selectedDay = widget.initialData.selectedDay;
     _selectedDateForRecurrence = widget.initialData.selectedDateForRecurrence;
     _duration = widget.initialData.duration;
+    _prevDuration = _duration;
   }
 
   void _notifyChanges() {
@@ -91,12 +96,13 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scalingFactor = widget.scalingFactor;
 
     return Column(
       children: [
         // --- ESNEK PERİYOT ŞERİDİ (INLINE EXPANSION) ---
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: EdgeInsets.symmetric(vertical: 8 * scalingFactor),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -120,218 +126,253 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
                 ],
               ),
               const SizedBox(height: 12),
-                Container(
-                  height: 44, // Alt seçeneklerin inline sığabilmesi için biraz daha uzun
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final List<Map<String, dynamic>> cats = [
-                        {'label': l10n.oneTime, 'type': 0, 'cat': null},
-                        {'label': l10n.day, 'type': 8, 'cat': 'gun'},
-                        {'label': l10n.week, 'type': 1, 'cat': 'hafta'},
-                        {'label': l10n.month, 'type': 2, 'cat': 'ay'},
-                        {'label': l10n.yearly, 'type': 3, 'cat': null},
-                      ];
-
-                      const double spacing = 4.0;
-                      final double totalWidth = constraints.maxWidth;
-                      final double availableWidth = totalWidth - (spacing * (cats.length - 1));
-
-                      // --- KARAKTER BAZLI HASSAS AĞIRLIK (CHAR-WEIGHTING) ---
-                      double getWeight(int i) {
-                        final c = cats[i];
-                        final bool isSelected = (c['cat'] == null)
-                            ? (_periodType == c['type'] && _expandedPeriodCategory == null)
-                            : (_expandedPeriodCategory == c['cat']);
-                        
-                        if (!isSelected) return 1.1;
-
-                        final String labelText = c['label'] as String;
-                        // Karakter sayısına göre esneklik ekle (Her harf için 0.15 ek yük)
-                        final double charWeight = labelText.length * 0.15;
-
-                        if (c['cat'] != null) {
-                          // Seçenekli olanlar (Gün/Hafta/Ay) + Karakter farkı
-                          return 3.1 + charWeight;
-                        } else {
-                          // Sabit metinler (Tek Seferlik/Yıllık) + Karakter farkı
-                          return 0.7 + charWeight;
-                        }
-                      }
-
-                      double totalWeight = 0;
-                      for (int i = 0; i < cats.length; i++) {
-                        totalWeight += getWeight(i);
-                      }
-
-                      // Genişlikleri ve sol pozisyonları hesapla
-                      List<double> widths = [];
-                      List<double> lefts = [];
-                      double currentLeft = 0;
-
-                      for (int i = 0; i < cats.length; i++) {
-                        double w = (getWeight(i) / totalWeight) * availableWidth;
-                        widths.add(w);
-                        lefts.add(currentLeft);
-                        currentLeft += w + spacing;
-                      }
-
-                      return Stack(
-                        children: List.generate(cats.length, (index) {
-                          return AnimatedPositioned(
-                            duration: const Duration(milliseconds: 700),
-                            curve: Curves.easeInOutQuart,
-                            left: lefts[index],
-                            width: widths[index],
-                            top: 0,
-                            bottom: 0,
-                            child: _buildAnimatedCategoryBtnInner(cats[index]),
-                          );
-                        }),
-                      );
-                    },
-                  ),
+              Container(
+                height: 44 * scalingFactor,
+                padding: EdgeInsets.all(4 * scalingFactor),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12 * scalingFactor),
                 ),
-              ],
-            ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final List<Map<String, dynamic>> cats = [
+                      {'label': l10n.oneTime, 'type': 0, 'cat': null},
+                      {'label': l10n.day, 'type': 8, 'cat': 'gun'},
+                      {'label': l10n.week, 'type': 1, 'cat': 'hafta'},
+                      {'label': l10n.month, 'type': 2, 'cat': 'ay'},
+                      {'label': l10n.yearly, 'type': 3, 'cat': null},
+                    ];
+
+                    final double spacing = 4.0 * scalingFactor;
+                    final double totalWidth = constraints.maxWidth;
+                    final double availableWidth = totalWidth - (spacing * (cats.length - 1));
+
+                    // Karakter bazlı ağırlıklandırma (Precision uyumlu)
+                    double getWeight(int i) {
+                      final c = cats[i];
+                      final bool isSelected = (c['cat'] == null)
+                          ? (_periodType == c['type'] && _expandedPeriodCategory == null)
+                          : (_expandedPeriodCategory == c['cat']);
+                      
+                      if (!isSelected) return 1.0;
+
+                      final String labelText = c['label'] as String;
+                      final double charWeight = labelText.length * 0.12;
+
+                      if (c['cat'] != null) {
+                        return 3.2 + charWeight;
+                      } else {
+                        return 0.8 + charWeight;
+                      }
+                    }
+
+                    double totalWeight = 0;
+                    for (int i = 0; i < cats.length; i++) {
+                      totalWeight += getWeight(i);
+                    }
+
+                    List<double> widths = [];
+                    List<double> lefts = [];
+                    double currentLeft = 0;
+
+                    for (int i = 0; i < cats.length; i++) {
+                      double w = (getWeight(i) / totalWeight) * availableWidth;
+                      widths.add(w);
+                      lefts.add(currentLeft);
+                      currentLeft += w + spacing;
+                    }
+
+                    return Stack(
+                      children: List.generate(cats.length, (index) {
+                        return AnimatedPositioned(
+                          duration: const Duration(milliseconds: 600),
+                          curve: Curves.easeInOutQuart,
+                          left: lefts[index],
+                          width: widths[index],
+                          top: 0,
+                          bottom: 0,
+                          child: _buildAnimatedCategoryBtnInner(cats[index], scalingFactor),
+                        );
+                      }),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
+        ),
 
-          // --- EKSTRA AYARLAR (ANİMASYONLU GENİŞLEME) ---
-          AnimatedSize(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOutQuart,
-            alignment: Alignment.topCenter,
-            child: _periodType == 0 
-              ? const SizedBox.shrink() // Tek seferlikte tamamen kapanır (0 px)
-              : Column(
-                  children: [
-                    // AYIRICI
-                    Divider(
-                      height: 1,
-                      thickness: 0.5,
-                      indent: 16,
-                      endIndent: 16,
-                      color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+        // --- EKSTRA AYARLAR (ANİMASYONLU GENİŞLEME) ---
+        AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOutQuart,
+          alignment: Alignment.topCenter,
+          child: _periodType == 0 
+            ? const SizedBox.shrink() // Tek seferlikte tamamen kapanır (0 px)
+            : Column(
+                children: [
+                  // AYIRICI
+                  Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+                  ),
+
+                  // 3. SATIR: DETAY SEÇİCİ (GÜN/TARİH)
+                  if (_periodType == 1 || [4, 5].contains(_periodType)) 
+                    _buildStandardRow(
+                      l10n.dayOfWeek,
+                      _getWeekDays(l10n)[_selectedDay - 1],
+                      Icons.calendar_view_week_rounded,
+                      () => _showWeekDayPicker(l10n),
                     ),
-
-                    // 3. SATIR: DETAY SEÇİCİ (GÜN/TARİH)
-                    if (_periodType == 1 || [4, 5].contains(_periodType)) 
-                      _buildStandardRow(
-                        l10n.dayOfWeek,
-                        _getWeekDays(l10n)[_selectedDay - 1],
-                        Icons.calendar_view_week_rounded,
-                        () => _showWeekDayPicker(l10n),
-                      ),
-                    if ([2, 3, 6, 7, 9, 10].contains(_periodType))
-                      _buildStandardRow(
-                        [2, 6, 7, 9, 10].contains(_periodType) ? l10n.dayOfMonth : l10n.dayOfYear,
-                        _periodType == 3
-                            ? "${_selectedDateForRecurrence.day} ${_getMonths(l10n)[_selectedDateForRecurrence.month - 1]}"
-                            : "${l10n.dayOf} ${_selectedDateForRecurrence.day}",
-                        Icons.calendar_month_rounded,
-                        () => _showDatePicker(l10n),
-                      ),
-                    
-                    // AYIRICI (Süre öncesi)
-                    Divider(
-                      height: 1,
-                      thickness: 0.5,
-                      indent: 16,
-                      endIndent: 16,
-                      color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+                  if ([2, 3, 6, 7, 9, 10].contains(_periodType))
+                    _buildStandardRow(
+                      [2, 6, 7, 9, 10].contains(_periodType) ? l10n.dayOfMonth : l10n.dayOfYear,
+                      _periodType == 3
+                          ? "${_selectedDateForRecurrence.day} ${_getMonths(l10n)[_selectedDateForRecurrence.month - 1]}"
+                          : "${l10n.dayOf} ${_selectedDateForRecurrence.day}",
+                      Icons.calendar_month_rounded,
+                      () => _showDatePicker(l10n),
                     ),
+                  
+                  // AYIRICI (Süre öncesi)
+                  Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+                  ),
 
-                  // 4. SATIR: BİTİŞ SÜRESİ
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.timer_rounded,
-                          size: 20,
-                          color: AppColors.getPrimary(context).withValues(alpha: 0.7),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                l10n.duration,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.getTextPrimary(context),
-                                ),
-                              ),
-                              Text(
-                                _duration == 0 ? l10n.repeatsIndefinitely : '$_duration ${l10n.endsAfter}',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.getTextSecondary(context).withValues(alpha: 0.6),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Row(
+                // 4. SATIR: BİTİŞ SÜRESİ
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16 * scalingFactor, vertical: 12 * scalingFactor),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.timer_rounded,
+                        size: 20 * scalingFactor,
+                        color: AppColors.getPrimary(context).withValues(alpha: 0.7),
+                      ),
+                      SizedBox(width: 12 * scalingFactor),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildDurationBtn(Icons.remove_rounded, () {
-                              if (_duration > 0) {
-                                setState(() { _duration--; });
-                                _notifyChanges();
-                              }
-                            }),
-                            const SizedBox(width: 8),
-                            SizedBox(
-                              width: 32,
-                              child: Center(
+                            Text(
+                              l10n.duration,
+                              style: TextStyle(
+                                fontSize: 15 * scalingFactor,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.getTextPrimary(context),
+                              ),
+                            ),
+                            Text(
+                              _duration == 0 ? l10n.repeatsIndefinitely : '$_duration ${l10n.endsAfter}',
+                              style: TextStyle(
+                                fontSize: 11 * scalingFactor,
+                                color: AppColors.getTextSecondary(context).withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          _buildDurationBtn(Icons.remove_rounded, () {
+                            if (_duration > 0) {
+                              setState(() { 
+                                _prevDuration = _duration;
+                                _duration--; 
+                              });
+                              _notifyChanges();
+                            }
+                          }, scalingFactor),
+                          SizedBox(width: 8 * scalingFactor),
+                          SizedBox(
+                            width: 32 * scalingFactor,
+                            child: Center(
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 300),
+                                transitionBuilder: (Widget child, Animation<double> animation) {
+                                  // Artış mı azalış mı kontrolü
+                                  final isEntering = child.key == ValueKey<int>(_duration);
+                                  final isIncreasing = _duration >= _prevDuration;
+                                  
+                                  // Gelen ve giden widget'lar için yön belirleme
+                                  double beginOffset = isIncreasing ? -1.0 : 1.0;
+                                  if (!isEntering) beginOffset = -beginOffset;
+
+                                  return ClipRect(
+                                    child: SlideTransition(
+                                      position: Tween<Offset>(
+                                        begin: Offset(0.0, beginOffset),
+                                        end: Offset.zero,
+                                      ).animate(CurvedAnimation(
+                                        parent: animation,
+                                        curve: Curves.easeInOutQuart,
+                                      )),
+                                      child: FadeTransition(
+                                        opacity: animation,
+                                        child: ScaleTransition(
+                                          scale: Tween<double>(begin: 0.9, end: 1.0).animate(animation),
+                                          child: child,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
                                 child: Text(
                                   _duration == 0 ? "∞" : _duration.toString(),
+                                  key: ValueKey<int>(_duration),
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 16 * scalingFactor,
                                     fontWeight: FontWeight.w900,
                                     color: AppColors.getPrimary(context),
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            _buildDurationBtn(Icons.add_rounded, () {
-                              if (_duration < 120) {
-                                setState(() { _duration++; });
-                                _notifyChanges();
-                              }
-                            }),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                          SizedBox(width: 8 * scalingFactor),
+                          _buildDurationBtn(Icons.add_rounded, () {
+                            if (_duration < 120) {
+                              setState(() { 
+                                _prevDuration = _duration;
+                                _duration++; 
+                              });
+                              _notifyChanges();
+                            }
+                          }, scalingFactor),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-        ],
-      );
+          ),
+      ],
+    );
   }
 
   Widget _buildStandardRow(String label, String value, IconData icon, VoidCallback onTap) {
+    final scalingFactor = widget.scalingFactor;
     return PrecisionAction(
       onTap: onTap,
       color: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16 * scalingFactor, vertical: 12 * scalingFactor),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: AppColors.getPrimary(context).withValues(alpha: 0.7)),
-          const SizedBox(width: 12),
+          Icon(
+            icon,
+            size: 20 * scalingFactor,
+            color: AppColors.getPrimary(context).withValues(alpha: 0.7),
+          ),
+          SizedBox(width: 12 * scalingFactor),
           Text(
             label,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 15 * scalingFactor,
               fontWeight: FontWeight.w600,
               color: AppColors.getTextPrimary(context),
             ),
@@ -340,19 +381,19 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 14 * scalingFactor,
               fontWeight: FontWeight.w900,
               color: AppColors.getPrimary(context),
             ),
           ),
-          const SizedBox(width: 4),
-          Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.getPrimary(context).withValues(alpha: 0.5)),
+          SizedBox(width: 4 * scalingFactor),
+          Icon(Icons.chevron_right_rounded, size: 16 * scalingFactor, color: AppColors.getPrimary(context).withValues(alpha: 0.5)),
         ],
       ),
     );
   }
 
-  Widget _buildAnimatedCategoryBtnInner(Map<String, dynamic> catData) {
+  Widget _buildAnimatedCategoryBtnInner(Map<String, dynamic> catData, double scalingFactor) {
     final l10n = AppLocalizations.of(context)!;
     final String label = catData['label'];
     final int type = catData['type'];
@@ -388,12 +429,12 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 600),
         curve: Curves.easeInOutQuart,
-        alignment: Alignment.centerLeft, // Yazı hep solda kalsın, sağa doğru genişlesin
+        alignment: Alignment.centerLeft,
         decoration: BoxDecoration(
           color: isThisExpanded 
               ? AppColors.getPrimary(context).withValues(alpha: 0.15) 
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(8 * scalingFactor),
           border: Border.all(
             color: isThisExpanded 
                 ? AppColors.getPrimary(context).withValues(alpha: 0.2) 
@@ -402,7 +443,7 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
           ),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(8 * scalingFactor),
           child: Center(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -411,7 +452,7 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8 * scalingFactor),
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 250),
                     child: Text(
@@ -419,7 +460,7 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
                       key: ValueKey((isAnyOtherExpanded) ? abb : label),
                       maxLines: 1,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 11 * scalingFactor,
                         fontWeight: isThisExpanded ? FontWeight.w900 : FontWeight.w600,
                         color: isThisExpanded ? AppColors.getPrimary(context) : AppColors.getTextSecondary(context).withValues(alpha: 0.6),
                         letterSpacing: -0.5,
@@ -435,15 +476,15 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
                       ? Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const SizedBox(width: 6),
-                            Container(width: 1, height: 12, color: AppColors.getPrimary(context).withValues(alpha: 0.3)),
-                            const SizedBox(width: 4),
-                            _buildSubPeriodInlineOptions(category, l10n),
+                            SizedBox(width: 6 * scalingFactor),
+                            Container(width: 1, height: 12 * scalingFactor, color: AppColors.getPrimary(context).withValues(alpha: 0.3)),
+                            SizedBox(width: 4 * scalingFactor),
+                            _buildSubPeriodInlineOptions(category, l10n, scalingFactor),
                           ],
                         )
                       : const SizedBox.shrink(),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8 * scalingFactor),
                 ],
               ),
             ),
@@ -453,38 +494,38 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
     );
   }
 
-  Widget _buildSubPeriodInlineOptions(String category, AppLocalizations l10n) {
+  Widget _buildSubPeriodInlineOptions(String category, AppLocalizations l10n, double scalingFactor) {
     List<Widget> options = [];
     if (category == 'gun') {
       final d = l10n.day[0].toUpperCase();
       options = [
-        _buildPeriodBtnSheet('1$d', 8),
-        _buildPeriodBtnSheet('2$d', 9),
-        _buildPeriodBtnSheet('3$d', 10),
+        _buildPeriodBtnSheet('1$d', 8, scalingFactor),
+        _buildPeriodBtnSheet('2$d', 9, scalingFactor),
+        _buildPeriodBtnSheet('3$d', 10, scalingFactor),
       ];
     } else if (category == 'hafta') {
       final h = l10n.week[0].toUpperCase();
       options = [
-        _buildPeriodBtnSheet('1$h', 1),
-        _buildPeriodBtnSheet('2$h', 4),
-        _buildPeriodBtnSheet('3$h', 5),
+        _buildPeriodBtnSheet('1$h', 1, scalingFactor),
+        _buildPeriodBtnSheet('2$h', 4, scalingFactor),
+        _buildPeriodBtnSheet('3$h', 5, scalingFactor),
       ];
     } else if (category == 'ay') {
       final a = l10n.month[0].toUpperCase();
       options = [
-        _buildPeriodBtnSheet('1$a', 2),
-        _buildPeriodBtnSheet('3$a', 6),
-        _buildPeriodBtnSheet('6$a', 7),
+        _buildPeriodBtnSheet('1$a', 2, scalingFactor),
+        _buildPeriodBtnSheet('3$a', 6, scalingFactor),
+        _buildPeriodBtnSheet('6$a', 7, scalingFactor),
       ];
     }
 
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: options.expand((w) => [w, const SizedBox(width: 4)]).toList()..removeLast(),
+      children: options.expand((w) => [w, SizedBox(width: 4 * scalingFactor)]).toList()..removeLast(),
     );
   }
 
-  Widget _buildPeriodBtnSheet(String label, int type) {
+  Widget _buildPeriodBtnSheet(String label, int type, double scalingFactor) {
     final bool isActive = _periodType == type;
     return PrecisionAction(
       onTap: () {
@@ -493,12 +534,12 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
         _notifyChanges();
       },
       color: isActive ? AppColors.getPrimary(context).withValues(alpha: 0.2) : Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
-      borderRadius: BorderRadius.circular(6),
+      padding: EdgeInsets.symmetric(horizontal: 5 * scalingFactor, vertical: 4 * scalingFactor),
+      borderRadius: BorderRadius.circular(6 * scalingFactor),
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 9.5,
+          fontSize: 9.5 * scalingFactor,
           fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
           color: isActive ? AppColors.getPrimary(context) : AppColors.getTextSecondary(context).withValues(alpha: 0.8),
         ),
@@ -506,14 +547,14 @@ class _TransactionPeriodSelectorState extends State<TransactionPeriodSelector> {
     );
   }
 
-  Widget _buildDurationBtn(IconData icon, VoidCallback onTap) {
-    return PrecisionAction(
+  Widget _buildDurationBtn(IconData icon, VoidCallback onTap, double scalingFactor) {
+    return PrecisionIconButton(
+      icon: icon,
       onTap: onTap,
-      width: 32,
-      height: 32,
-      color: AppColors.getPrimary(context).withValues(alpha: 0.1),
-      borderRadius: BorderRadius.circular(8),
-      child: Icon(icon, size: 18, color: AppColors.getPrimary(context)),
+      size: 18 * scalingFactor,
+      padding: 7 * scalingFactor,
+      borderRadius: 8 * scalingFactor,
+      color: AppColors.getPrimary(context),
     );
   }
 

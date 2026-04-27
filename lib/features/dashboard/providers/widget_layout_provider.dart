@@ -48,36 +48,118 @@ class WidgetLayoutNotifier extends StateNotifier<List<List<WidgetConfig>>> {
   }
 
   void _normalize(List<WidgetConfig> widgets) {
-    // 1. Sıralama (Sayfa -> ID)
+    // 1. Sıralama (Sayfa numarasına göre, aynı sayfadakiler ID'ye göre)
+    // Bu sıralama "itilme" sırasını belirler.
     widgets.sort((a, b) {
       if (a.page != b.page) return a.page.compareTo(b.page);
       return a.id.compareTo(b.id);
     });
 
-    final List<List<WidgetConfig>> newPages = [[], [], [], []];
+    List<List<WidgetConfig>> pages = [[], [], [], []];
     List<WidgetConfig> overflow = [];
-    
-    // Maksimum 4 sayfa (0, 1, 2, 3)
-    for (int pageIdx = 0; pageIdx < 4; pageIdx++) {
-      int currentWeight = 0;
-      final candidateWidgets = [
-        ...widgets.where((w) => w.page == pageIdx),
-        ...overflow
-      ];
-      overflow = []; 
 
-      for (var w in candidateWidgets) {
+    // CASCADE PUSH: Zincirleme iteleme mantığı
+    void performCascadePush(List<WidgetConfig> allWidgets) {
+      List<List<WidgetConfig>> newPages = [[], [], [], []];
+      int currentPage = 0;
+      int currentWeight = 0;
+      List<WidgetConfig> currentOverflow = [];
+
+      for (var w in allWidgets) {
         final wWeight = _getWeight(w.size);
-        if (currentWeight + wWeight <= 4) {
-          newPages[pageIdx].add(w.copyWith(page: pageIdx));
+        
+        // Eğer widget'ın istediği sayfa henüz gelmediyse ve biz daha gerideysek,
+        // o sayfaya kadar atlayabiliriz (Eğer arada başka widget yoksa)
+        if (w.page > currentPage && currentWeight == 0) {
+          currentPage = w.page.clamp(0, 3);
+        }
+
+        // Sayfa doluysa bir sonrakine it
+        while (currentPage < 4 && currentWeight + wWeight > 4) {
+          currentPage++;
+          currentWeight = 0;
+        }
+
+        if (currentPage < 4) {
+          newPages[currentPage].add(w.copyWith(page: currentPage));
           currentWeight += wWeight;
         } else {
-          overflow.add(w.copyWith(page: pageIdx + 1));
+          currentOverflow.add(w);
         }
       }
+      pages = newPages;
+      overflow = currentOverflow;
     }
-    // 4 sayfa dolduysa ve hala overflow varsa, onlar eklenmez (silinir)
-    state = newPages;
+
+    // 1. TUR: İteleme ile yerleştir
+    performCascadePush(widgets);
+
+    // 2. ADIM: Geriye dönük iteleme (Boşlukları doldurarak kurtar)
+    if (overflow.isNotEmpty) {
+      final allToResqueeze = [...pages.expand((p) => p), ...overflow];
+      // "En baştan başla ve hiç boşluk bırakmadan doldur" (Squeeze)
+      List<List<WidgetConfig>> squeezedPages = [[], [], [], []];
+      int cP = 0;
+      int cW = 0;
+      List<WidgetConfig> finalOverflow = [];
+
+      for (var w in allToResqueeze) {
+        final wWeight = _getWeight(w.size);
+        while (cP < 4 && cW + wWeight > 4) {
+          cP++;
+          cW = 0;
+        }
+        if (cP < 4) {
+          squeezedPages[cP].add(w.copyWith(page: cP));
+          cW += wWeight;
+        } else {
+          finalOverflow.add(w);
+        }
+      }
+      pages = squeezedPages;
+      overflow = finalOverflow;
+    }
+
+    // 3. ADIM: Otomatik Küçültme (Son çare)
+    if (overflow.isNotEmpty) {
+      List<WidgetConfig> allToFix = [...pages.expand((p) => p), ...overflow];
+      bool canShrinkMore = true;
+      while (overflow.isNotEmpty && canShrinkMore) {
+        canShrinkMore = false;
+        // Küçültme önceliği: En büyükleri küçült
+        for (int i = 0; i < allToFix.length; i++) {
+          final w = allToFix[i];
+          if (w.size == DashboardWidgetSize.large) {
+            allToFix[i] = w.copyWith(size: DashboardWidgetSize.wide);
+            canShrinkMore = true;
+            break;
+          } else if (w.size == DashboardWidgetSize.wide) {
+            allToFix[i] = w.copyWith(size: DashboardWidgetSize.small);
+            canShrinkMore = true;
+            break;
+          }
+        }
+        
+        // Küçülttükten sonra tekrar iteleme ve sıkıştırma dene
+        performCascadePush(allToFix);
+        if (overflow.isNotEmpty) {
+          // Hala sığmıyorsa tekrar sıkıştır
+          final allTemp = [...pages.expand((p) => p), ...overflow];
+          List<List<WidgetConfig>> tempPages = [[], [], [], []];
+          int tP = 0; int tW = 0; List<WidgetConfig> tO = [];
+          for (var tw in allTemp) {
+            final twW = _getWeight(tw.size);
+            while (tP < 4 && tW + twW > 4) { tP++; tW = 0; }
+            if (tP < 4) { tempPages[tP].add(tw.copyWith(page: tP)); tW += twW; }
+            else { tO.add(tw); }
+          }
+          pages = tempPages; overflow = tO;
+        }
+        allToFix = [...pages.expand((p) => p), ...overflow];
+      }
+    }
+
+    state = pages;
   }
 
   void removeWidget(String id) {

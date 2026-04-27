@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class FluidSegmentedControl extends StatelessWidget {
+class PrecisionFluidSegmentedControl extends StatelessWidget {
   final List<String> items;
   final int selectedIndex;
   final ValueChanged<int> onChanged;
   final double scalingFactor;
 
-  const FluidSegmentedControl({
+  const PrecisionFluidSegmentedControl({
     super.key,
     required this.items,
     required this.selectedIndex,
@@ -30,7 +30,9 @@ class FluidSegmentedControl extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final double totalWidth = constraints.maxWidth;
-          final double itemWidth = totalWidth / items.length;
+          final double itemWidth = items.isEmpty ? 0 : totalWidth / items.length;
+
+          if (items.isEmpty) return const SizedBox();
 
           return Stack(
             children: [

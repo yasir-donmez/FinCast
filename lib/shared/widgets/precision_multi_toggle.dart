@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class FluidTripleToggle extends StatelessWidget {
+class PrecisionMultiToggle extends StatelessWidget {
   final List<String>? labels;
   final List<IconData>? icons;
   final int selectedIndex;
@@ -9,7 +9,7 @@ class FluidTripleToggle extends StatelessWidget {
   final List<Color>? activeColors;
   final double scalingFactor;
 
-  const FluidTripleToggle({
+  const PrecisionMultiToggle({
     super.key,
     this.labels,
     this.icons,
@@ -17,27 +17,23 @@ class FluidTripleToggle extends StatelessWidget {
     required this.onChanged,
     this.activeColors,
     this.scalingFactor = 1.0,
-  }) : assert(labels != null || icons != null, 'Either labels or icons must be provided'),
-       assert((labels?.length ?? icons?.length) == 3, 'Must have exactly 3 items');
+  }) : assert(labels != null || icons != null, 'Either labels or icons must be provided');
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final int itemCount = labels?.length ?? icons?.length ?? 0;
     
     // Eğer activeColors verilmemişse tema primary rengini kullan
-    final List<Color> colors = activeColors ?? [
-      Theme.of(context).colorScheme.primary,
-      Theme.of(context).colorScheme.primary,
-      Theme.of(context).colorScheme.primary,
-    ];
+    final List<Color> colors = activeColors ?? List.generate(itemCount, (i) => Theme.of(context).colorScheme.primary);
 
-    final Color activeColor = colors[selectedIndex];
+    final Color activeColor = selectedIndex < colors.length ? colors[selectedIndex] : Theme.of(context).colorScheme.primary;
 
     final double segmentWidth = 36.0 * scalingFactor;
     final double padding = 4.0 * scalingFactor;
 
     return Container(
-      width: (segmentWidth * 3) + (padding * 2),
+      width: (segmentWidth * itemCount) + (padding * 2),
       height: 40 * scalingFactor,
       padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
@@ -62,7 +58,7 @@ class FluidTripleToggle extends StatelessWidget {
             ),
           ),
           Row(
-            children: List.generate(3, (index) {
+            children: List.generate(itemCount, (index) {
               final isSelected = selectedIndex == index;
               return GestureDetector(
                 onTap: () {

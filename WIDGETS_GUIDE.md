@@ -59,6 +59,27 @@ Bu dosya, `lib/shared/widgets` klasöründeki profesyonel bileşenlerin ne işe 
 - **Ne İşe Yarar?**: İki ikon arasında yumuşak rotasyon ve ölçeklenme ile geçiş yapar.
 - **Eski Adı**: `FluidAnimatedIcon`
 
+### 16. PrecisionCard
+- **Ne İşe Yarar?**: Çok amaçlı, cam efektli (blur) ve ince kenarlıklı kart bileşeni.
+
+### 17. PrecisionFluidSegmentedControl
+- **Ne İşe Yarar?**: Dinamik genişliğe sahip, akıcı geçiş animasyonlu çoklu seçim çubuğu.
+- **Eski Adı**: `FluidSegmentedControl`
+
+### 18. PrecisionTripleToggle
+- **Ne İşe Yarar?**: Üçlü seçimler için (S, W, L gibi) özel dairesel göstergeli ve haptic geri bildirimli toggle.
+- **Eski Adı**: `FluidTripleToggle`
+
+### 19. PrecisionMiniSegmentedControl
+- **Ne İşe Yarar?**: Küçük alanlar ve filtreler için optimize edilmiş, kompakt seçim bileşeni.
+- **Eski Adı**: `MiniSegmentedControl`
+
+### 20. PrecisionInlinePicker
+- **Ne İşe Yarar?**: Formlar içinde dairesel (wheel) seçim yapılmasını sağlayan kompakt picker.
+
+### 21. PrecisionSelectorField
+- **Ne İşe Yarar?**: İkon, etiket ve seçim kontrolünü (segmented control) birleştiren form alanı bileşeni.
+
 ---
 
 ## Özelliğe Özel Bileşenler

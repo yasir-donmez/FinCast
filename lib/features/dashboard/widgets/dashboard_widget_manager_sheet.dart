@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,7 +6,9 @@ import '../../../core/theme/app_constants.dart';
 import '../../../shared/widgets/precision_segmented_control.dart';
 import '../../../shared/widgets/precision_card.dart';
 import '../../../shared/widgets/precision_selector_field.dart';
-import '../../../shared/widgets/fluid_triple_toggle.dart';
+import '../../../shared/widgets/precision_multi_toggle.dart';
+import '../../../shared/widgets/precision_button.dart';
+import '../../../shared/widgets/precision_icon_button.dart';
 import '../providers/widget_layout_provider.dart';
 import 'dashboard_widget.dart'; // for DashboardWidgetSize
 
@@ -50,23 +53,30 @@ class _DashboardWidgetManagerSheetState extends ConsumerState<DashboardWidgetMan
     final activeColor = AppColors.getPrimary(context);
     final scalingFactor = (MediaQuery.of(context).size.height / 812.0).clamp(0.85, 1.0);
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        PrecisionSegmentedControl(
-          tabs: const ['Aktif Widget\'lar', 'Kütüphane'],
-          selectedIndex: _activeTab == WidgetManagerTab.active ? 0 : 1,
-          onTabChanged: (index) => _switchTab(index == 0 ? WidgetManagerTab.active : WidgetManagerTab.library),
-          scalingFactor: scalingFactor,
-        ),
-        const SizedBox(height: 12),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 400),
-          child: _activeTab == WidgetManagerTab.active 
-              ? _buildActiveWidgetsList(context, pages, activeColor, scalingFactor)
-              : _buildLibraryList(context, pages, activeColor, scalingFactor),
-        ),
-      ],
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeOutBack, // O meşhur "pıt pıt" esneme efekti
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: PrecisionSegmentedControl(
+              tabs: const ['Dashboard', 'Library'],
+              selectedIndex: _activeTab == WidgetManagerTab.active ? 0 : 1,
+              onTabChanged: (index) => _switchTab(index == 0 ? WidgetManagerTab.active : WidgetManagerTab.library),
+              scalingFactor: scalingFactor,
+            ),
+          ),
+          const SizedBox(height: 12),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            child: _activeTab == WidgetManagerTab.active 
+                ? _buildActiveWidgetsList(context, pages, activeColor, scalingFactor)
+                : _buildLibraryList(context, pages, activeColor, scalingFactor),
+          ),
+        ],
+      ),
     );
   }
 
@@ -85,20 +95,67 @@ class _DashboardWidgetManagerSheetState extends ConsumerState<DashboardWidgetMan
         if (flatList.isNotEmpty)
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.55 * scalingFactor),
-            child: ListView.separated(
+            child: ReorderableListView.builder(
               shrinkWrap: true,
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8 * scalingFactor),
               physics: const BouncingScrollPhysics(),
+              proxyDecorator: (child, index, animation) {
+                return AnimatedBuilder(
+                  animation: animation,
+                  builder: (context, _) {
+                    final double animValue = Curves.easeInOut.transform(animation.value);
+                    final double elevation = lerpDouble(0, 12, animValue)!;
+                    final double scale = lerpDouble(1.0, 1.02, animValue)!; // Hafif büyüme
+                    
+                    return Transform.scale(
+                      scale: scale,
+                      child: Material(
+                        color: Colors.transparent,
+                        elevation: elevation,
+                        shadowColor: Colors.black45,
+                        borderRadius: BorderRadius.circular(16 * scalingFactor),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16 * scalingFactor),
+                            boxShadow: [
+                              BoxShadow(
+                                color: (Theme.of(context).primaryColor).withValues(alpha: 0.15 * animValue),
+                                blurRadius: 20,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: child,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
               itemCount: flatList.length,
-              separatorBuilder: (_, __) => SizedBox(height: 10 * scalingFactor),
+              onReorder: (oldIndex, newIndex) {
+                if (newIndex > oldIndex) newIndex -= 1;
+                final item = flatList[oldIndex];
+                final targetItem = flatList[newIndex];
+                // Sürükle bırak ile sayfa numarasını da güncelleyebiliriz
+                ref.read(widgetLayoutProvider.notifier).changeWidgetPage(
+                  (item['widget'] as WidgetConfig).id, 
+                  (targetItem['widget'] as WidgetConfig).page,
+                );
+              },
               itemBuilder: (context, index) {
                 final item = flatList[index];
-                return _buildActiveItem(context, item['widget'] as WidgetConfig, item['page'] as int, activeColor, scalingFactor, pages.length);
+                final widget = item['widget'] as WidgetConfig;
+                return Container(
+                  key: ValueKey('active_${widget.id}'), // Sabit anahtar animasyon için kritik
+                  margin: EdgeInsets.only(bottom: 10 * scalingFactor),
+                  child: _buildActiveItem(context, widget, item['page'] as int, activeColor, scalingFactor, pages.length, index),
+                );
               },
             ),
           )
         else
-          _buildEmptyState('Panoda aktif widget yok.', Icons.dashboard_customize_rounded, activeColor, scalingFactor),
+          _buildEmptyState('Dashboard şu an boş.', Icons.dashboard_customize_rounded, activeColor, scalingFactor),
         const SizedBox(height: 12),
       ],
     );
@@ -108,6 +165,7 @@ class _DashboardWidgetManagerSheetState extends ConsumerState<DashboardWidgetMan
     return Column(
       key: const ValueKey('library_widgets'),
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (_library.isNotEmpty)
           ConstrainedBox(
@@ -120,172 +178,196 @@ class _DashboardWidgetManagerSheetState extends ConsumerState<DashboardWidgetMan
               separatorBuilder: (_, __) => SizedBox(height: 10 * scalingFactor),
               itemBuilder: (context, index) {
                 final libItem = _library[index];
-                return _buildLibraryItem(context, libItem, activeColor, scalingFactor);
+                return _buildLibraryItem(context, libItem, activeColor, scalingFactor, index);
               },
             ),
           )
         else
-          _buildEmptyState('Kütüphane boş.', Icons.check_circle_outline_rounded, activeColor, scalingFactor),
+          _buildEmptyState('Library şu an boş.', Icons.check_circle_outline_rounded, activeColor, scalingFactor),
         const SizedBox(height: 12),
       ],
     );
   }
 
-  Widget _buildActiveItem(BuildContext context, WidgetConfig widget, int pageIndex, Color activeColor, double scalingFactor, int totalPages) {
-    return PrecisionCard(
-      scalingFactor: scalingFactor,
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8 * scalingFactor),
-                decoration: BoxDecoration(
-                  color: activeColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12 * scalingFactor),
-                ),
-                child: Icon(
+  List<DashboardWidgetSize> _getAllowedSizes(String type) {
+    switch (type) {
+      case 'quick_action': return [DashboardWidgetSize.small];
+      case 'timeline':
+      case 'radar': return [DashboardWidgetSize.wide, DashboardWidgetSize.large];
+      case 'daily_budget': return [DashboardWidgetSize.small, DashboardWidgetSize.wide];
+      case 'spending':
+      case 'vault_status':
+      default: return [DashboardWidgetSize.small, DashboardWidgetSize.wide, DashboardWidgetSize.large];
+    }
+  }
+
+  Widget _buildActiveItem(BuildContext context, WidgetConfig widget, int pageIndex, Color activeColor, double scalingFactor, int totalPages, int index) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final allowedSizes = _getAllowedSizes(widget.type);
+    
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 400 + (index * 100)), // Kademeli (staggered) giriş
+      curve: Curves.easeOutBack,
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: value,
+          child: Opacity(opacity: value.clamp(0, 1), child: child),
+        );
+      },
+      child: PrecisionCard(
+        scalingFactor: scalingFactor,
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Icon(
                   _getWidgetIcon(widget.type),
                   color: activeColor,
                   size: 20 * scalingFactor,
                 ),
-              ),
-              SizedBox(width: 12 * scalingFactor),
-              Expanded(
-                child: Text(
-                  _getWidgetName(widget.type),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15 * scalingFactor,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.remove_circle_outline_rounded, color: AppColors.error),
-                onPressed: () {
-                  HapticFeedback.mediumImpact();
-                  ref.read(widgetLayoutProvider.notifier).removeWidget(widget.id);
-                },
-              ),
-            ],
-          ),
-          const Divider(height: 1),
-          PrecisionSelectorField(
-            icon: Icons.layers_rounded,
-            label: 'Sayfa',
-            pickerWidth: 160,
-            items: const ['1', '2', '3', '4'],
-            selectedIndex: pageIndex.clamp(0, 3),
-            scalingFactor: scalingFactor,
-            onChanged: (newIdx) {
-              ref.read(widgetLayoutProvider.notifier).changeWidgetPage(widget.id, newIdx);
-            },
-          ),
-          const Divider(height: 1),
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 4 * scalingFactor),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.aspect_ratio_rounded,
-                  size: 18 * scalingFactor,
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-                ),
                 SizedBox(width: 12 * scalingFactor),
                 Expanded(
                   child: Text(
-                    'BOYUT',
+                    _getWidgetName(widget.type),
                     style: TextStyle(
-                      fontSize: 11 * scalingFactor,
                       fontWeight: FontWeight.w900,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                      letterSpacing: 1.0,
+                      fontSize: 15 * scalingFactor,
+                      letterSpacing: -0.5,
                     ),
                   ),
                 ),
-                FluidTripleToggle(
-                  labels: const ['S', 'W', 'L'],
-                  selectedIndex: widget.size == DashboardWidgetSize.small ? 0 : widget.size == DashboardWidgetSize.wide ? 1 : 2,
-                  activeColors: [
-                    Theme.of(context).colorScheme.primary,
-                    Theme.of(context).colorScheme.primary,
-                    Theme.of(context).colorScheme.primary,
-                  ],
-                  scalingFactor: scalingFactor,
-                  onChanged: (index) {
+                PrecisionIconButton(
+                  icon: Icons.remove_circle_outline_rounded,
+                  color: AppColors.error,
+                  size: 20 * scalingFactor,
+                  padding: 8 * scalingFactor,
+                  onTap: () {
                     HapticFeedback.mediumImpact();
-                    final newSize = index == 0 ? DashboardWidgetSize.small : index == 1 ? DashboardWidgetSize.wide : DashboardWidgetSize.large;
-                    ref.read(widgetLayoutProvider.notifier).setWidgetSizeById(widget.id, newSize);
+                    ref.read(widgetLayoutProvider.notifier).removeWidget(widget.id);
                   },
+                ),
+                SizedBox(width: 4 * scalingFactor),
+                // Sürükleme Tutamacı İkonu (Statik, arka plansız)
+                Icon(
+                  Icons.unfold_more_rounded,
+                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.3),
+                  size: 22 * scalingFactor,
                 ),
               ],
             ),
-          ),
-          const Divider(height: 1),
-        ],
+            PrecisionSelectorField(
+              icon: Icons.dashboard_rounded,
+              label: 'Sayfa',
+              pickerWidth: 160,
+              items: const ['1', '2', '3', '4'],
+              selectedIndex: pageIndex.clamp(0, 3),
+              scalingFactor: scalingFactor,
+              onChanged: (newIdx) {
+                ref.read(widgetLayoutProvider.notifier).changeWidgetPage(widget.id, newIdx);
+              },
+            ),
+            Divider(height: 1, thickness: 0.5, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black).withValues(alpha: 0.08)),
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 4 * scalingFactor),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.aspect_ratio_rounded,
+                    size: 18 * scalingFactor,
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+                  ),
+                  SizedBox(width: 12 * scalingFactor),
+                  Expanded(
+                    child: Text(
+                      'Boyut',
+                      style: TextStyle(
+                        fontSize: 11 * scalingFactor,
+                        fontWeight: FontWeight.w900,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                  PrecisionMultiToggle(
+                    labels: allowedSizes.map((s) => s == DashboardWidgetSize.small ? 'S' : s == DashboardWidgetSize.wide ? 'W' : 'L').toList(),
+                    selectedIndex: allowedSizes.indexOf(widget.size).clamp(0, allowedSizes.length - 1),
+                    activeColors: List.generate(allowedSizes.length, (_) => Theme.of(context).colorScheme.primary),
+                    scalingFactor: scalingFactor,
+                    onChanged: (index) {
+                      HapticFeedback.mediumImpact();
+                      ref.read(widgetLayoutProvider.notifier).setWidgetSizeById(widget.id, allowedSizes[index]);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            Divider(height: 1, thickness: 0.5, color: (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black).withValues(alpha: 0.08)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildLibraryItem(BuildContext context, Map<String, dynamic> libItem, Color activeColor, double scalingFactor) {
-    return PrecisionCard(
-      scalingFactor: scalingFactor,
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(8 * scalingFactor),
-            decoration: BoxDecoration(
-              color: activeColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12 * scalingFactor),
-            ),
-            child: Icon(
+  Widget _buildLibraryItem(BuildContext context, Map<String, dynamic> libItem, Color activeColor, double scalingFactor, int index) {
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 350 + (index * 80)),
+      curve: Curves.easeOutBack,
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: value,
+          child: Opacity(opacity: value.clamp(0, 1), child: child),
+        );
+      },
+      child: PrecisionCard(
+        scalingFactor: scalingFactor,
+        child: Row(
+          children: [
+            Icon(
               libItem['icon'] as IconData,
               color: activeColor,
               size: 20 * scalingFactor,
             ),
-          ),
-          SizedBox(width: 12 * scalingFactor),
-          Expanded(
-            child: Text(
-              libItem['name'] as String,
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 15 * scalingFactor,
-                letterSpacing: -0.5,
+            SizedBox(width: 12 * scalingFactor),
+            Expanded(
+              child: Text(
+                libItem['name'] as String,
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15 * scalingFactor,
+                  letterSpacing: -0.5,
+                ),
               ),
             ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: activeColor,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-              elevation: 0,
-              padding: EdgeInsets.symmetric(horizontal: 16 * scalingFactor, vertical: 8 * scalingFactor),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12 * scalingFactor)),
+            PrecisionButton(
+              label: 'Ekle',
+              onTap: () {
+                HapticFeedback.heavyImpact();
+                ref.read(widgetLayoutProvider.notifier).addWidget(
+                  libItem['type'] as String,
+                  libItem['defaultSize'] as DashboardWidgetSize,
+                );
+                
+                ScaffoldMessenger.of(context).clearSnackBars();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${libItem['name']} panoya eklendi!'),
+                    duration: const Duration(milliseconds: 800),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    margin: const EdgeInsets.all(16),
+                  ),
+                );
+              },
+              activeColor: activeColor,
+              width: 80 * scalingFactor,
+              height: 34 * scalingFactor,
+              fontSize: 12 * scalingFactor,
+              isFilled: true,
             ),
-            onPressed: () {
-              HapticFeedback.heavyImpact();
-              ref.read(widgetLayoutProvider.notifier).addWidget(
-                libItem['type'] as String,
-                libItem['defaultSize'] as DashboardWidgetSize,
-              );
-              
-              // Ekranda minik bir görsel bildirim gösterebiliriz (opsiyonel ama kullanıcı eklendiğini anlasın diye)
-              ScaffoldMessenger.of(context).clearSnackBars();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${libItem['name']} panoya eklendi!'),
-                  duration: const Duration(milliseconds: 800),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  margin: const EdgeInsets.all(16),
-                ),
-              );
-            },
-            child: Text('Ekle', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13 * scalingFactor)),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

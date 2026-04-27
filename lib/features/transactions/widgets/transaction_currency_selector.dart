@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_constants.dart';
-import '../../../shared/widgets/precision_inline_picker.dart';
+import '../../../shared/widgets/precision_picker_field.dart';
+import '../../../l10n/app_localizations.dart';
 
 class TransactionCurrencySelector extends StatefulWidget {
   final String selectedCurrency;
   final ValueChanged<String> onChanged;
+  final double scalingFactor;
 
   const TransactionCurrencySelector({
     super.key,
     required this.selectedCurrency,
     required this.onChanged,
+    this.scalingFactor = 1.0,
   });
 
   @override
@@ -17,35 +20,23 @@ class TransactionCurrencySelector extends StatefulWidget {
 }
 
 class _TransactionCurrencySelectorState extends State<TransactionCurrencySelector> {
-  late FixedExtentScrollController _controller;
   final List<String> _options = AppCurrency.supportedSymbols;
 
   @override
-  void initState() {
-    super.initState();
-    int index = _options.indexOf(widget.selectedCurrency);
-    if (index == -1) index = 0;
-    _controller = FixedExtentScrollController(initialItem: index);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     int currentIndex = _options.indexOf(widget.selectedCurrency);
     if (currentIndex == -1) currentIndex = 0;
 
-    return PrecisionInlinePicker(
+    return PrecisionPickerField(
+      icon: Icons.currency_exchange_rounded,
+      label: l10n.currency,
       items: _options,
       selectedIndex: currentIndex,
+      scalingFactor: widget.scalingFactor,
       onChanged: (index) {
         widget.onChanged(_options[index]);
       },
-      width: 120,
     );
   }
 }
