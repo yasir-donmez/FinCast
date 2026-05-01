@@ -14,15 +14,15 @@ class LanguageSetting extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
+    final languageCode = ref.watch(settingsProvider.select((s) => s.languageCode));
     final activeColor = ref.watch(rotaryColorProvider);
     final l10n = AppLocalizations.of(context)!;
 
     return ProfileListItems.buildSetting(
       icon: Icons.language_rounded,
       title: l10n.language,
-      trailing: _getLanguageName(settings.languageCode),
-      onTap: () => _showLanguagePicker(context, ref, settings.languageCode, l10n),
+      trailing: _getLanguageName(languageCode),
+      onTap: () => _showLanguagePicker(context, ref, languageCode, l10n),
       activeColor: activeColor,
       context: context,
     );
@@ -54,7 +54,7 @@ class LanguageSetting extends ConsumerWidget {
               ref.read(settingsProvider.notifier).setLanguage(codes[tempIndex]);
               Navigator.pop(context);
             },
-            activeColor: ref.read(rotaryColorProvider),
+            activeColor: ref.read(rotaryColorProvider.select((s) => s)),
           ),
         ],
       ),

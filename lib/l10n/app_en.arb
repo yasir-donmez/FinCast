@@ -8,6 +8,8 @@
   "dataAndAiSettings": "DATA & AI SETTINGS",
   "dataRetention": "Data Retention Period",
   "dataRetentionDesc": "Expired transactions are archived.\nAI Persona only uses data within this period.",
+  "permanentDataDeletion": "Permanent Data Deletion Period",
+  "permanentDataDeletionDesc": "After this period, transactions are permanently deleted from the database.\nThis action cannot be undone.",
   "oneMonth": "1 Month",
   "threeMonths": "3 Months",
   "sixMonths": "6 Months",

@@ -164,6 +164,18 @@ abstract class AppLocalizations {
   /// **'Süresi dolan işlemler arşivlenir.\nAI Persona yalnızca bu süredeki verileri kullanır.'**
   String get dataRetentionDesc;
 
+  /// No description provided for @permanentDataDeletion.
+  ///
+  /// In tr, this message translates to:
+  /// **'Kalıcı Veri Silme Süresi'**
+  String get permanentDataDeletion;
+
+  /// No description provided for @permanentDataDeletionDesc.
+  ///
+  /// In tr, this message translates to:
+  /// **'Bu süreden sonra işlemler veritabanından kalıcı olarak silinir.\nBu işlem geri alınamaz.'**
+  String get permanentDataDeletionDesc;
+
   /// No description provided for @oneMonth.
   ///
   /// In tr, this message translates to:

@@ -8,6 +8,8 @@
   "dataAndAiSettings": "VERİ & AI AYARLARI",
   "dataRetention": "Veri Saklama Süresi",
   "dataRetentionDesc": "Süresi dolan işlemler arşivlenir.\nAI Persona yalnızca bu süredeki verileri kullanır.",
+  "permanentDataDeletion": "Kalıcı Veri Silme Süresi",
+  "permanentDataDeletionDesc": "Bu süreden sonra işlemler veritabanından kalıcı olarak silinir.\nBu işlem geri alınamaz.",
   "oneMonth": "1 Ay",
   "threeMonths": "3 Ay",
   "sixMonths": "6 Ay",

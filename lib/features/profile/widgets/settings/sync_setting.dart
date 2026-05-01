@@ -9,16 +9,18 @@ class SyncSetting extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
+    final isSyncEnabled = ref.watch(settingsProvider.select((s) => s.isSyncEnabled));
     final activeColor = ref.watch(rotaryColorProvider);
 
     return ProfileListItems.buildToggle(
       icon: Icons.cloud_sync_rounded,
       title: "Bulut Senkronizasyonu",
-      value: settings.isSyncEnabled,
+      value: isSyncEnabled,
       onChanged: (val) => ref.read(settingsProvider.notifier).toggleSync(val),
       activeColor: activeColor,
       context: context,
+      activeIcon: Icons.cloud_done_rounded,
+      inactiveIcon: Icons.cloud_off_rounded,
     );
   }
 }

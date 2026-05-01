@@ -79,6 +79,13 @@ class DatabaseService {
     });
   }
 
+  /// Birden fazla işlemi sil
+  static Future<void> deleteTransactions(List<int> ids) async {
+    await isar.writeTxn(() async {
+      await isar.transactionRecords.deleteAll(ids);
+    });
+  }
+
   /// Birden fazla işlemi tek işlemde güncelle
   static Future<void> updateAllTransactions(List<TransactionRecord> txs) async {
     await isar.writeTxn(() async {

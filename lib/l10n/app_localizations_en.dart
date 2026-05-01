@@ -37,6 +37,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Expired transactions are archived.\nAI Persona only uses data within this period.';
 
   @override
+  String get permanentDataDeletion => 'Permanent Data Deletion Period';
+
+  @override
+  String get permanentDataDeletionDesc =>
+      'After this period, transactions are permanently deleted from the database.\nThis action cannot be undone.';
+
+  @override
   String get oneMonth => '1 Month';
 
   @override

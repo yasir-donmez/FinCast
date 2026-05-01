@@ -37,6 +37,13 @@ class AppLocalizationsTr extends AppLocalizations {
       'Süresi dolan işlemler arşivlenir.\nAI Persona yalnızca bu süredeki verileri kullanır.';
 
   @override
+  String get permanentDataDeletion => 'Kalıcı Veri Silme Süresi';
+
+  @override
+  String get permanentDataDeletionDesc =>
+      'Bu süreden sonra işlemler veritabanından kalıcı olarak silinir.\nBu işlem geri alınamaz.';
+
+  @override
   String get oneMonth => '1 Ay';
 
   @override

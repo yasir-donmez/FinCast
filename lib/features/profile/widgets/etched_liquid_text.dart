@@ -58,12 +58,12 @@ class _EtchedLiquidTextState extends State<EtchedLiquidText>
       animation: Listenable.merge([_waveController, _levelController]),
       builder: (context, child) {
         // progress 0 ise animasyonlu seviyeyi kullan (0.45 - 0.65 arası)
-        final double effectiveLevel = widget.progress == 0 
-            ? (0.45 + (_levelController.value * 0.2)) 
-            : widget.progress;
+        // Start from the bottom (base level) when at the top
+        final double idleLevel = 0.05 + (_levelController.value * 0.05);
+        final double effectiveLevel = (widget.progress * (1.0 - idleLevel)) + idleLevel;
 
         return CustomPaint(
-          size: Size(widget.fontSize * 8, widget.fontSize * 2.2),
+          size: Size(widget.fontSize * 10, widget.fontSize * 2.5), // Increased size slightly to avoid clipping
           painter: _EtchedLiquidPainter(
             progress: effectiveLevel,
             activeColor: widget.activeColor,
@@ -116,18 +116,19 @@ class _EtchedLiquidPainter extends CustomPainter {
       height: textPainter.height,
     );
 
-    canvas.saveLayer(textRect.inflate(50), Paint());
+    // Inflate more to capture all shadow effects
+    canvas.saveLayer(textRect.inflate(100), Paint());
 
     // 1. RIM HIGHLIGHT
     final bezelTP = TextPainter(
       text: TextSpan(
         text: text,
         style: textStyle.copyWith(
-          color: AppColors.getLightShadow(context).withValues(alpha: 0.4),
+          color: AppColors.getLightShadow(context).withValues(alpha: 0.5),
           shadows: [
             Shadow(
-              color: AppColors.getLightShadow(context).withValues(alpha: 0.2),
-              offset: const Offset(0.5, 0.7),
+              color: AppColors.getLightShadow(context).withValues(alpha: 0.3),
+              offset: const Offset(0.8, 1.0),
               blurRadius: 1,
             ),
           ],
@@ -135,29 +136,29 @@ class _EtchedLiquidPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    bezelTP.paint(canvas, textRect.topLeft + const Offset(0.5, 0.7));
+    bezelTP.paint(canvas, textRect.topLeft + const Offset(0.8, 1.0));
 
     // 2. INNER WALL SHADOW
     final darkTP = TextPainter(
       text: TextSpan(
         text: text,
-        style: textStyle.copyWith(color: Colors.black.withValues(alpha: 0.7)),
+        style: textStyle.copyWith(color: Colors.black.withValues(alpha: 0.8)),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    darkTP.paint(canvas, textRect.topLeft + const Offset(-0.8, -1.0));
+    darkTP.paint(canvas, textRect.topLeft + const Offset(-1.0, -1.2));
 
     // 3. ETCHED BASE
     final baseTP = TextPainter(
       text: TextSpan(
         text: text,
         style: textStyle.copyWith(
-          color: AppColors.getInnerSurface(context).withValues(alpha: 1.0),
+          color: AppColors.getInnerSurface(context),
           shadows: [
             Shadow(
-              color: Colors.black.withValues(alpha: 0.4),
-              offset: const Offset(0.2, 0.2),
-              blurRadius: 1.5,
+              color: Colors.black.withValues(alpha: 0.5),
+              offset: const Offset(0.5, 0.5),
+              blurRadius: 2.0,
             ),
           ],
         ),
@@ -166,32 +167,45 @@ class _EtchedLiquidPainter extends CustomPainter {
     )..layout();
     baseTP.paint(canvas, textRect.topLeft);
 
-    if (progress >= 0) {
-      final double liquidLevel = textRect.bottom + 20 - (textRect.height * progress * 1.5);
+    if (progress > 0) {
+      // Precise liquid level mapping
+      final double liquidLevel = textRect.bottom - (textRect.height * progress);
+      
       final Path wavePath = Path();
-      wavePath.moveTo(textRect.left - 60, liquidLevel);
-      for (double x = textRect.left - 60; x <= textRect.right + 60; x++) {
-        final double wave1 = math.sin((x / 18) + (waveValue * 2 * math.pi)) * (fontSize * 0.15);
-        final double wave2 = math.sin((x / 10) - (waveValue * 2 * math.pi)) * (fontSize * 0.05);
+      wavePath.moveTo(textRect.left - 50, liquidLevel);
+      
+      // More fluid wave parameters
+      for (double x = textRect.left - 50; x <= textRect.right + 50; x++) {
+        final double wave1 = math.sin((x / 25) + (waveValue * 2 * math.pi)) * (fontSize * 0.1);
+        final double wave2 = math.sin((x / 15) - (waveValue * 2 * math.pi)) * (fontSize * 0.03);
         wavePath.lineTo(x, liquidLevel + wave1 + wave2);
       }
 
+      final Path submergedPath = Path.from(wavePath);
+      submergedPath.lineTo(textRect.right + 50, textRect.bottom + 50);
+      submergedPath.lineTo(textRect.left - 50, textRect.bottom + 50);
+      submergedPath.close();
+
+      // Liquid Fill - Use background color to "erase" the text as it rises
+      final Paint liquidPaint = Paint()
+        ..color = AppColors.getBackground(context)
+        ..blendMode = BlendMode.srcATop;
+      canvas.drawPath(submergedPath, liquidPaint);
+
+      // Liquid Surface Effects - Only show the active color on the surface edge
       final Paint surfacePaint = Paint()
-        ..color = activeColor.withValues(alpha: (0.9 * progress).clamp(0, 0.9))
+        ..color = activeColor.withValues(alpha: 0.8)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = fontSize * 0.08
+        ..strokeWidth = fontSize * 0.04
         ..blendMode = BlendMode.srcATop;
       canvas.drawPath(wavePath, surfacePaint);
 
-      final Path submergedPath = Path.from(wavePath);
-      submergedPath.lineTo(textRect.right + 60, textRect.bottom + 100);
-      submergedPath.lineTo(textRect.left - 60, textRect.bottom + 100);
-      submergedPath.close();
-
-      final Paint eraserPaint = Paint()
-        ..blendMode = BlendMode.clear
-        ..color = Colors.black;
-      canvas.drawPath(submergedPath, eraserPaint);
+      final Paint surfaceShinePaint = Paint()
+        ..color = Colors.white.withValues(alpha: 0.3)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = fontSize * 0.015
+        ..blendMode = BlendMode.srcATop;
+      canvas.drawPath(wavePath, surfaceShinePaint);
     }
 
     canvas.restore();

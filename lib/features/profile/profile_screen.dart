@@ -12,7 +12,6 @@ import '../../shared/widgets/precision_theme_toggle.dart';
 
 // Modular Widgets
 import 'widgets/etched_liquid_text.dart';
-import 'widgets/profile_blob.dart';
 import 'widgets/membership_card.dart';
 import 'widgets/profile_list_items.dart';
 
@@ -24,6 +23,7 @@ import 'widgets/settings/location_setting.dart';
 import 'widgets/settings/auth_setting.dart';
 import 'widgets/settings/sync_setting.dart';
 import 'widgets/settings/retention_setting.dart';
+import 'widgets/settings/purge_setting.dart';
 import 'widgets/settings/reset_setting.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -35,7 +35,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   late ScrollController _scrollController;
-  double _scrollOffset = 0;
+  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0);
 
   final _preferencesKey = GlobalKey();
   final _dataAiKey = GlobalKey();
@@ -47,17 +47,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     super.initState();
     _scrollController = ScrollController()
       ..addListener(() {
-        if (mounted) {
-          setState(() {
-            _scrollOffset = _scrollController.offset;
-          });
-        }
+        _scrollOffset.value = _scrollController.offset;
       });
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _scrollOffset.dispose();
     super.dispose();
   }
 
@@ -68,155 +65,158 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final subscription = ref.watch(subscriptionServiceProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Stack(
-      children: [
-        Positioned(
-          top: 400 - (_scrollOffset * 0.3),
-          left: -150 - (_scrollOffset * 0.1),
-          child: ProfileBlob(
-            color: AppColors.getSecondary(context).withValues(alpha: 0.08),
-            size: 500,
-          ),
-        ),
-
-        SafeArea(
-          bottom: false,
-          child: CustomScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 40, bottom: 20),
-                  child: Center(
-                    child: EtchedLiquidText(
-                      progress: 0, // Will show half-full as default in the new implementation
-                      activeColor: activeColor,
-                      text: "Yasir Dönmez",
-                      fontSize: 44,
-                    ),
+    return SafeArea(
+      bottom: false,
+      child: CustomScrollView(
+        controller: _scrollController,
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 40, bottom: 20),
+              child: Center(
+                child: RepaintBoundary(
+                  child: ValueListenableBuilder<double>(
+                    valueListenable: _scrollOffset,
+                    builder: (context, offset, _) {
+                      return EtchedLiquidText(
+                        progress: (offset / 120).clamp(0.0, 1.0),
+                        activeColor: activeColor,
+                        text: "Yasir Dönmez",
+                        fontSize: 44,
+                      );
+                    },
                   ),
                 ),
               ),
-
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    const SizedBox(height: 10),
-                    MembershipCard(
-                      l10n: l10n,
-                      isPro: subscription.isPro,
-                      activeColor: activeColor,
-                      onTap: () async {
-                        final currentPro = ref.read(subscriptionServiceProvider).isPro;
-                        await ref.read(subscriptionServiceProvider).setProStatus(!currentPro);
-                      },
-                    ),
-
-                    const SizedBox(height: 30),
-                    ProfileListItems.buildSectionTitle(l10n.preferences, activeColor, key: _preferencesKey),
-                    const SizedBox(height: 12),
-                    PrecisionCard(
-                      padding: EdgeInsets.zero,
-                      child: Column(
-                        children: [
-                          PrecisionThemeToggle(activeColor: activeColor),
-                          ProfileListItems.buildDivider(isDark),
-                          const LanguageSetting(),
-                          ProfileListItems.buildDivider(isDark),
-                          const CurrencySetting(),
-                          ProfileListItems.buildDivider(isDark),
-                          const NotificationSetting(),
-                          ProfileListItems.buildDivider(isDark),
-                          const LocationSetting(),
-                          ProfileListItems.buildDivider(isDark),
-                          const AuthSetting(),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 40),
-                    ProfileListItems.buildSectionTitle(l10n.dataAndAiSettings, activeColor, key: _dataAiKey),
-                    const SizedBox(height: 16),
-                    const RetentionSetting(),
-
-                    const SizedBox(height: 40),
-                    ProfileListItems.buildSectionTitle(
-                      l10n.dataManagement, 
-                      AppColors.getSecondary(context), 
-                      key: _managementKey
-                    ),
-                    const SizedBox(height: 12),
-                    PrecisionCard(
-                      padding: EdgeInsets.zero,
-                      child: Column(
-                        children: [
-                          const SyncSetting(),
-                          ProfileListItems.buildDivider(isDark),
-                          ProfileListItems.buildSetting(
-                            icon: Icons.cloud_upload_rounded,
-                            title: l10n.driveBackup,
-                            onTap: () => _showComingSoon(l10n.driveBackup, l10n),
-                            activeColor: AppColors.getSecondary(context),
-                            context: context,
-                            isAction: true,
-                          ),
-                          ProfileListItems.buildDivider(isDark),
-                          ProfileListItems.buildSetting(
-                            icon: Icons.table_view_rounded,
-                            title: l10n.exportExcel,
-                            onTap: () => _showComingSoon(l10n.exportExcel, l10n),
-                            activeColor: AppColors.getSecondary(context),
-                            context: context,
-                            isAction: true,
-                          ),
-                          ProfileListItems.buildDivider(isDark),
-                          const ResetSetting(),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 40),
-                    ProfileListItems.buildSectionTitle(
-                      l10n.support, 
-                      AppColors.getPrimary(context), 
-                      key: _supportKey
-                    ),
-                    const SizedBox(height: 12),
-                    PrecisionCard(
-                      padding: EdgeInsets.zero,
-                      child: Column(
-                        children: [
-                          ProfileListItems.buildSetting(
-                            icon: Icons.support_agent_rounded,
-                            title: l10n.contact,
-                            onTap: _launchEmail,
-                            activeColor: AppColors.getPrimary(context),
-                            context: context,
-                            isAction: true,
-                          ),
-                          ProfileListItems.buildDivider(isDark),
-                          ProfileListItems.buildSetting(
-                            icon: Icons.info_outline_rounded,
-                            title: l10n.about,
-                            trailing: "v1.0.0",
-                            onTap: () => _showAboutDialog(l10n),
-                            activeColor: AppColors.getPrimary(context),
-                            context: context,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 120),
-                  ]),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ],
+
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                const SizedBox(height: 10),
+                MembershipCard(
+                  l10n: l10n,
+                  isPro: subscription.isPro,
+                  activeColor: activeColor,
+                  onTap: () async {
+                    final currentPro = ref.read(subscriptionServiceProvider).isPro;
+                    await ref.read(subscriptionServiceProvider).setProStatus(!currentPro);
+                  },
+                ),
+
+                const SizedBox(height: 30),
+                ProfileListItems.buildSectionTitle(l10n.preferences, activeColor, key: _preferencesKey),
+                const SizedBox(height: 12),
+                PrecisionCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      PrecisionThemeToggle(activeColor: activeColor),
+                      ProfileListItems.buildDivider(isDark),
+                      const LanguageSetting(),
+                      ProfileListItems.buildDivider(isDark),
+                      const CurrencySetting(),
+                      ProfileListItems.buildDivider(isDark),
+                      const NotificationSetting(),
+                      ProfileListItems.buildDivider(isDark),
+                      const LocationSetting(),
+                      ProfileListItems.buildDivider(isDark),
+                      const AuthSetting(),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+                ProfileListItems.buildSectionTitle(l10n.dataAndAiSettings, activeColor, key: _dataAiKey),
+                const SizedBox(height: 16),
+                PrecisionCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      const RetentionSetting(),
+                      ProfileListItems.buildDivider(isDark),
+                      const PurgeSetting(),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+                ProfileListItems.buildSectionTitle(
+                  l10n.dataManagement, 
+                  AppColors.getSecondary(context), 
+                  key: _managementKey
+                ),
+                const SizedBox(height: 12),
+                PrecisionCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      const SyncSetting(),
+                      ProfileListItems.buildDivider(isDark),
+                      ProfileListItems.buildSetting(
+                        icon: Icons.cloud_upload_rounded,
+                        title: l10n.driveBackup,
+                        onTap: () => _showComingSoon(l10n.driveBackup, l10n),
+                        activeColor: AppColors.getSecondary(context),
+                        context: context,
+                        isAction: true,
+                      ),
+                      ProfileListItems.buildDivider(isDark),
+                      ProfileListItems.buildSetting(
+                        icon: Icons.table_view_rounded,
+                        title: l10n.exportExcel,
+                        onTap: () => _showComingSoon(l10n.exportExcel, l10n),
+                        activeColor: AppColors.getSecondary(context),
+                        context: context,
+                        isAction: true,
+                      ),
+                      ProfileListItems.buildDivider(isDark),
+                      const ResetSetting(),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+                ProfileListItems.buildSectionTitle(
+                  l10n.support, 
+                  AppColors.getPrimary(context), 
+                  key: _supportKey
+                ),
+                const SizedBox(height: 12),
+                PrecisionCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      ProfileListItems.buildSetting(
+                        icon: Icons.support_agent_rounded,
+                        title: l10n.contact,
+                        onTap: _launchEmail,
+                        activeColor: AppColors.getPrimary(context),
+                        context: context,
+                        isAction: true,
+                      ),
+                      ProfileListItems.buildDivider(isDark),
+                      ProfileListItems.buildSetting(
+                        icon: Icons.info_outline_rounded,
+                        title: l10n.about,
+                        trailing: "v1.0.0",
+                        onTap: () => _showAboutDialog(l10n),
+                        activeColor: AppColors.getPrimary(context),
+                        context: context,
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 120),
+              ]),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

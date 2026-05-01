@@ -10,48 +10,90 @@ import 'precision_detail_sheet.dart';
 String? localizedCategoryName(String? categoryId, AppLocalizations l10n) {
   if (categoryId == null) return null;
   switch (categoryId) {
-    case 'exp_grocery': return l10n.grocery;
-    case 'exp_grocery_food': return l10n.food;
-    case 'exp_grocery_cleaning': return l10n.cleaning;
-    case 'exp_grocery_personal': return l10n.personalCare;
-    case 'exp_dining': return l10n.dining;
-    case 'exp_dining_restaurant': return l10n.restaurant;
-    case 'exp_dining_fastfood': return l10n.fastFood;
-    case 'exp_dining_cafe': return l10n.cafe;
-    case 'exp_rent': return l10n.rent;
-    case 'exp_rent_home': return l10n.homeRent;
-    case 'exp_rent_office': return l10n.workspace;
-    case 'exp_bill': return l10n.bill;
-    case 'exp_bill_electricity': return l10n.electricity;
-    case 'exp_bill_water': return l10n.water;
-    case 'exp_fun': return l10n.entertainment;
-    case 'exp_trans': return l10n.transportation;
-    case 'exp_sub': return l10n.subscription;
-    case 'exp_health': return l10n.health;
-    case 'inc_salary': return l10n.salary;
-    case 'inc_salary_main': return l10n.mainSalary;
-    case 'inc_salary_bonus': return l10n.bonus;
-    case 'inc_extra': return l10n.extraIncome;
-    case 'inc_extra_freelance': return l10n.freelance;
-    case 'inc_extra_parttime': return l10n.partTime;
-    case 'inc_extra_commission': return l10n.commission;
-    case 'inc_invest': return l10n.investmentReturn;
-    case 'inc_invest_stock': return l10n.stock;
-    case 'inc_invest_crypto': return l10n.crypto;
-    case 'inc_invest_interest': return l10n.interest;
-    case 'inc_rent': return l10n.rentalIncome;
-    case 'inc_rent_home': return l10n.home;
-    case 'inc_rent_office': return l10n.officeIncome;
-    case 'inc_sale': return l10n.sale;
-    case 'inc_sale_online': return l10n.onlineSale;
-    case 'inc_sale_physical': return l10n.physicalSale;
-    case 'inc_scholarship': return l10n.scholarshipLoan;
-    case 'inc_scholarship_award': return l10n.scholarship;
-    case 'inc_scholarship_loan': return l10n.credit;
-    case 'inc_gift': return l10n.gift;
-    case 'inc_other': return l10n.other;
-    case 'exp_other': return l10n.other;
-    default: return null;
+    case 'exp_grocery':
+      return l10n.grocery;
+    case 'exp_grocery_food':
+      return l10n.food;
+    case 'exp_grocery_cleaning':
+      return l10n.cleaning;
+    case 'exp_grocery_personal':
+      return l10n.personalCare;
+    case 'exp_dining':
+      return l10n.dining;
+    case 'exp_dining_restaurant':
+      return l10n.restaurant;
+    case 'exp_dining_fastfood':
+      return l10n.fastFood;
+    case 'exp_dining_cafe':
+      return l10n.cafe;
+    case 'exp_rent':
+      return l10n.rent;
+    case 'exp_rent_home':
+      return l10n.homeRent;
+    case 'exp_rent_office':
+      return l10n.workspace;
+    case 'exp_bill':
+      return l10n.bill;
+    case 'exp_bill_electricity':
+      return l10n.electricity;
+    case 'exp_bill_water':
+      return l10n.water;
+    case 'exp_fun':
+      return l10n.entertainment;
+    case 'exp_trans':
+      return l10n.transportation;
+    case 'exp_sub':
+      return l10n.subscription;
+    case 'exp_health':
+      return l10n.health;
+    case 'inc_salary':
+      return l10n.salary;
+    case 'inc_salary_main':
+      return l10n.mainSalary;
+    case 'inc_salary_bonus':
+      return l10n.bonus;
+    case 'inc_extra':
+      return l10n.extraIncome;
+    case 'inc_extra_freelance':
+      return l10n.freelance;
+    case 'inc_extra_parttime':
+      return l10n.partTime;
+    case 'inc_extra_commission':
+      return l10n.commission;
+    case 'inc_invest':
+      return l10n.investmentReturn;
+    case 'inc_invest_stock':
+      return l10n.stock;
+    case 'inc_invest_crypto':
+      return l10n.crypto;
+    case 'inc_invest_interest':
+      return l10n.interest;
+    case 'inc_rent':
+      return l10n.rentalIncome;
+    case 'inc_rent_home':
+      return l10n.home;
+    case 'inc_rent_office':
+      return l10n.officeIncome;
+    case 'inc_sale':
+      return l10n.sale;
+    case 'inc_sale_online':
+      return l10n.onlineSale;
+    case 'inc_sale_physical':
+      return l10n.physicalSale;
+    case 'inc_scholarship':
+      return l10n.scholarshipLoan;
+    case 'inc_scholarship_award':
+      return l10n.scholarship;
+    case 'inc_scholarship_loan':
+      return l10n.credit;
+    case 'inc_gift':
+      return l10n.gift;
+    case 'inc_other':
+      return l10n.other;
+    case 'exp_other':
+      return l10n.other;
+    default:
+      return null;
   }
 }
 
@@ -82,29 +124,49 @@ class PrecisionTransactionCard extends StatelessWidget {
     String? periodLabel;
     if (tx.periodType != 0) {
       switch (tx.periodType) {
-        case 1: periodLabel = l10n.weekly; break;
-        case 2: periodLabel = l10n.monthly; break;
-        case 3: periodLabel = l10n.yearly; break;
-        case 4: periodLabel = l10n.every2Weeks; break;
-        case 5: periodLabel = l10n.every3Weeks; break;
-        case 6: periodLabel = l10n.every3Months; break;
-        case 7: periodLabel = l10n.every6Months; break;
+        case 1:
+          periodLabel = l10n.weekly;
+          break;
+        case 2:
+          periodLabel = l10n.monthly;
+          break;
+        case 3:
+          periodLabel = l10n.yearly;
+          break;
+        case 4:
+          periodLabel = l10n.every2Weeks;
+          break;
+        case 5:
+          periodLabel = l10n.every3Weeks;
+          break;
+        case 6:
+          periodLabel = l10n.every3Months;
+          break;
+        case 7:
+          periodLabel = l10n.every6Months;
+          break;
       }
     }
 
     final categoryName = localizedCategoryName(tx.categoryId, l10n) ?? l10n.all;
     final parentId = tx.categoryId?.split('_').take(2).join('_');
-    final parentName = parentId != null ? localizedCategoryName(parentId, l10n) : null;
+    final parentName = parentId != null
+        ? localizedCategoryName(parentId, l10n)
+        : null;
     final hasSubCategory = parentName != null && parentName != categoryName;
 
-    final amountColor = tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context);
+    final amountColor = tx.isIncome
+        ? AppColors.getIncome(context)
+        : AppColors.getExpense(context);
     final vaultCount = tx.groupIds.length;
 
     return GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
       child: PrecisionSurface(
-        padding: EdgeInsets.all(10 * sf), // Senin istediğin padding'e geri döndü
+        padding: EdgeInsets.all(
+          10 * sf,
+        ), // Senin istediğin padding'e geri döndü
         borderRadius: 18 * sf,
         isGlass: false,
         color: tx.color.withValues(alpha: isDark ? 0.12 : 0.08),
@@ -126,7 +188,8 @@ class PrecisionTransactionCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 28 * sf, height: 28 * sf,
+                      width: 28 * sf,
+                      height: 28 * sf,
                       decoration: BoxDecoration(
                         color: tx.color.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8 * sf),
@@ -153,7 +216,8 @@ class PrecisionTransactionCard extends StatelessWidget {
                               ),
                               textAlign: TextAlign.right,
                               maxLines: 1,
-                              overflow: TextOverflow.visible, // FittedBox handles it
+                              overflow:
+                                  TextOverflow.visible, // FittedBox handles it
                             ),
                             if (hasSubCategory)
                               Text(
@@ -182,53 +246,65 @@ class PrecisionTransactionCard extends StatelessWidget {
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
                         child: tx.minAmount != null && tx.maxAmount != null
-                          ? Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.amount)}',
-                                  style: TextStyle(
-                                    fontSize: 36 * sf,
-                                    fontWeight: FontWeight.w900,
-                                    color: amountColor,
-                                    letterSpacing: -1.2,
-                                    height: 1.1,
+                            ? Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.amount)}',
+                                    style: TextStyle(
+                                      fontSize: 36 * sf,
+                                      fontWeight: FontWeight.w900,
+                                      color: amountColor,
+                                      letterSpacing: -1.2,
+                                      height: 1.1,
+                                    ),
                                   ),
-                                ),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.minAmount!)}',
-                                      style: TextStyle(
-                                        fontSize: 10.5 * sf,
-                                        fontWeight: FontWeight.w800,
-                                        color: isDark ? Colors.white30 : Colors.black26,
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.minAmount!)}',
+                                        style: TextStyle(
+                                          fontSize: 10.5 * sf,
+                                          fontWeight: FontWeight.w800,
+                                          color: isDark
+                                              ? Colors.white30
+                                              : Colors.black26,
+                                        ),
                                       ),
-                                    ),
-                                    Text(' – ', style: TextStyle(fontSize: 10 * sf, color: isDark ? Colors.white24 : Colors.black12)),
-                                    Text(
-                                      '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.maxAmount!)}',
-                                      style: TextStyle(
-                                        fontSize: 10.5 * sf,
-                                        fontWeight: FontWeight.w800,
-                                        color: isDark ? Colors.white30 : Colors.black26,
+                                      Text(
+                                        ' – ',
+                                        style: TextStyle(
+                                          fontSize: 10 * sf,
+                                          color: isDark
+                                              ? Colors.white24
+                                              : Colors.black12,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                      Text(
+                                        '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.maxAmount!)}',
+                                        style: TextStyle(
+                                          fontSize: 10.5 * sf,
+                                          fontWeight: FontWeight.w800,
+                                          color: isDark
+                                              ? Colors.white30
+                                              : Colors.black26,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              )
+                            : Text(
+                                '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.amount)}',
+                                style: TextStyle(
+                                  fontSize: 44 * sf,
+                                  fontWeight: FontWeight.w900,
+                                  color: amountColor,
+                                  letterSpacing: -1.8,
+                                  height: 1.1,
                                 ),
-                              ],
-                            )
-                          : Text(
-                              '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.amount)}',
-                              style: TextStyle(
-                                fontSize: 44 * sf,
-                                fontWeight: FontWeight.w900,
-                                color: amountColor,
-                                letterSpacing: -1.8,
-                                height: 1.1,
                               ),
-                            ),
                       ),
                     ),
                   ),
@@ -247,39 +323,59 @@ class PrecisionTransactionCard extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  tx.showOnDashboard ? Icons.visibility_rounded : Icons.visibility_off_rounded,
-                                  color: tx.showOnDashboard ? AppColors.getPrimary(context) : Colors.grey.withValues(alpha: 0.3),
+                                  tx.showOnDashboard
+                                      ? Icons.visibility_rounded
+                                      : Icons.visibility_off_rounded,
+                                  color: tx.showOnDashboard
+                                      ? AppColors.getPrimary(context)
+                                      : Colors.grey.withValues(alpha: 0.3),
                                   size: 13 * sf,
                                 ),
                                 if (vaultCount > 0) ...[
                                   SizedBox(width: 4 * sf),
                                   Text(
                                     '$vaultCount',
-                                    style: TextStyle(fontSize: 10 * sf, fontWeight: FontWeight.w900, color: Colors.grey.withValues(alpha: 0.6)),
+                                    style: TextStyle(
+                                      fontSize: 10 * sf,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.grey.withValues(alpha: 0.6),
+                                    ),
                                   ),
                                   const SizedBox(width: 1),
-                                  Icon(Icons.account_balance_wallet_rounded, size: 9 * sf, color: Colors.grey.withValues(alpha: 0.4)),
+                                  Icon(
+                                    Icons.account_balance_wallet_rounded,
+                                    size: 9 * sf,
+                                    color: Colors.grey.withValues(alpha: 0.4),
+                                  ),
                                 ],
                               ],
                             ),
                             const SizedBox(width: 4),
                             if (periodLabel != null)
                               Container(
-                                padding: EdgeInsets.symmetric(horizontal: 5 * sf, vertical: 2 * sf),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 5 * sf,
+                                  vertical: 2 * sf,
+                                ),
                                 decoration: BoxDecoration(
                                   color: amountColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(5 * sf),
                                 ),
                                 child: Text(
                                   periodLabel.toUpperCase(),
-                                  style: TextStyle(fontSize: 8 * sf, fontWeight: FontWeight.w900, color: amountColor, letterSpacing: 0.4),
+                                  style: TextStyle(
+                                    fontSize: 8 * sf,
+                                    fontWeight: FontWeight.w900,
+                                    color: amountColor,
+                                    letterSpacing: 0.4,
+                                  ),
                                 ),
                               ),
                           ],
                         ),
                       ),
                     );
-                  }
+                  },
                 ),
               ],
             ),

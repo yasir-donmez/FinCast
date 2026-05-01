@@ -306,3 +306,30 @@ final selectedVaultProvider = StateProvider<String?>((ref) => null);
 
 /// Seçili periyot (null = Tümü, 0: Tek Seferlik, 1: Haftalık, 2: Aylık, 3: Yıllık)
 final selectedPeriodProvider = StateProvider<int?>((ref) => null);
+
+/// Seçili filtrelemelere göre işlemleri getiren provider
+final filteredVaultTransactionsProvider = Provider<List<TransactionUI>>((ref) {
+  final allTransactions = ref.watch(vaultTransactionsProvider);
+  final filter = ref.watch(transactionFilterProvider);
+  final selectedVaultId = ref.watch(selectedVaultProvider);
+  final selectedPeriod = ref.watch(selectedPeriodProvider);
+
+  // 1. Kasa Filtresi
+  var filtered = selectedVaultId == null
+      ? allTransactions
+      : allTransactions.where((t) => t.groupIds.contains(selectedVaultId)).toList();
+
+  // 2. Tip Filtresi (Gelir/Gider)
+  filtered = filtered.where((t) {
+    if (filter == TransactionFilter.income) return t.isIncome;
+    if (filter == TransactionFilter.expense) return !t.isIncome;
+    return true;
+  }).toList();
+
+  // 3. Periyot Filtresi
+  if (selectedPeriod != null) {
+    filtered = filtered.where((t) => t.periodType == selectedPeriod).toList();
+  }
+
+  return filtered;
+});

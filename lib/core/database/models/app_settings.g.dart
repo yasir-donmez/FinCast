@@ -47,23 +47,28 @@ const AppSettingsSchema = CollectionSchema(
       name: r'languageCode',
       type: IsarType.string,
     ),
-    r'remoteId': PropertySchema(
+    r'permanentDeletionDays': PropertySchema(
       id: 6,
+      name: r'permanentDeletionDays',
+      type: IsarType.long,
+    ),
+    r'remoteId': PropertySchema(
+      id: 7,
       name: r'remoteId',
       type: IsarType.string,
     ),
     r'syncStatus': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'syncStatus',
       type: IsarType.long,
     ),
     r'themeModeIndex': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'themeModeIndex',
       type: IsarType.long,
     ),
     r'updatedAt': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -151,10 +156,11 @@ void _appSettingsSerialize(
   writer.writeBool(offsets[3], object.isLocationEnabled);
   writer.writeBool(offsets[4], object.isSyncEnabled);
   writer.writeString(offsets[5], object.languageCode);
-  writer.writeString(offsets[6], object.remoteId);
-  writer.writeLong(offsets[7], object.syncStatus);
-  writer.writeLong(offsets[8], object.themeModeIndex);
-  writer.writeDateTime(offsets[9], object.updatedAt);
+  writer.writeLong(offsets[6], object.permanentDeletionDays);
+  writer.writeString(offsets[7], object.remoteId);
+  writer.writeLong(offsets[8], object.syncStatus);
+  writer.writeLong(offsets[9], object.themeModeIndex);
+  writer.writeDateTime(offsets[10], object.updatedAt);
 }
 
 AppSettings _appSettingsDeserialize(
@@ -171,10 +177,11 @@ AppSettings _appSettingsDeserialize(
   object.isLocationEnabled = reader.readBool(offsets[3]);
   object.isSyncEnabled = reader.readBool(offsets[4]);
   object.languageCode = reader.readString(offsets[5]);
-  object.remoteId = reader.readStringOrNull(offsets[6]);
-  object.syncStatus = reader.readLong(offsets[7]);
-  object.themeModeIndex = reader.readLong(offsets[8]);
-  object.updatedAt = reader.readDateTime(offsets[9]);
+  object.permanentDeletionDays = reader.readLong(offsets[6]);
+  object.remoteId = reader.readStringOrNull(offsets[7]);
+  object.syncStatus = reader.readLong(offsets[8]);
+  object.themeModeIndex = reader.readLong(offsets[9]);
+  object.updatedAt = reader.readDateTime(offsets[10]);
   return object;
 }
 
@@ -198,12 +205,14 @@ P _appSettingsDeserializeProp<P>(
     case 5:
       return (reader.readString(offset)) as P;
     case 6:
-      return (reader.readStringOrNull(offset)) as P;
-    case 7:
       return (reader.readLong(offset)) as P;
+    case 7:
+      return (reader.readStringOrNull(offset)) as P;
     case 8:
       return (reader.readLong(offset)) as P;
     case 9:
+      return (reader.readLong(offset)) as P;
+    case 10:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -979,6 +988,62 @@ extension AppSettingsQueryFilter
   }
 
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      permanentDeletionDaysEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'permanentDeletionDays',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      permanentDeletionDaysGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'permanentDeletionDays',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      permanentDeletionDaysLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'permanentDeletionDays',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      permanentDeletionDaysBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'permanentDeletionDays',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
       remoteIdIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1389,6 +1454,20 @@ extension AppSettingsQuerySortBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByPermanentDeletionDays() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'permanentDeletionDays', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByPermanentDeletionDaysDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'permanentDeletionDays', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByRemoteId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'remoteId', Sort.asc);
@@ -1534,6 +1613,20 @@ extension AppSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByPermanentDeletionDays() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'permanentDeletionDays', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByPermanentDeletionDaysDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'permanentDeletionDays', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByRemoteId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'remoteId', Sort.asc);
@@ -1628,6 +1721,13 @@ extension AppSettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByPermanentDeletionDays() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'permanentDeletionDays');
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByRemoteId(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1697,6 +1797,13 @@ extension AppSettingsQueryProperty
   QueryBuilder<AppSettings, String, QQueryOperations> languageCodeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'languageCode');
+    });
+  }
+
+  QueryBuilder<AppSettings, int, QQueryOperations>
+      permanentDeletionDaysProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'permanentDeletionDays');
     });
   }
 

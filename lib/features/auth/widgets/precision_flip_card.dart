@@ -59,28 +59,30 @@ class _PrecisionFlipCardState extends State<PrecisionFlipCard> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        // Dönüş açısı (Radyan cinsinden, 0 ile Pi/180 arası)
-        // Y ekseninde yatay 180 derece dönüş
-        final double rotationValue = _animation.value * math.pi;
-        final bool isBackVisible = rotationValue > math.pi / 2;
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          // Dönüş açısı (Radyan cinsinden, 0 ile Pi/180 arası)
+          // Y ekseninde yatay 180 derece dönüş
+          final double rotationValue = _animation.value * math.pi;
+          final bool isBackVisible = rotationValue > math.pi / 2;
 
-        return Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.identity()
-            ..setEntry(3, 2, 0.001) // Perspektif (Derinlik hissi)
-            ..rotateY(rotationValue),
-          child: isBackVisible
-              ? Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.identity()..rotateY(math.pi), // Arka tarafı düzelt
-                  child: _buildCardSide(widget.back),
-                )
-              : _buildCardSide(widget.front),
-        );
-      },
+          return Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.001) // Perspektif (Derinlik hissi)
+              ..rotateY(rotationValue),
+            child: isBackVisible
+                ? Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()..rotateY(math.pi), // Arka tarafı düzelt
+                    child: _buildCardSide(widget.back),
+                  )
+                : _buildCardSide(widget.front),
+          );
+        },
+      ),
     );
   }
 

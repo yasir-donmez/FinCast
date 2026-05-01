@@ -37,6 +37,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les transactions expirées sont archivées.\nL\'IA n\'utilise que les données de cette période.';
 
   @override
+  String get permanentDataDeletion => 'Kalıcı Veri Silme Süresi';
+
+  @override
+  String get permanentDataDeletionDesc =>
+      'Bu süreden sonra işlemler veritabanından kalıcı olarak silinir.\nBu işlem geri alınamaz.';
+
+  @override
   String get oneMonth => '1 Mois';
 
   @override

@@ -18,6 +18,7 @@ class ResetSetting extends ConsumerWidget {
       onTap: () => _showResetDialog(context, l10n),
       activeColor: AppColors.getExpense(context),
       context: context,
+      isAction: true,
     );
   }
 

@@ -9,13 +9,13 @@ class LocationSetting extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
+    final isLocationEnabled = ref.watch(settingsProvider.select((s) => s.isLocationEnabled));
     final activeColor = ref.watch(rotaryColorProvider);
 
     return ProfileListItems.buildToggle(
       icon: Icons.location_on_rounded,
       title: "Konum Servisleri", // TODO: Add to L10n if needed
-      value: settings.isLocationEnabled,
+      value: isLocationEnabled,
       onChanged: (val) => ref.read(settingsProvider.notifier).toggleLocation(val),
       activeColor: activeColor,
       context: context,

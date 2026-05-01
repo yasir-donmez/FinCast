@@ -15,15 +15,15 @@ class CurrencySetting extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
+    final currencySymbol = ref.watch(settingsProvider.select((s) => s.currencySymbol));
     final activeColor = ref.watch(rotaryColorProvider);
     final l10n = AppLocalizations.of(context)!;
 
     return ProfileListItems.buildSetting(
       icon: Icons.currency_lira_rounded,
       title: "Para Birimi",
-      trailing: settings.currencySymbol,
-      onTap: () => _showCurrencyPicker(context, ref, settings.currencySymbol, l10n),
+      trailing: currencySymbol,
+      onTap: () => _showCurrencyPicker(context, ref, currencySymbol, l10n),
       activeColor: activeColor,
       context: context,
     );

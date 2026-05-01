@@ -37,6 +37,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'Las transacciones vencidas se archivan.\nLa IA solo usa datos dentro de este período.';
 
   @override
+  String get permanentDataDeletion => 'Kalıcı Veri Silme Süresi';
+
+  @override
+  String get permanentDataDeletionDesc =>
+      'Bu süreden sonra işlemler veritabanından kalıcı olarak silinir.\nBu işlem geri alınamaz.';
+
+  @override
   String get oneMonth => '1 Mes';
 
   @override

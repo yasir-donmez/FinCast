@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_constants.dart';
 import '../../../shared/widgets/precision_action.dart';
 import '../../../shared/widgets/precision_toggle.dart';
+import '../../../shared/widgets/precision_animated_icon.dart';
 
 class ProfileListItems {
   static Widget buildSectionTitle(String title, Color activeColor, {Key? key}) {
@@ -125,7 +126,14 @@ class ProfileListItems {
                 width: 1,
               ),
             ),
-            child: Icon(icon, color: activeColor, size: 22),
+            child: PrecisionAnimatedIcon(
+              activeIcon: activeIcon ?? icon,
+              inactiveIcon: inactiveIcon ?? icon,
+              isActive: value,
+              color: activeColor.withValues(alpha: value ? 1.0 : 0.4),
+              size: 22,
+              duration: const Duration(milliseconds: 400),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(

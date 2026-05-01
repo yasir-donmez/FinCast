@@ -7,10 +7,13 @@ part 'app_settings.g.dart';
 class AppSettings {
   Id id = 1; // Tek kayıt, her zaman id=1
 
-  /// Veri saklama süresi (gün cinsinden)
-  /// -1 = Hiçbir zaman silme (sonsuz)
-  /// 30 / 90 / 180 / 365 = ilgili süre
+  /// Veri saklama süresi (Görünürlük & AI Analizi için - gün cinsinden)
+  /// -1 = Hiçbir zaman arşivleme (sonsuz)
   int dataRetentionDays = 90;
+
+  /// Veritabanından kalıcı silme süresi (gün cinsinden)
+  /// -1 = Hiçbir zaman kalıcı silme
+  int permanentDeletionDays = -1;
 
   /// Tema Modu
   /// 0 = Sistem Varsayılanı

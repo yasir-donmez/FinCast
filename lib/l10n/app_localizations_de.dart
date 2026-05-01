@@ -37,6 +37,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Abgelaufene Transaktionen werden archiviert.\nDie KI-Persona verwendet nur Daten innerhalb dieses Zeitraums.';
 
   @override
+  String get permanentDataDeletion => 'Kalıcı Veri Silme Süresi';
+
+  @override
+  String get permanentDataDeletionDesc =>
+      'Bu süreden sonra işlemler veritabanından kalıcı olarak silinir.\nBu işlem geri alınamaz.';
+
+  @override
   String get oneMonth => '1 Monat';
 
   @override

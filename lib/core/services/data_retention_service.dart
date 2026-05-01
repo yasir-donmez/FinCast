@@ -38,5 +38,27 @@ class DataRetentionService {
     }
 
     await DatabaseService.updateAllTransactions(toArchive);
+
+    // --- KALICI SİLME İŞLEMİ ---
+    final permanentDeletionDays = settings.permanentDeletionDays;
+    if (permanentDeletionDays == -1) return;
+
+    final deleteCutoff = DateTime.now().subtract(Duration(days: permanentDeletionDays));
+    
+    // Sadece arşivlenmiş olanları değil, tüm işlemleri tara (güvenlik için)
+    final toDelete = allTx.where((tx) {
+      // Güvenlik kuralları:
+      // 1. Taksidi bitmiş olmalı
+      bool isFinished = tx.periodType == 0 || (tx.remainingInstallments != null && tx.remainingInstallments! <= 0);
+      if (!isFinished) return false;
+
+      // 2. Silme süresinden eski olmalı
+      return tx.date.isBefore(deleteCutoff);
+    }).toList();
+
+    if (toDelete.isNotEmpty) {
+      final idsToDelete = toDelete.map((tx) => tx.id).toList();
+      await DatabaseService.deleteTransactions(idsToDelete);
+    }
   }
 }

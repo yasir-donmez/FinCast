@@ -10,14 +10,14 @@ class NotificationSetting extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
+    final isAiEnabled = ref.watch(settingsProvider.select((s) => s.isAiNotificationsEnabled));
     final activeColor = ref.watch(rotaryColorProvider);
     final l10n = AppLocalizations.of(context)!;
 
     return ProfileListItems.buildToggle(
       icon: Icons.notifications_active_rounded,
       title: l10n.aiNotifications,
-      value: settings.isAiNotificationsEnabled,
+      value: isAiEnabled,
       onChanged: (val) => ref.read(settingsProvider.notifier).toggleAiNotifications(val),
       activeColor: activeColor,
       context: context,

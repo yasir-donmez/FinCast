@@ -189,32 +189,34 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
               child: Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(height: topSpacer),
-                      _buildHero(context, primaryColor, screenHeight),
-                      SizedBox(height: heroToCardSpacer),
-
-                      PrecisionGlassCard(
-                        padding: const EdgeInsets.all(24),
-                        child: AnimatedSize(
-                          duration: const Duration(milliseconds: 400),
-                          curve: Curves.fastOutSlowIn,
-                          clipBehavior: Clip.hardEdge,
-                          alignment: Alignment.topCenter,
-                          child: PrecisionFlipCard(
-                            isFront: _isLogin,
-                            front: _buildLoginForm(context, screenHeight),
-                            back: _buildRegisterForm(context, screenHeight),
+                  child: RepaintBoundary(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(height: topSpacer),
+                        _buildHero(context, primaryColor, screenHeight),
+                        SizedBox(height: heroToCardSpacer),
+  
+                        PrecisionGlassCard(
+                          padding: const EdgeInsets.all(24),
+                          child: AnimatedSize(
+                            duration: const Duration(milliseconds: 400),
+                            curve: Curves.fastOutSlowIn,
+                            clipBehavior: Clip.hardEdge,
+                            alignment: Alignment.topCenter,
+                            child: PrecisionFlipCard(
+                              isFront: _isLogin,
+                              front: _buildLoginForm(context, screenHeight),
+                              back: _buildRegisterForm(context, screenHeight),
+                            ),
                           ),
                         ),
-                      ),
-
-                      SizedBox(height: cardToBottomSpacer),
-                      _buildBottomActions(context, primaryColor),
-                      const SizedBox(height: 20), // Extra space for scrolling
-                    ],
+  
+                        SizedBox(height: cardToBottomSpacer),
+                        _buildBottomActions(context, primaryColor),
+                        const SizedBox(height: 20), // Extra space for scrolling
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -228,27 +230,29 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
   Widget _buildHero(BuildContext context, Color primaryColor, double screenHeight) {
     final double fontSize = (screenHeight * 0.06).clamp(32.0, 56.0);
     
-    return Column(
-      children: [
-        Text(
-          'FinCast',
-          style: TextStyle(
-            fontSize: fontSize,
-            fontWeight: FontWeight.w900,
-            color: AppColors.getTextPrimary(context),
-            letterSpacing: -3,
+    return RepaintBoundary(
+      child: Column(
+        children: [
+          Text(
+            'FinCast',
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.w900,
+              color: AppColors.getTextPrimary(context),
+              letterSpacing: -3,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Container(
-          width: fontSize * 0.8,
-          height: 4,
-          decoration: BoxDecoration(
-            color: primaryColor,
-            borderRadius: BorderRadius.circular(2),
+          const SizedBox(height: 4),
+          Container(
+            width: fontSize * 0.8,
+            height: 4,
+            decoration: BoxDecoration(
+              color: primaryColor,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

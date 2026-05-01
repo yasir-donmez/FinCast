@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:ui' as ui;
 import 'dart:math' as math;
@@ -6,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/theme/app_constants.dart';
 import '../../l10n/app_localizations.dart';
-import 'precision_toggle.dart';
 
 // Global key for screenshot boundary
 // Global key is imported from settings_provider
@@ -20,24 +20,30 @@ class PrecisionThemeToggle extends ConsumerStatefulWidget {
 }
 
 class _PrecisionThemeToggleState extends ConsumerState<PrecisionThemeToggle> with TickerProviderStateMixin {
-  late AnimationController _controller;
+  late AnimationController _revealController;
+  late AnimationController _iconController;
   OverlayEntry? _overlayEntry;
   ui.Image? _screenshot;
-  final GlobalKey _switchKey = GlobalKey();
+  final GlobalKey _buttonKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _revealController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
+    );
+    _iconController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
     );
   }
 
   @override
   void dispose() {
     _removeOverlay();
-    _controller.dispose();
+    _revealController.dispose();
+    _iconController.dispose();
     super.dispose();
   }
 
@@ -53,93 +59,136 @@ class _PrecisionThemeToggleState extends ConsumerState<PrecisionThemeToggle> wit
       final boundary = rootRepaintBoundaryKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) return;
       
-      final pixelRatio = View.of(context).devicePixelRatio;
-      _screenshot = await boundary.toImage(pixelRatio: pixelRatio);
+      // Performans için 1.5x pixel ratio (3x yerine) kullanıyoruz. 
+      // Geçiş anında fark edilmez ama işlemciyi çok rahatlatır.
+      _screenshot = await boundary.toImage(pixelRatio: 1.5);
     } catch (e) {
       debugPrint('ThemeReveal screenshot error: $e');
       _screenshot = null;
     }
   }
 
-  void _handleToggle(bool val) async {
-    if (_controller.isAnimating) return;
+  void _handleToggle() async {
+    if (_revealController.isAnimating) return;
     if (!mounted) return;
 
-    // 1. Capture snapshot of OLD theme
+    final settings = ref.read(settingsProvider);
+    // Mod döngüsü: Sistem (0) -> Açık (1) -> Koyu (2) -> Sistem (0)
+    final nextMode = (settings.themeModeIndex + 1) % 3;
+
+    // 1. Ekran görüntüsünü al
     await _captureSnapshot(context);
     if (_screenshot == null || !mounted) return;
 
-    // 2. Capture switch position for reveal start
-    final RenderBox? renderBox = _switchKey.currentContext?.findRenderObject() as RenderBox?;
+    // 2. Buton konumunu bul (açılma merkezini belirlemek için)
+    final RenderBox? renderBox = _buttonKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
     final center = renderBox.localToGlobal(renderBox.size.center(Offset.zero));
 
-    // 3. Change theme underneath
-    await ref.read(settingsProvider.notifier).setThemeMode(val ? 2 : 1);
+    // 3. İkon animasyonunu başlat
+    _iconController.forward(from: 0.0);
+    HapticFeedback.mediumImpact();
 
-    // 4. Show OLD snapshot in overlay
+    // 4. Temayı değiştir
+    await ref.read(settingsProvider.notifier).setThemeMode(nextMode);
+
+    // 5. Overlay'i ekle
     if (!mounted) return;
     _overlayEntry = OverlayEntry(
       builder: (context) => _RevealOverlay(
         center: center,
-        animation: _controller,
+        animation: _revealController,
         image: _screenshot!,
       ),
     );
 
     Overlay.of(context).insert(_overlayEntry!);
 
-    // 5. Reveal the new theme
-    await _controller.forward(from: 0.0);
+    // 6. Reveal animasyonunu başlat
+    await _revealController.forward(from: 0.0);
     
     _removeOverlay();
-    _controller.reset();
+    _revealController.reset();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeIndex = ref.watch(settingsProvider.select((s) => s.themeModeIndex));
+    
+    String label;
+    IconData icon;
+    switch (themeIndex) {
+      case 1:
+        label = l10n.themeLight;
+        icon = Icons.light_mode_rounded;
+        break;
+      case 2:
+        label = l10n.themeDark;
+        icon = Icons.dark_mode_rounded;
+        break;
+      default:
+        label = l10n.themeSystem;
+        icon = Icons.brightness_auto_rounded;
+    }
 
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: widget.activeColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: widget.activeColor.withValues(alpha: 0.15),
-                width: 1,
-              ),
-            ),
-            child: Icon(
-              isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-              color: widget.activeColor,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 16),
           Expanded(
-            child: Text(
-              l10n.themeMode,
-              style: TextStyle(
-                color: AppColors.getTextPrimary(context),
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.themeMode,
+                  style: TextStyle(
+                    color: AppColors.getTextPrimary(context),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: AppColors.getTextSecondary(context),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
-          PrecisionToggle(
-            key: _switchKey,
-            value: isDark,
-            activeColor: widget.activeColor,
-            onChanged: _handleToggle,
-            activeIcon: Icons.dark_mode_rounded,
-            inactiveIcon: Icons.light_mode_rounded,
+          GestureDetector(
+            key: _buttonKey,
+            onTap: _handleToggle,
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: widget.activeColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: widget.activeColor.withValues(alpha: 0.2),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.activeColor.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: RotationTransition(
+                turns: _iconController,
+                child: Icon(
+                  icon,
+                  color: widget.activeColor,
+                  size: 24,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -160,14 +209,20 @@ class _RevealOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Daha yumuşak bir kavis ekliyoruz
+    final curvedAnimation = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeInOutQuart,
+    );
+
     return AnimatedBuilder(
-      animation: animation,
+      animation: curvedAnimation,
       builder: (context, child) {
         return CustomPaint(
           size: Size.infinite,
           painter: _InverseCircularRevealPainter(
             center: center,
-            fraction: animation.value,
+            fraction: curvedAnimation.value,
             image: image,
           ),
         );
@@ -189,9 +244,12 @@ class _InverseCircularRevealPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (fraction >= 1.0) return; // Animasyon bittiyse çizim yapma
+
     final maxRadius = _calcMaxRadius(center, size);
     final radius = maxRadius * fraction;
 
+    // Performans için sadece ekranın görünen kısmına katman açıyoruz
     canvas.saveLayer(Offset.zero & size, Paint());
 
     paintImage(
@@ -199,6 +257,7 @@ class _InverseCircularRevealPainter extends CustomPainter {
       rect: Offset.zero & size,
       image: image,
       fit: BoxFit.fill,
+      filterQuality: FilterQuality.low, // Geçiş anında performans için düşük kalite yeterli
     );
 
     final erasePaint = Paint()

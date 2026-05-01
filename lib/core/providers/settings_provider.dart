@@ -26,8 +26,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..languageCode = state.languageCode
       ..currencySymbol = state.currencySymbol
       ..dataRetentionDays = state.dataRetentionDays
+      ..permanentDeletionDays = state.permanentDeletionDays
       ..isAiNotificationsEnabled = state.isAiNotificationsEnabled
       ..isSyncEnabled = state.isSyncEnabled
+      ..isLocationEnabled = state.isLocationEnabled
       ..remoteId = state.remoteId
       ..syncStatus = state.syncStatus;
     await _save(newSettings);
@@ -42,8 +44,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..languageCode = code
       ..currencySymbol = state.currencySymbol
       ..dataRetentionDays = state.dataRetentionDays
+      ..permanentDeletionDays = state.permanentDeletionDays
       ..isAiNotificationsEnabled = state.isAiNotificationsEnabled
       ..isSyncEnabled = state.isSyncEnabled
+      ..isLocationEnabled = state.isLocationEnabled
       ..remoteId = state.remoteId
       ..syncStatus = state.syncStatus;
     await _save(newSettings);
@@ -59,8 +63,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..languageCode = state.languageCode
       ..currencySymbol = symbol
       ..dataRetentionDays = state.dataRetentionDays
+      ..permanentDeletionDays = state.permanentDeletionDays
       ..isAiNotificationsEnabled = state.isAiNotificationsEnabled
       ..isSyncEnabled = state.isSyncEnabled
+      ..isLocationEnabled = state.isLocationEnabled
       ..remoteId = state.remoteId
       ..syncStatus = state.syncStatus;
     await _save(newSettings);
@@ -91,6 +97,25 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..languageCode = state.languageCode
       ..currencySymbol = state.currencySymbol
       ..dataRetentionDays = days
+      ..permanentDeletionDays = state.permanentDeletionDays
+      ..isAiNotificationsEnabled = state.isAiNotificationsEnabled
+      ..isSyncEnabled = state.isSyncEnabled
+      ..isLocationEnabled = state.isLocationEnabled
+      ..remoteId = state.remoteId
+      ..syncStatus = state.syncStatus;
+    await _save(updated);
+  }
+
+  Future<void> setPermanentDeletion(int days) async {
+    if (state.permanentDeletionDays == days) return;
+
+    final updated = AppSettings()
+      ..id = state.id
+      ..themeModeIndex = state.themeModeIndex
+      ..languageCode = state.languageCode
+      ..currencySymbol = state.currencySymbol
+      ..dataRetentionDays = state.dataRetentionDays
+      ..permanentDeletionDays = days
       ..isAiNotificationsEnabled = state.isAiNotificationsEnabled
       ..isSyncEnabled = state.isSyncEnabled
       ..isLocationEnabled = state.isLocationEnabled
@@ -108,6 +133,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..languageCode = state.languageCode
       ..currencySymbol = state.currencySymbol
       ..dataRetentionDays = state.dataRetentionDays
+      ..permanentDeletionDays = state.permanentDeletionDays
       ..isAiNotificationsEnabled = value
       ..isSyncEnabled = state.isSyncEnabled
       ..isLocationEnabled = state.isLocationEnabled
@@ -125,6 +151,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..languageCode = state.languageCode
       ..currencySymbol = state.currencySymbol
       ..dataRetentionDays = state.dataRetentionDays
+      ..permanentDeletionDays = state.permanentDeletionDays
       ..isAiNotificationsEnabled = state.isAiNotificationsEnabled
       ..isSyncEnabled = state.isSyncEnabled
       ..isLocationEnabled = value
@@ -142,6 +169,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..languageCode = state.languageCode
       ..currencySymbol = state.currencySymbol
       ..dataRetentionDays = state.dataRetentionDays
+      ..permanentDeletionDays = state.permanentDeletionDays
       ..isAiNotificationsEnabled = state.isAiNotificationsEnabled
       ..isSyncEnabled = value
       ..isLocationEnabled = state.isLocationEnabled

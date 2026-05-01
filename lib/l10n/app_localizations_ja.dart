@@ -37,6 +37,13 @@ class AppLocalizationsJa extends AppLocalizations {
       '期限切れの取引はアーカイブされます。\nAIペルソナはこの期間内のデータのみを使用します。';
 
   @override
+  String get permanentDataDeletion => 'Kalıcı Veri Silme Süresi';
+
+  @override
+  String get permanentDataDeletionDesc =>
+      'Bu süreden sonra işlemler veritabanından kalıcı olarak silinir.\nBu işlem geri alınamaz.';
+
+  @override
   String get oneMonth => '1ヶ月';
 
   @override

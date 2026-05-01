@@ -18,7 +18,8 @@ import '../dashboard/dashboard_providers.dart';
 import 'widgets/precision_blob.dart';
 import 'widgets/header_delegate.dart';
 import 'widgets/filter_chip.dart';
-// Removed unused: import '../../shared/widgets/sliver_animation_spacer.dart';
+import 'widgets/vault_snap_scroll_physics.dart';
+import 'widgets/staggered_entry_anim.dart';
 
 class VaultsScreen extends ConsumerStatefulWidget {
   const VaultsScreen({super.key});
@@ -53,56 +54,19 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
     final activeColor = ref.watch(rotaryColorProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final vaultTransactions = selectedVaultId == null
-        ? allTransactions
-        : allTransactions
-              .where((t) => t.groupIds.contains(selectedVaultId))
-              .toList();
-
-    var filteredTransactions = vaultTransactions.where((t) {
-      if (filter == TransactionFilter.income) return t.isIncome;
-      if (filter == TransactionFilter.expense) return !t.isIncome;
-      return true;
-    }).toList();
-
-    if (selectedPeriod != null) {
-      filteredTransactions = filteredTransactions
-          .where((t) => t.periodType == selectedPeriod)
-          .toList();
-    }
+    final filteredTransactions = ref.watch(filteredVaultTransactionsProvider);
 
     final screenHeight = MediaQuery.of(context).size.height;
     final scalingFactor = (screenHeight / 812.0).clamp(0.85, 1.0);
 
-    // Header limitleri (header_delegate.dart ile uyumlu)
     const maxHeaderHeight = 420.0;
     const minHeaderHeight = 100.0;
-
-    // (requiredContentHeight was unused and removed)
-
 
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
       body: Stack(
         children: [
-          if (isDark) ...[
-            Positioned(
-              top: -50,
-              left: -50,
-              child: PrecisionBlob(
-                color: activeColor.withValues(alpha: 0.15),
-                size: 400,
-              ),
-            ),
-            Positioned(
-              bottom: 100,
-              right: -100,
-              child: PrecisionBlob(
-                color: AppColors.getSecondary(context).withValues(alpha: 0.1),
-                size: 500,
-              ),
-            ),
-          ],
+          if (isDark) ..._buildBackgroundBlobs(activeColor, context),
 
           CustomScrollView(
             controller: _scrollController,
@@ -110,237 +74,255 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
               maxScrollExtent: maxHeaderHeight - (minHeaderHeight + MediaQuery.of(context).padding.top),
             ),
             slivers: [
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: TrueMorphDeckHeaderDelegate(
-                  groups: groups,
-                  allTransactions: allTransactions,
-                  selectedVaultId: selectedVaultId,
-                  onVaultSelect: (id) =>
-                      ref.read(selectedVaultProvider.notifier).state = id,
-                  activeColor: activeColor,
-                  onManageVaults: () => _showVaultManagementSheet(context),
-                  onAddVault: () => _showAddVaultSheet(context),
-                  l10n: l10n,
-                  onVaultTap: (id) => _showVaultDetail(context, id),
-                  topPadding: MediaQuery.of(context).padding.top,
-                ),
-              ),
-
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSizes.paddingMedium,
-                    24,
-                    AppSizes.paddingMedium,
-                    24,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "FİLTRELEME",
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.grey.withValues(alpha: 0.5),
-                          letterSpacing: 2,
-                        ),
-                      ),
-                      SizedBox(height: AppSizes.paddingLarge * scalingFactor),
-                      Row(
-                        children: [
-                          VaultFilterChip(
-                            label: l10n.all,
-                            isActive: filter == TransactionFilter.all,
-                            onTap: () =>
-                                ref
-                                    .read(transactionFilterProvider.notifier)
-                                    .state = TransactionFilter
-                                    .all,
-                            activeColor: activeColor,
-                          ),
-                          const SizedBox(width: 8),
-                          VaultFilterChip(
-                            label: l10n.income,
-                            isActive: filter == TransactionFilter.income,
-                            onTap: () =>
-                                ref
-                                    .read(transactionFilterProvider.notifier)
-                                    .state = TransactionFilter
-                                    .income,
-                            activeColor: AppColors.getIncome(context),
-                          ),
-                          const SizedBox(width: 8),
-                          VaultFilterChip(
-                            label: l10n.expense,
-                            isActive: filter == TransactionFilter.expense,
-                            onTap: () =>
-                                ref
-                                    .read(transactionFilterProvider.notifier)
-                                    .state = TransactionFilter
-                                    .expense,
-                            activeColor: AppColors.getExpense(context),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        clipBehavior: Clip.none,
-                        child: Row(
-                          children: [
-                            VaultFilterChip(
-                              label: l10n.allTime,
-                              isActive: selectedPeriod == null,
-                              onTap: () =>
-                                  ref
-                                          .read(selectedPeriodProvider.notifier)
-                                          .state =
-                                      null,
-                              activeColor: activeColor,
-                            ),
-                            const SizedBox(width: 8),
-                            ...[1, 2, 3].map(
-                              (p) => Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: VaultFilterChip(
-                                  label: _getPeriodLabel(p, l10n),
-                                  isActive: selectedPeriod == p,
-                                  onTap: () =>
-                                      ref
-                                              .read(
-                                                selectedPeriodProvider.notifier,
-                                              )
-                                              .state =
-                                          p,
-                                  activeColor: activeColor,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
+              _buildHeader(groups, allTransactions, selectedVaultId, activeColor, l10n, context),
+              _buildFilters(filter, selectedPeriod, activeColor, scalingFactor, l10n, context),
+              
               if (filteredTransactions.isEmpty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Align(
-                    alignment: const Alignment(
-                      0,
-                      -0.4,
-                    ), // İçeriği yukarı çektik
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TweenAnimationBuilder<double>(
-                            duration: const Duration(milliseconds: 1200),
-                            tween: Tween(begin: 0.0, end: 1.0),
-                            curve: Curves.elasticOut,
-                            builder: (context, value, child) {
-                              return PrecisionInset(
-                                size:
-                                    100, // Biraz küçülttük ki daha rahat sığsın
-                                child: Transform.scale(
-                                  scale: 0.4 + (0.6 * value),
-                                  child: Opacity(
-                                    opacity: value.clamp(0.0, 1.0),
-                                    child: child,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Icon(
-                              Icons.auto_graph_rounded,
-                              size: 40,
-                              color: activeColor.withValues(
-                                alpha: isDark ? 0.3 : 0.1,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Text(
-                            l10n.noTransactions.toUpperCase(),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.15)
-                                  : Colors.grey.withValues(alpha: 0.3),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                )
+                _buildEmptyState(activeColor, isDark, l10n)
               else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSizes.paddingMedium,
-                    0,
-                    AppSizes.paddingMedium,
-                    20,
-                  ),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 1.35,
-                        ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final tx = filteredTransactions[index];
-                        return StaggeredEntryAnim(
-                          key: ValueKey(tx.dbId ?? index),
-                          index: index,
-                          child: PrecisionTransactionCard(
-                            transaction: tx,
-                            onTap: () => _showTransactionDetail(context, tx),
-                            onLongPress: () => _handleTransactionLongPress(context, ref, tx),
-                          ),
-                        );
-                      },
-                      childCount: filteredTransactions.length,
-                    ),
-                  ),
-                ),
+                _buildTransactionGrid(filteredTransactions, context),
 
-              // AKILLI BOŞLUK:
-              // Eğer içerik zaten yeterince uzunsa (animasyonu tamamlatabiliyorsa) boşluk eklemez.
-              // Eğer içerik kısaysa, tam animasyonun kapanacağı mesafe (320px) kadar alanı garanti eder.
-              SliverLayoutBuilder(
-                builder: (context, constraints) {
-                  // precedingScrollExtent o anki toplam layout boyutunu verir.
-                  // scrollOffset ile toplayarak scroll=0 anındaki hayali tam boyutu buluyoruz.
-                  final totalHeightAtStart =
-                      constraints.precedingScrollExtent +
-                      constraints.scrollOffset;
-                  final targetHeight =
-                      constraints.viewportMainAxisExtent +
-                      (maxHeaderHeight - minHeaderHeight);
-                  final gap = targetHeight - totalHeightAtStart;
-
-                  return SliverToBoxAdapter(
-                    child: SizedBox(height: gap > 0 ? gap : 0),
-                  );
-                },
-              ),
+              _buildSmartSpacing(maxHeaderHeight, minHeaderHeight),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  List<Widget> _buildBackgroundBlobs(Color activeColor, BuildContext context) {
+    return [
+      Positioned(
+        top: -50,
+        left: -50,
+        child: PrecisionBlob(
+          color: activeColor.withValues(alpha: 0.15),
+          size: 400,
+        ),
+      ),
+      Positioned(
+        bottom: 100,
+        right: -100,
+        child: PrecisionBlob(
+          color: AppColors.getSecondary(context).withValues(alpha: 0.1),
+          size: 500,
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildHeader(
+    List<TransactionGroup> groups, 
+    List<TransactionUI> allTransactions, 
+    String? selectedVaultId, 
+    Color activeColor, 
+    AppLocalizations l10n, 
+    BuildContext context
+  ) {
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: TrueMorphDeckHeaderDelegate(
+        groups: groups,
+        allTransactions: allTransactions,
+        selectedVaultId: selectedVaultId,
+        onVaultSelect: (id) => ref.read(selectedVaultProvider.notifier).state = id,
+        activeColor: activeColor,
+        onManageVaults: () => _showVaultManagementSheet(context),
+        onAddVault: () => _showAddVaultSheet(context),
+        l10n: l10n,
+        onVaultTap: (id) => _showVaultDetail(context, id),
+        topPadding: MediaQuery.of(context).padding.top,
+      ),
+    );
+  }
+
+  Widget _buildFilters(
+    TransactionFilter filter, 
+    int? selectedPeriod, 
+    Color activeColor, 
+    double scalingFactor, 
+    AppLocalizations l10n, 
+    BuildContext context
+  ) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSizes.paddingMedium,
+          24,
+          AppSizes.paddingMedium,
+          24,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "FİLTRELEME",
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: Colors.grey.withValues(alpha: 0.5),
+                letterSpacing: 2,
+              ),
+            ),
+            SizedBox(height: AppSizes.paddingLarge * scalingFactor),
+            Row(
+              children: [
+                VaultFilterChip(
+                  label: l10n.all,
+                  isActive: filter == TransactionFilter.all,
+                  onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.all,
+                  activeColor: activeColor,
+                ),
+                const SizedBox(width: 8),
+                VaultFilterChip(
+                  label: l10n.income,
+                  isActive: filter == TransactionFilter.income,
+                  onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.income,
+                  activeColor: AppColors.getIncome(context),
+                ),
+                const SizedBox(width: 8),
+                VaultFilterChip(
+                  label: l10n.expense,
+                  isActive: filter == TransactionFilter.expense,
+                  onTap: () => ref.read(transactionFilterProvider.notifier).state = TransactionFilter.expense,
+                  activeColor: AppColors.getExpense(context),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              clipBehavior: Clip.none,
+              child: Row(
+                children: [
+                  VaultFilterChip(
+                    label: l10n.allTime,
+                    isActive: selectedPeriod == null,
+                    onTap: () => ref.read(selectedPeriodProvider.notifier).state = null,
+                    activeColor: activeColor,
+                  ),
+                  const SizedBox(width: 8),
+                  ...[1, 2, 3].map(
+                    (p) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: VaultFilterChip(
+                        label: _getPeriodLabel(p, l10n),
+                        isActive: selectedPeriod == p,
+                        onTap: () => ref.read(selectedPeriodProvider.notifier).state = p,
+                        activeColor: activeColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(Color activeColor, bool isDark, AppLocalizations l10n) {
+    return SliverFillRemaining(
+      hasScrollBody: false,
+      child: Align(
+        alignment: const Alignment(0, -0.4),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 1200),
+                tween: Tween(begin: 0.0, end: 1.0),
+                curve: Curves.elasticOut,
+                builder: (context, value, child) {
+                  return PrecisionInset(
+                    size: 100,
+                    child: Transform.scale(
+                      scale: 0.4 + (0.6 * value),
+                      child: Opacity(
+                        opacity: value.clamp(0.0, 1.0),
+                        child: child,
+                      ),
+                    ),
+                  );
+                },
+                child: Icon(
+                  Icons.auto_graph_rounded,
+                  size: 40,
+                  color: activeColor.withValues(alpha: isDark ? 0.3 : 0.1),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                l10n.noTransactions.toUpperCase(),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : Colors.grey.withValues(alpha: 0.3),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTransactionGrid(List<TransactionUI> transactions, BuildContext context) {
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSizes.paddingMedium,
+        0,
+        AppSizes.paddingMedium,
+        20,
+      ),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.35,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final tx = transactions[index];
+            return StaggeredEntryAnim(
+              key: ValueKey(tx.dbId ?? index),
+              index: index,
+              child: PrecisionTransactionCard(
+                transaction: tx,
+                onTap: () => _showTransactionActions(context, tx),
+                onLongPress: () {
+                  HapticFeedback.heavyImpact();
+                  _showTransactionActions(context, tx);
+                },
+              ),
+            );
+          },
+          childCount: transactions.length,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSmartSpacing(double maxHeaderHeight, double minHeaderHeight) {
+    return SliverLayoutBuilder(
+      builder: (context, constraints) {
+        final totalHeightAtStart = constraints.precedingScrollExtent + constraints.scrollOffset;
+        final targetHeight = constraints.viewportMainAxisExtent + (maxHeaderHeight - minHeaderHeight);
+        final gap = targetHeight - totalHeightAtStart;
+
+        return SliverToBoxAdapter(
+          child: SizedBox(height: gap > 0 ? gap : 0),
+        );
+      },
     );
   }
 
@@ -367,7 +349,9 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
     }
   }
 
-  void _showTransactionDetail(BuildContext context, TransactionUI tx) {
+  void _showTransactionActions(BuildContext context, TransactionUI tx) {
+    if (tx.dbId == null) return;
+    
     final l10n = AppLocalizations.of(context)!;
     final categoryName = localizedCategoryName(tx.categoryId, l10n) ?? l10n.all;
     final parentId = tx.categoryId?.split('_').take(2).join('_');
@@ -377,6 +361,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
         : categoryName;
 
     final selectedVaultId = ref.read(selectedVaultProvider);
+
     PrecisionSheet.show(
       context: context,
       title: fullTitle,
@@ -446,89 +431,10 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
     );
   }
 
-  void _handleTransactionLongPress(
-    BuildContext context,
-    WidgetRef ref,
-    TransactionUI tx,
-  ) {
-    if (tx.dbId == null) return;
-    HapticFeedback.heavyImpact();
-
-    final selectedVaultId = ref.read(selectedVaultProvider);
-
-    PrecisionSheet.show(
-      context: context,
-      title: tx.name,
-      child: PrecisionDetailSheet(
-        transaction: tx,
-        onEdit: () {
-          PrecisionSheet.show(
-            context: context,
-            title: AppLocalizations.of(context)!.edit,
-            child: AddTransactionSheet(
-              initialId: tx.dbId,
-              initialName: tx.name,
-              initialAmount: tx.amount,
-              initialMinAmount: tx.minAmount,
-              initialMaxAmount: tx.maxAmount,
-              initialIsIncome: tx.isIncome,
-              initialVaultIds: tx.groupIds
-                  .map((vId) => int.parse(vId.replaceFirst('v_', '')))
-                  .toList(),
-              initialCategoryId: tx.categoryId,
-              initialNote: tx.note,
-              initialCurrency: tx.currency,
-              initialPeriodType: tx.periodType,
-              initialRecurrenceDay: tx.recurrenceDay,
-              initialRecurrenceDate: tx.recurrenceDate,
-              initialRecurrenceDuration: tx.recurrenceDuration,
-            ),
-          );
-        },
-        onDelete: () async {
-          final confirm = await showPrecisionDialog<bool>(
-            context: context,
-            accentColor: AppColors.error,
-            title: AppLocalizations.of(context)!.permanentDelete,
-            content: AppLocalizations.of(context)!.permanentDeleteDesc,
-            actions: [
-              PrecisionDialogAction(
-                label: AppLocalizations.of(context)!.cancel,
-                onTap: () => Navigator.pop(context, false),
-                isPrimary: false,
-              ),
-              PrecisionDialogAction(
-                label: AppLocalizations.of(context)!.ok,
-                onTap: () => Navigator.pop(context, true),
-                isPrimary: true,
-              ),
-            ],
-          );
-          if (confirm == true) {
-            await DatabaseService.deleteTransaction(tx.dbId!);
-            HapticFeedback.mediumImpact();
-          }
-        },
-        onRemoveFromVault: selectedVaultId != null ? () async {
-          final record = await DatabaseService.getTransaction(tx.dbId!);
-          if (record != null) {
-            final vId = int.tryParse(selectedVaultId.replaceFirst('v_', ''));
-            if (vId != null) {
-              record.vaultIds = List<int>.from(record.vaultIds)..remove(vId);
-              await DatabaseService.updateTransaction(record);
-              HapticFeedback.mediumImpact();
-            }
-          }
-        } : null,
-        isInVault: tx.groupIds.isNotEmpty,
-      ),
-    );
-  }
-
   void _showVaultManagementSheet(BuildContext context) {
     PrecisionSheet.show(
       context: context,
-      title: 'Dashboard Edit', // Sade ve şık başlık
+      title: 'Dashboard Edit', 
       child: const DashboardWidgetManagerSheet(),
     );
   }
@@ -548,121 +454,6 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
       context: context,
       title: 'Kasa Detayı',
       child: VaultDetailSheet(vaultId: vaultId),
-    );
-  }
-}
-
-class VaultSnapScrollPhysics extends BouncingScrollPhysics {
-  final double maxScrollExtent;
-
-  const VaultSnapScrollPhysics({
-    super.parent,
-    required this.maxScrollExtent,
-  });
-
-  @override
-  VaultSnapScrollPhysics applyTo(ScrollPhysics? ancestor) {
-    return VaultSnapScrollPhysics(
-      parent: buildParent(ancestor),
-      maxScrollExtent: maxScrollExtent,
-    );
-  }
-
-  @override
-  Simulation? createBallisticSimulation(ScrollMetrics position, double velocity) {
-    final tolerance = toleranceFor(position);
-    final offset = position.pixels;
-
-    // Eğer Kasa başlığının küçüldüğü bölgedeysek (0 ile maxScrollExtent arası)
-    if (offset > 0.0 && offset < maxScrollExtent) {
-      final double target;
-      
-      // Kullanıcı hızlı kaydırdıysa (flick), ivmeye göre yukarı veya aşağı yapıştır
-      if (velocity.abs() > tolerance.velocity) {
-        target = velocity > 0 ? maxScrollExtent : 0.0;
-      } else {
-        // Kullanıcı yavaş bıraktıysa, yarıyı geçtiği tarafa yapıştır
-        target = offset > maxScrollExtent / 2 ? maxScrollExtent : 0.0;
-      }
-      
-      return ScrollSpringSimulation(
-        spring,
-        offset,
-        target,
-        velocity,
-        tolerance: tolerance,
-      );
-    }
-    
-    // Normal liste kaydırması için BouncingScrollPhysics'e bırak
-    return super.createBallisticSimulation(position, velocity);
-  }
-}
-
-class StaggeredEntryAnim extends StatefulWidget {
-  final Widget child;
-  final int index;
-
-  const StaggeredEntryAnim({
-    super.key,
-    required this.child,
-    required this.index,
-  });
-
-  @override
-  State<StaggeredEntryAnim> createState() => _StaggeredEntryAnimState();
-}
-
-class _StaggeredEntryAnimState extends State<StaggeredEntryAnim> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 550));
-    
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    ));
-
-    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
-    
-    _scaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutBack, // O meşhur "pıt" (spring) efekti
-    ));
-
-    // Kartın sırasına (index) göre bekleme süresini hesapla (Çok uzun listelerde max 15'e sabitle)
-    final delay = (widget.index.clamp(0, 15)) * 60;
-    Future.delayed(Duration(milliseconds: delay), () {
-      if (mounted) _controller.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: ScaleTransition(
-          scale: _scaleAnimation,
-          child: widget.child,
-        ),
-      ),
     );
   }
 }

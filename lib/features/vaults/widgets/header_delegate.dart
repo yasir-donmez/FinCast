@@ -51,22 +51,35 @@ class TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
     final double compactTopOffset = topPadding + ((availableHeaderHeight - kCompactCardHeight) / 2) - 2;
 
     return SizedBox.expand(
-      child: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: bgAlpha * 20,
-            sigmaY: bgAlpha * 20,
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.getBackground(context).withValues(alpha: bgAlpha * 0.15),
-              border: Border(
-                bottom: BorderSide(
-                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: progress > 0.95 ? (progress - 0.95) * 2 : 0.0),
-                  width: 0.5,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // GPU-Friendly Blur Layer: Constant blur radius, dynamic opacity
+          Positioned.fill(
+            child: Opacity(
+              opacity: bgAlpha,
+              child: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.getBackground(context).withValues(alpha: 0.15),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: (isDark ? Colors.white : Colors.black).withValues(
+                            alpha: progress > 0.95 ? (progress - 0.95) * 2 : 0.0,
+                          ),
+                          width: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
+          ),
+          // Content Layer
+          Positioned.fill(
             child: Stack(
               clipBehavior: Clip.none,
               children: [
@@ -113,7 +126,7 @@ class TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }

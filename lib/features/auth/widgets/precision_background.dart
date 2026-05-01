@@ -49,21 +49,17 @@ class _PrecisionBackgroundState extends State<PrecisionBackground>
               color: AppColors.getBackground(context),
             ),
           ),
-        
-        // Hareketli Blob'lar
+         // Hareketli Blob'lar
         Positioned.fill(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: _LiquidPainter(
-                  progress: _controller.value,
-                  primaryColor: AppColors.primary.withValues(alpha: isDark ? 0.15 : 0.2),
-                  secondaryColor: AppColors.secondary.withValues(alpha: isDark ? 0.12 : 0.15),
-                  isDark: isDark,
-                ),
-              );
-            },
+          child: RepaintBoundary(
+            child: CustomPaint(
+              painter: _LiquidPainter(
+                animation: _controller,
+                primaryColor: AppColors.primary.withValues(alpha: isDark ? 0.15 : 0.2),
+                secondaryColor: AppColors.secondary.withValues(alpha: isDark ? 0.12 : 0.15),
+                isDark: isDark,
+              ),
+            ),
           ),
         ),
         
@@ -75,20 +71,21 @@ class _PrecisionBackgroundState extends State<PrecisionBackground>
 }
 
 class _LiquidPainter extends CustomPainter {
-  final double progress;
+  final Animation<double> animation;
   final Color primaryColor;
   final Color secondaryColor;
   final bool isDark;
 
   _LiquidPainter({
-    required this.progress,
+    required this.animation,
     required this.primaryColor,
     required this.secondaryColor,
     required this.isDark,
-  });
+  }) : super(repaint: animation);
 
   @override
   void paint(Canvas canvas, Size size) {
+    final progress = animation.value;
     final paint = Paint()..style = PaintingStyle.fill;
     
     // 🎨 DİNAMİK RENK GEÇİŞİ (Dynamic Color Cycle)
@@ -109,6 +106,7 @@ class _LiquidPainter extends CustomPainter {
       canvas, 
       size, 
       paint, 
+      progress,
       color: waveColor,
       center: Offset(
         size.width * (-0.15 + 0.3 * math.sin(progress * 2 * math.pi)),
@@ -123,6 +121,7 @@ class _LiquidPainter extends CustomPainter {
       canvas, 
       size, 
       paint, 
+      progress,
       color: Color.lerp(secondaryColor, primaryColor, math.sin(progress * math.pi).abs())!,
       center: Offset(
         size.width * (0.8 - 0.2 * math.cos(progress * 2 * math.pi)),
@@ -137,6 +136,7 @@ class _LiquidPainter extends CustomPainter {
       canvas, 
       size, 
       paint, 
+      progress,
       color: waveColor.withValues(alpha: 0.05),
       center: Offset(
         size.width * (0.5 + 0.25 * math.sin(progress * math.pi)),
@@ -150,7 +150,8 @@ class _LiquidPainter extends CustomPainter {
   void _drawBlob(
     Canvas canvas, 
     Size size, 
-    Paint paint, {
+    Paint paint,
+    double progress, {
     required Color color,
     required Offset center,
     required double radius,
@@ -178,5 +179,9 @@ class _LiquidPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _LiquidPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _LiquidPainter oldDelegate) => 
+      oldDelegate.animation != animation || 
+      oldDelegate.primaryColor != primaryColor || 
+      oldDelegate.secondaryColor != secondaryColor || 
+      oldDelegate.isDark != isDark;
 }

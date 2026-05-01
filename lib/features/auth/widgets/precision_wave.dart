@@ -22,40 +22,39 @@ class PrecisionWave extends StatefulWidget {
 class _PrecisionWaveState extends State<PrecisionWave> {
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: widget.controller,
-      builder: (context, child) {
-        return CustomPaint(
-          size: Size.infinite,
-          painter: _WavePainter(
-            progress: widget.controller.value,
-            color: widget.color,
-            isTriggered: widget.isTriggered,
-          ),
-        );
-      },
+    return RepaintBoundary(
+      child: CustomPaint(
+        size: Size.infinite,
+        painter: _WavePainter(
+          animation: widget.controller,
+          color: widget.color,
+          isTriggered: widget.isTriggered,
+        ),
+      ),
     );
   }
 }
 
 class _WavePainter extends CustomPainter {
-  final double progress;
+  final Animation<double> animation;
   final Color color;
   final bool isTriggered;
 
   _WavePainter({
-    required this.progress,
+    required this.animation,
     required this.color,
     required this.isTriggered,
-  });
+  }) : super(repaint: animation);
 
   @override
   void paint(Canvas canvas, Size size) {
+    final progress = animation.value;
+    
     if (progress <= 0 || progress >= 1) {
       return;
     }
     
-    // Safety check for invalid, empty or NaN sizes (prevents black screen on sudden layout shifts)
+    // Safety check for invalid, empty or NaN sizes
     if (size.isEmpty ||
         size.width.isInfinite ||
         size.height.isInfinite ||
@@ -102,5 +101,9 @@ class _WavePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _WavePainter oldDelegate) => true;
+  bool shouldRepaint(covariant _WavePainter oldDelegate) => 
+      oldDelegate.animation != animation || 
+      oldDelegate.color != color || 
+      oldDelegate.isTriggered != isTriggered;
 }
+
