@@ -24,21 +24,22 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
   
   bool _isLogin = true;
   bool _isLoading = false;
+  bool _isAnimating = false;
+  late AnimationController _waveController;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   
   String? _emailError;
   String? _passwordError;
   String? _confirmPasswordError;
-
-  late AnimationController _waveController;
+  final GlobalKey _flipKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     _waveController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 1000),
     );
   }
 
@@ -52,16 +53,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
   }
 
   void _toggleAuthMode() async {
-    _waveController.forward(from: 0);
-    _resetErrors();
+    if (_isAnimating) return;
     
-    // Switch mode slightly before the flip finishes for smoother visual integration
-    await Future.delayed(const Duration(milliseconds: 250));
+    _waveController.forward(from: 0);
     
     if (mounted) {
       setState(() {
+        _isAnimating = true;
         _isLogin = !_isLogin;
+        _emailError = null;
+        _passwordError = null;
+        _confirmPasswordError = null;
       });
+    }
+
+    // Wait for the animation to complete (1000ms)
+    await Future.delayed(const Duration(milliseconds: 1000));
+    if (mounted) {
+      setState(() => _isAnimating = false);
     }
   }
 
@@ -179,32 +188,35 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
       body: PrecisionBackground(
         child: Stack(
           children: [
-            PrecisionWave(
-              controller: _waveController,
-              color: _isLogin ? AppColors.secondary : AppColors.primary,
-              isTriggered: true,
+            RepaintBoundary(
+              child: PrecisionWave(
+                controller: _waveController,
+                color: _isLogin ? AppColors.secondary : AppColors.primary,
+                isTriggered: true,
+              ),
             ),
             
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
-                  child: RepaintBoundary(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                         SizedBox(height: topSpacer),
                         _buildHero(context, primaryColor, screenHeight),
                         SizedBox(height: heroToCardSpacer),
   
                         PrecisionGlassCard(
                           padding: const EdgeInsets.all(24),
+                          isGlass: true, // Animasyon sırasında kapatmıyoruz ki widget ağacı sarsılmasın
                           child: AnimatedSize(
-                            duration: const Duration(milliseconds: 400),
-                            curve: Curves.fastOutSlowIn,
-                            clipBehavior: Clip.hardEdge,
+                            duration: const Duration(milliseconds: 1000),
+                            curve: Curves.easeInOutSine,
+                            clipBehavior: Clip.none, 
                             alignment: Alignment.topCenter,
                             child: PrecisionFlipCard(
+                              key: _flipKey,
                               isFront: _isLogin,
                               front: _buildLoginForm(context, screenHeight),
                               back: _buildRegisterForm(context, screenHeight),
@@ -215,8 +227,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
                         SizedBox(height: cardToBottomSpacer),
                         _buildBottomActions(context, primaryColor),
                         const SizedBox(height: 20), // Extra space for scrolling
-                      ],
-                    ),
+                    ],
                   ),
                 ),
               ),
@@ -230,8 +241,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
   Widget _buildHero(BuildContext context, Color primaryColor, double screenHeight) {
     final double fontSize = (screenHeight * 0.06).clamp(32.0, 56.0);
     
-    return RepaintBoundary(
-      child: Column(
+    return Column(
         children: [
           Text(
             'FinCast',
@@ -252,15 +262,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 
   Widget _buildLoginForm(BuildContext context, double screenHeight) {
     return AnimatedOpacity(
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 700),
       opacity: _isLogin ? 1.0 : 0.0,
-      curve: Curves.easeInQuad,
+      curve: Curves.easeInOutSine,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -334,9 +343,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
 
   Widget _buildRegisterForm(BuildContext context, double screenHeight) {
     return AnimatedOpacity(
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 700),
       opacity: !_isLogin ? 1.0 : 0.0,
-      curve: Curves.easeInQuad,
+      curve: Curves.easeInOutSine,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -29,11 +29,11 @@ class _PrecisionFlipCardState extends State<PrecisionFlipCard> with SingleTicker
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 650),
+      duration: const Duration(milliseconds: 1000),
     );
     _animation = CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeInOutQuart,
+      curve: Curves.easeInOutSine,
     );
 
     if (!widget.isFront) _controller.value = 1.0;
@@ -59,30 +59,57 @@ class _PrecisionFlipCardState extends State<PrecisionFlipCard> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: AnimatedBuilder(
-        animation: _animation,
-        builder: (context, child) {
-          // Dönüş açısı (Radyan cinsinden, 0 ile Pi/180 arası)
-          // Y ekseninde yatay 180 derece dönüş
-          final double rotationValue = _animation.value * math.pi;
-          final bool isBackVisible = rotationValue > math.pi / 2;
+    return Stack(
+      alignment: Alignment.topCenter,
+      clipBehavior: Clip.none,
+      children: [
+        // LAYOUT PROVIDER (Hayalet Katman)
+        // Bu bölüm kartın asıl boyutunu belirler. 
+        // widget.isFront değiştiği anda (0. milisaniyede) hedef formun 
+        // boyutunu üst katmandaki AnimatedSize'a raporlar.
+        // Verimlilik için 'visible: false' tutulur ama yer kaplaması sağlanır.
+        Visibility(
+          maintainSize: true,
+          maintainAnimation: true,
+          maintainState: true,
+          visible: false,
+          child: widget.isFront ? widget.front : widget.back,
+        ),
 
-          return Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.001) // Perspektif (Derinlik hissi)
-              ..rotateY(rotationValue),
-            child: isBackVisible
-                ? Transform(
-                    alignment: Alignment.center,
-                    transform: Matrix4.identity()..rotateY(math.pi), // Arka tarafı düzelt
-                    child: _buildCardSide(widget.back),
-                  )
-                : _buildCardSide(widget.front),
-          );
-        },
-      ),
+        // ANIMATION PROVIDER (Dönen Katman)
+        // 'Positioned.fill' + 'OverflowBox' kombinasyonu sayesinde:
+        // 1. Dönen içerik, Layout Provider'ın alanına ortalanır.
+        // 2. Boyut değişimleri sırasında içerik "ezilmez" (squeezing olmaz), 
+        //    çünkü OverflowBox içeriğin kendi doğal boyutunda kalmasına izin verir.
+        Positioned.fill(
+          child: OverflowBox(
+            minHeight: 0,
+            maxHeight: double.infinity,
+            alignment: Alignment.topCenter,
+            child: AnimatedBuilder(
+              animation: _animation,
+              builder: (context, child) {
+                final double rotationValue = _animation.value * math.pi;
+                final bool isBackVisible = rotationValue > math.pi / 2;
+
+                return Transform(
+                  alignment: Alignment.center,
+                  transform: Matrix4.identity()
+                    ..setEntry(3, 2, 0.0007) // Yumuşak perspektif
+                    ..rotateY(rotationValue),
+                  child: isBackVisible
+                      ? Transform(
+                          alignment: Alignment.center,
+                          transform: Matrix4.identity()..rotateY(math.pi),
+                          child: _buildCardSide(widget.back),
+                        )
+                      : _buildCardSide(widget.front),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -90,3 +117,4 @@ class _PrecisionFlipCardState extends State<PrecisionFlipCard> with SingleTicker
     return child;
   }
 }
+

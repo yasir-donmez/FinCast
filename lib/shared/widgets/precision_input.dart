@@ -97,16 +97,16 @@ class _PrecisionInputState extends State<PrecisionInput> with SingleTickerProvid
             : _buildTextField(activeColor, isDark),
           // Hata Mesajı Bölümü - Daha şık ve animasyonlu
           AnimatedSize(
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeInOutQuart,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
             child: widget.errorText != null
                 ? Container(
                     width: double.infinity,
                     padding: const EdgeInsets.only(top: 8, left: 16),
                     child: TweenAnimationBuilder<double>(
-                      duration: const Duration(milliseconds: 500),
+                      duration: const Duration(milliseconds: 250),
                       tween: Tween(begin: 0.0, end: 1.0),
-                      curve: Curves.easeOutQuart,
+                      curve: Curves.easeOut,
                       builder: (context, value, child) {
                         return Opacity(
                           opacity: value,

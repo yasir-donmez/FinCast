@@ -21,7 +21,10 @@ class AnalysisStatusSection extends StatelessWidget {
     final onTrack = snapshot.isAlreadyOnTrack;
     final healthScore = onTrack
         ? 1.0
-        : (snapshot.monthlySurplus / snapshot.requiredMonthlySaving).clamp(0.0, 1.0);
+        : (snapshot.requiredMonthlySaving > 0
+            ? (snapshot.monthlySurplus / snapshot.requiredMonthlySaving)
+                .clamp(0.0, 1.0)
+            : 1.0);
 
     return Column(
       children: [

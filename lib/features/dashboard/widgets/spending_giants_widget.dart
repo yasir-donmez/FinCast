@@ -369,7 +369,7 @@ class _SpendingGiantsWidgetState extends ConsumerState<SpendingGiantsWidget> {
           (e) => _CategoryGiant(
             categoryId: e.key,
             amount: e.value,
-            percentage: (e.value / total) * 100,
+            percentage: total > 0 ? (e.value / total) * 100 : 0,
           ),
         )
         .toList();
