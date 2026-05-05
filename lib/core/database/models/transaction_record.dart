@@ -1,4 +1,7 @@
 import 'package:isar/isar.dart';
+import '../../utils/currency_utils.dart';
+import 'exchange_rate.dart';
+
 
 part 'transaction_record.g.dart'; // Isar code generator tarafından üretilecek
 
@@ -87,33 +90,58 @@ class TransactionRecord {
   @Index()
   int syncStatus = 0;
 
+  /// İşlemin etkin tutarını hesaplar.
+  /// Eğer amount 0 ise ve min/max varsa bunların ortalamasını döner.
+  @ignore
+  double get effectiveAmount {
+    if (amount == 0 && (minAmount != null || maxAmount != null)) {
+      return ((minAmount ?? 0) + (maxAmount ?? 0)) /
+          ((minAmount != null && maxAmount != null) ? 2 : 1);
+    }
+    return amount;
+  }
+
   /// İşlemin aylık karşılığını hesaplar.
   /// Dashboard ve Analiz motoru arasındaki tutarsızlığı önlemek için bu metod kullanılmalıdır.
   @ignore
   double get monthlyEquivalent {
+    final baseAmount = effectiveAmount;
+    double monthly;
     switch (periodType) {
       case 1: // Haftalık
-        return amount * (52 / 12);
+        monthly = baseAmount * 4.33;
       case 2: // Aylık
-        return amount;
+        monthly = baseAmount;
       case 3: // Yıllık
-        return amount / 12;
+        monthly = baseAmount / 12;
       case 4: // 2 Haftada Bir
-        return amount * (26 / 12);
-      case 5: // 3 Haftada Bir (Yılda yaklaşık 17.33 kez = 52/3)
-        return amount * (52 / 3 / 12);
+        monthly = baseAmount * 2.16;
+      case 5: // 3 Haftada Bir
+        monthly = baseAmount * 1.44;
       case 6: // 3 Ayda Bir
-        return amount / 3;
+        monthly = baseAmount / 3;
       case 7: // 6 Ayda Bir
-        return amount / 6;
+        monthly = baseAmount / 6;
       case 8: // Günlük
-        return amount * (365 / 12);
+        monthly = baseAmount * 30;
       case 9: // 2 Günde Bir
-        return amount * (365 / 2 / 12);
+        monthly = baseAmount * 15;
       case 10: // 3 Günde Bir
-        return amount * (365 / 3 / 12);
+        monthly = baseAmount * 10;
       default: // Tek seferlik
-        return 0;
+        monthly = 0;
     }
+    // Kuruş karmaşasını önlemek için 2 haneye yuvarla
+    return double.parse(monthly.toStringAsFixed(2));
+  }
+
+  /// Belirli bir hedef birime göre tutarı döndürür
+  double getConvertedAmount(String targetCurrency, List<ExchangeRate> rates) {
+    return CurrencyUtils.convert(effectiveAmount, currency ?? '₺', targetCurrency, rates);
+  }
+
+  /// Belirli bir hedef birime göre aylık karşılığı döndürür
+  double getConvertedMonthlyEquivalent(String targetCurrency, List<ExchangeRate> rates) {
+    return CurrencyUtils.convert(monthlyEquivalent, currency ?? '₺', targetCurrency, rates);
   }
 }

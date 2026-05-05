@@ -40,10 +40,7 @@ class PrecisionSheet extends StatelessWidget {
       barrierColor: isDark 
           ? Colors.black.withValues(alpha: 0.5) 
           : Colors.black.withValues(alpha: 0.1), // Daha da şeffaf karartma
-      transitionAnimationController: AnimationController(
-        vsync: Navigator.of(context),
-        duration: const Duration(milliseconds: 400),
-      ),
+      // Animasyon süresini default bırakıyoruz çünkü vsync context dışından güvenli değil
       builder: (context) => PrecisionSheet(
         title: title,
         actions: actions,
@@ -81,7 +78,7 @@ class PrecisionSheet extends StatelessWidget {
             constraints: BoxConstraints(
               maxHeight: isFullScreen 
                   ? MediaQuery.of(context).size.height 
-                  : MediaQuery.of(context).size.height * 0.9,
+                  : MediaQuery.of(context).size.height * 0.88,
             ),
             width: double.infinity,
             decoration: BoxDecoration(
@@ -157,9 +154,9 @@ class PrecisionSheet extends StatelessWidget {
                       child: SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
                         child: TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0.95, end: 1.0),
-                          duration: const Duration(milliseconds: 500),
-                          curve: Curves.easeOutBack,
+                          tween: Tween(begin: 0.98, end: 1.0),
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeOutCubic,
                           builder: (context, value, child) {
                             return Transform.scale(
                               scale: value,
@@ -169,13 +166,15 @@ class PrecisionSheet extends StatelessWidget {
                               ),
                             );
                           },
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                              left: AppSizes.paddingLarge,
-                              right: AppSizes.paddingLarge,
-                              bottom: AppSizes.paddingLarge,
+                          child: RepaintBoundary(
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                left: AppSizes.paddingLarge,
+                                right: AppSizes.paddingLarge,
+                                bottom: AppSizes.paddingLarge,
+                              ),
+                              child: child,
                             ),
-                            child: child,
                           ),
                         ),
                       ),

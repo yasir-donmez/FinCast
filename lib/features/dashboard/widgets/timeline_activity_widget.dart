@@ -43,7 +43,7 @@ class _TimelineActivityWidgetState extends ConsumerState<TimelineActivityWidget>
              color: latest.isIncome ? theme.colorScheme.primary : theme.colorScheme.error, size: 24),
         const SizedBox(height: 8),
         Text(
-          CurrencyUtils.formatAmount(latest.amount),
+          CurrencyUtils.formatAmount(latest.effectiveAmount),
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
         ),
         Text(
@@ -74,7 +74,7 @@ class _TimelineActivityWidgetState extends ConsumerState<TimelineActivityWidget>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(tx.title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
-              Text(CurrencyUtils.formatAmount(tx.amount), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: tx.isIncome ? theme.colorScheme.primary : theme.colorScheme.error)),
+              Text(CurrencyUtils.formatAmount(tx.effectiveAmount), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: tx.isIncome ? theme.colorScheme.primary : theme.colorScheme.error)),
             ],
           ),
         )),
@@ -212,7 +212,7 @@ class _TimelineActivityWidgetState extends ConsumerState<TimelineActivityWidget>
           
           // Tutar
           Text(
-            (isIncome ? '+' : '-') + CurrencyUtils.formatAmount(tx.amount),
+            (isIncome ? '+' : '-') + CurrencyUtils.formatAmount(tx.effectiveAmount),
             style: theme.textTheme.labelLarge?.copyWith(
               fontSize: 14,
               color: isIncome ? theme.colorScheme.primary : theme.colorScheme.error,

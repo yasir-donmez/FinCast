@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import '../../../core/database/models/exchange_rate.dart';
+
 import '../../../l10n/app_localizations.dart';
 import '../../../core/theme/app_constants.dart';
 import '../../../core/utils/currency_utils.dart';
@@ -15,8 +17,13 @@ class IntegratedVaultCard extends StatelessWidget {
   final Color activeColor;
   final AppLocalizations l10n;
   final String vaultName;
+  final String currencySymbol;
   final double morphProgress;
   final bool isCurrent;
+  final double? convertedBalance;
+  final String? convertedSymbol;
+  final List<ExchangeRate> exchangeRates;
+  final String targetCurrency;
 
   const IntegratedVaultCard({
     super.key,
@@ -28,8 +35,13 @@ class IntegratedVaultCard extends StatelessWidget {
     required this.activeColor, 
     required this.l10n, 
     required this.vaultName, 
+    required this.currencySymbol,
     required this.morphProgress, 
     required this.isCurrent,
+    this.convertedBalance,
+    this.convertedSymbol,
+    this.exchangeRates = const [],
+    this.targetCurrency = 'TRY',
   });
 
   @override
@@ -194,7 +206,7 @@ class IntegratedVaultCard extends StatelessWidget {
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.lerp(Alignment.center, Alignment.centerRight, magneticT)!,
                     child: Text(
-                      '₺${CurrencyUtils.formatFullAmount(balance)}',
+                      '$currencySymbol${CurrencyUtils.formatFullAmount(balance)}',
                       style: TextStyle(
                         fontSize: balanceFontSize,
                         fontWeight: FontWeight.w900,
@@ -207,6 +219,27 @@ class IntegratedVaultCard extends StatelessWidget {
               ),
             ),
             
+            // === DÖNÜŞTÜRÜLMÜŞ BAKİYE ===
+            if (convertedBalance != null && statsOpacity > 0.01)
+              Positioned(
+                left: 0, right: 0,
+                top: balanceTop + balanceFontSize + 4,
+                child: Opacity(
+                  opacity: statsOpacity,
+                  child: Center(
+                    child: Text(
+                      '≈ $convertedSymbol${CurrencyUtils.formatFullAmount(convertedBalance!)}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.getTextPrimary(context).withValues(alpha: 0.4),
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
             // === SECONDARY STATS (STAGGERED FADE-OUT + PARALLAX) ===
             if (statsOpacity > 0.01)
               Positioned(
@@ -247,7 +280,7 @@ class IntegratedVaultCard extends StatelessWidget {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              _buildRangeStats(txs),
+                              _buildRangeStats(txs, targetCurrency, exchangeRates),
                               const SizedBox(height: 16),
                             ],
                           ),
@@ -276,14 +309,16 @@ class IntegratedVaultCard extends StatelessWidget {
       children: [
         Text(label.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.grey.withValues(alpha: 0.6), letterSpacing: 1)),
         const SizedBox(height: 4),
-        Text('₺${CurrencyUtils.formatAmount(amount)}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
+        Text('$currencySymbol${CurrencyUtils.formatAmount(amount)}', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
       ],
     );
   }
 
-  Widget _buildRangeStats(List<TransactionUI> txs) {
-    final minNet = txs.where((t) => t.isIncome).fold<double>(0, (s, t) => s + t.minMonthlyEquivalent) - txs.where((t) => !t.isIncome).fold<double>(0, (s, t) => s + t.maxMonthlyEquivalent);
-    final maxNet = txs.where((t) => t.isIncome).fold<double>(0, (s, t) => s + t.maxMonthlyEquivalent) - txs.where((t) => !t.isIncome).fold<double>(0, (s, t) => s + t.minMonthlyEquivalent);
+  Widget _buildRangeStats(List<TransactionUI> txs, String targetCurrency, List<ExchangeRate> rates) {
+    final minNet = txs.where((t) => t.isIncome).fold<double>(0, (s, t) => s + CurrencyUtils.convert(t.minAmount ?? t.amount, t.currency ?? '₺', targetCurrency, rates)) 
+        - txs.where((t) => !t.isIncome).fold<double>(0, (s, t) => s + CurrencyUtils.convert(t.maxAmount ?? t.amount, t.currency ?? '₺', targetCurrency, rates));
+    final maxNet = txs.where((t) => t.isIncome).fold<double>(0, (s, t) => s + CurrencyUtils.convert(t.maxAmount ?? t.amount, t.currency ?? '₺', targetCurrency, rates)) 
+        - txs.where((t) => !t.isIncome).fold<double>(0, (s, t) => s + CurrencyUtils.convert(t.minAmount ?? t.amount, t.currency ?? '₺', targetCurrency, rates));
     
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -303,7 +338,7 @@ class IntegratedVaultCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.grey)),
-            Text('₺${CurrencyUtils.formatAmount(amount)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+            Text('$currencySymbol${CurrencyUtils.formatAmount(amount)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
           ],
         ),
       ],

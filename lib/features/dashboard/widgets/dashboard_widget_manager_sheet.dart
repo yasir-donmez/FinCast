@@ -54,8 +54,8 @@ class _DashboardWidgetManagerSheetState extends ConsumerState<DashboardWidgetMan
     final scalingFactor = (MediaQuery.of(context).size.height / 812.0).clamp(0.85, 1.0);
 
     return AnimatedSize(
-      duration: const Duration(milliseconds: 600),
-      curve: Curves.easeOutBack, // O meşhur "pıt pıt" esneme efekti
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOutSine, // Daha yumuşak ve performanslı bir eğri
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,11 +69,13 @@ class _DashboardWidgetManagerSheetState extends ConsumerState<DashboardWidgetMan
             ),
           ),
           const SizedBox(height: 12),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 400),
-            child: _activeTab == WidgetManagerTab.active 
-                ? _buildActiveWidgetsList(context, pages, activeColor, scalingFactor)
-                : _buildLibraryList(context, pages, activeColor, scalingFactor),
+          RepaintBoundary(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: _activeTab == WidgetManagerTab.active 
+                  ? _buildActiveWidgetsList(context, pages, activeColor, scalingFactor)
+                  : _buildLibraryList(context, pages, activeColor, scalingFactor),
+            ),
           ),
         ],
       ),
@@ -206,9 +208,9 @@ class _DashboardWidgetManagerSheetState extends ConsumerState<DashboardWidgetMan
     final allowedSizes = _getAllowedSizes(widget.type);
     
     return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 400 + (index * 100)), // Kademeli (staggered) giriş
-      curve: Curves.easeOutBack,
-      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 300), // Sabit ve hızlı giriş
+      curve: Curves.easeOutSine,
+      tween: Tween(begin: 0.98, end: 1.0),
       builder: (context, value, child) {
         return Transform.scale(
           scale: value,
@@ -311,9 +313,9 @@ class _DashboardWidgetManagerSheetState extends ConsumerState<DashboardWidgetMan
 
   Widget _buildLibraryItem(BuildContext context, Map<String, dynamic> libItem, Color activeColor, double scalingFactor, int index) {
     return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 350 + (index * 80)),
-      curve: Curves.easeOutBack,
-      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutSine,
+      tween: Tween(begin: 0.98, end: 1.0),
       builder: (context, value, child) {
         return Transform.scale(
           scale: value,

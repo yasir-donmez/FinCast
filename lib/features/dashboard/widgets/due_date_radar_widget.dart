@@ -243,7 +243,7 @@ class _DueDateRadarWidgetState extends ConsumerState<DueDateRadarWidget> with Si
           
           // Tutar
           Text(
-            CurrencyUtils.formatAmount(tx.amount),
+            CurrencyUtils.formatAmount(tx.effectiveAmount),
             style: theme.textTheme.labelLarge?.copyWith(
               fontSize: 14,
               fontWeight: FontWeight.w900,

@@ -434,7 +434,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
   void _showVaultManagementSheet(BuildContext context) {
     PrecisionSheet.show(
       context: context,
-      title: 'Dashboard Edit', 
+      title: 'Panel Düzenle', 
       child: const DashboardWidgetManagerSheet(),
     );
   }
@@ -448,7 +448,7 @@ class _VaultsScreenState extends ConsumerState<VaultsScreen> {
     );
   }
 
-  void _showVaultDetail(BuildContext context, String vaultId) {
+  void _showVaultDetail(BuildContext context, String? vaultId) {
     HapticFeedback.mediumImpact();
     PrecisionSheet.show(
       context: context,

@@ -5,6 +5,7 @@ import 'models/transaction_record.dart';
 import 'models/vault.dart';
 import 'models/financial_goal.dart';
 import 'models/app_settings.dart';
+import 'models/exchange_rate.dart';
 
 /// Isar Veritabanı Servisi — Singleton
 class DatabaseService {
@@ -31,6 +32,7 @@ class DatabaseService {
         VaultSchema,
         FinancialGoalSchema,
         AppSettingsSchema,
+        ExchangeRateSchema,
       ], directory: dir.path);
       debugPrint('✅ [DatabaseService] Isar başarıyla açıldı.');
 
@@ -131,6 +133,11 @@ class DatabaseService {
   /// Tüm kasaları getir
   static Future<List<Vault>> getAllVaults() async {
     return await isar.vaults.where().findAll();
+  }
+
+  /// Tek bir kasayı ID ile getir
+  static Future<Vault?> getVault(int id) async {
+    return await isar.vaults.get(id);
   }
 
   /// Kasa ekle
@@ -250,5 +257,38 @@ class DatabaseService {
     await isar.writeTxn(() async {
       await isar.appSettings.put(settings);
     });
+  }
+
+  // =====================
+  // EXCHANGE RATES
+  // =====================
+
+  /// Tüm kurları getir
+  static Future<List<ExchangeRate>> getAllExchangeRates() async {
+    return await isar.exchangeRates.where().findAll();
+  }
+
+  /// Tek bir kuru kaydet veya güncelle
+  static Future<void> saveExchangeRate(ExchangeRate rate) async {
+    rate.updatedAt = DateTime.now();
+    await isar.writeTxn(() async {
+      await isar.exchangeRates.put(rate);
+    });
+  }
+
+  /// Birden fazla kuru topluca kaydet
+  static Future<void> saveAllExchangeRates(List<ExchangeRate> rates) async {
+    final now = DateTime.now();
+    for (var r in rates) {
+      r.updatedAt = now;
+    }
+    await isar.writeTxn(() async {
+      await isar.exchangeRates.putAll(rates);
+    });
+  }
+
+  /// Kurları canlı dinle
+  static Stream<List<ExchangeRate>> watchAllExchangeRates() {
+    return isar.exchangeRates.where().watch(fireImmediately: true);
   }
 }

@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/db_providers.dart';
 import '../../core/database/database_service.dart';
 import '../../core/database/models/transaction_record.dart';
+import '../../core/database/models/exchange_rate.dart';
 import '../../core/utils/icon_utils.dart';
+import '../../core/utils/currency_utils.dart';
 
 /// Tek bir işlem kaydı (UI Model)
 class TransactionUI {
@@ -60,34 +62,45 @@ class TransactionUI {
 
   /// Belirli bir tutarın aylık karşılığını hesaplar.
   double _calculateMonthly(double baseAmount) {
+    double monthly;
     switch (periodType) {
       case 1: // Haftalık
-        return baseAmount * (52 / 12);
+        monthly = baseAmount * 4.33;
       case 2: // Aylık
-        return baseAmount;
+        monthly = baseAmount;
       case 3: // Yıllık
-        return baseAmount / 12;
+        monthly = baseAmount / 12;
       case 4: // 2 Haftada Bir
-        return baseAmount * (26 / 12);
+        monthly = baseAmount * 2.16;
       case 5: // 3 Haftada Bir
-        return baseAmount * (52 / 3 / 12);
+        monthly = baseAmount * 1.44;
       case 6: // 3 Ayda Bir
-        return baseAmount / 3;
+        monthly = baseAmount / 3;
       case 7: // 6 Ayda Bir
-        return baseAmount / 6;
+        monthly = baseAmount / 6;
       case 8: // Günlük
-        return baseAmount * (365 / 12);
+        monthly = baseAmount * 30;
       case 9: // 2 Günde Bir
-        return baseAmount * (365 / 2 / 12);
+        monthly = baseAmount * 15;
       case 10: // 3 Günde Bir
-        return baseAmount * (365 / 3 / 12);
+        monthly = baseAmount * 10;
       default: // Tek seferlik
-        return 0;
+        monthly = 0;
     }
+    return double.parse(monthly.toStringAsFixed(2));
+  }
+
+  /// İşlemin etkin tutarını hesaplar.
+  double get effectiveAmount {
+    if (amount == 0 && (minAmount != null || maxAmount != null)) {
+      return ((minAmount ?? 0) + (maxAmount ?? 0)) /
+          ((minAmount != null && maxAmount != null) ? 2 : 1);
+    }
+    return amount;
   }
 
   /// İşlemin aylık karşılığını hesaplar.
-  double get monthlyEquivalent => _calculateMonthly(amount);
+  double get monthlyEquivalent => _calculateMonthly(effectiveAmount);
 
   /// Minimum aylık karşılık (esnek işlemler için)
   double get minMonthlyEquivalent => _calculateMonthly(minAmount ?? amount);
@@ -96,11 +109,16 @@ class TransactionUI {
   double get maxMonthlyEquivalent => _calculateMonthly(maxAmount ?? amount);
 
   /// Ortalama aylık karşılık (esnek işlemler için)
-  double get avgMonthlyEquivalent {
-    if (minAmount != null && maxAmount != null) {
-      return _calculateMonthly((minAmount! + maxAmount!) / 2);
-    }
-    return monthlyEquivalent;
+  double get avgMonthlyEquivalent => monthlyEquivalent;
+
+  /// Belirli bir hedef birime göre tutarı döndürür
+  double getConvertedAmount(String targetCurrency, List<ExchangeRate> rates) {
+    return CurrencyUtils.convert(effectiveAmount, currency ?? '₺', targetCurrency, rates);
+  }
+
+  /// Belirli bir hedef birime göre aylık karşılığı döndürür
+  double getConvertedMonthlyEquivalent(String targetCurrency, List<ExchangeRate> rates) {
+    return CurrencyUtils.convert(monthlyEquivalent, currency ?? '₺', targetCurrency, rates);
   }
 
   /// TransactionRecord'dan TransactionUI'a dönüştür
@@ -136,11 +154,13 @@ class TransactionUI {
 class TransactionGroup {
   final String id;
   String name;
+  String currency;
   final List<String> transactionIds;
 
   TransactionGroup({
     required this.id,
     required this.name,
+    this.currency = 'AUTO',
     List<String>? transactionIds,
   }) : transactionIds = transactionIds ?? [];
 }
@@ -255,6 +275,7 @@ final transactionGroupsProvider = Provider<List<TransactionGroup>>((ref) {
     return TransactionGroup(
       id: 'v_${v.id}',
       name: v.name,
+      currency: v.currency,
       transactionIds: relatedTxIds.map((t) => t.id).toList(),
     );
   }).toList();

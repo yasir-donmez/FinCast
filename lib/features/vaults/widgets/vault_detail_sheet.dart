@@ -5,14 +5,15 @@ import '../../../core/theme/app_constants.dart';
 import '../../../core/database/database_service.dart';
 import '../../../core/database/models/vault.dart';
 import '../../../core/providers/db_providers.dart';
+import '../../../core/providers/settings_provider.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../core/utils/icon_utils.dart';
+import '../../../core/database/models/exchange_rate.dart';
 import '../../../shared/widgets/precision_toggle.dart';
 import '../../../shared/widgets/precision_segmented_control.dart';
 import '../../../shared/widgets/precision_card.dart';
 import '../../../shared/widgets/precision_input.dart';
 import '../../../shared/widgets/precision_icon_button.dart';
-import '../../../shared/widgets/precision_animated_icon.dart';
 import '../../../shared/widgets/precision_dialog.dart';
 import '../../../l10n/app_localizations.dart';
 import '../vaults_providers.dart';
@@ -20,7 +21,7 @@ import '../vaults_providers.dart';
 enum VaultDetailTab { transactions, manage }
 
 class VaultDetailSheet extends ConsumerStatefulWidget {
-  final String vaultId;
+  final String? vaultId;
   const VaultDetailSheet({super.key, required this.vaultId});
 
   @override
@@ -29,19 +30,79 @@ class VaultDetailSheet extends ConsumerStatefulWidget {
 
 class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with SingleTickerProviderStateMixin {
   late TextEditingController _nameController;
-  bool _isEditingName = false;
   VaultDetailTab _activeTab = VaultDetailTab.transactions;
+  
+  String? _tempName;
+  String? _tempCurrency;
+  Set<int>? _tempSelectedTxIds;
+  bool _isInitialized = false;
+
+  final List<Map<String, String>> _currencies = [
+    {'symbol': 'AUTO', 'label': 'OTOMATİK'},
+    {'symbol': '₺', 'label': 'TL'},
+    {'symbol': '\$', 'label': 'USD'},
+    {'symbol': '€', 'label': 'EUR'},
+    {'symbol': 'G', 'label': 'ALTIN'},
+  ];
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController();
+    _nameController.addListener(() {
+      if (_isInitialized) {
+        _tempName = _nameController.text.trim();
+      }
+    });
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _saveChanges() async {
+    if (widget.vaultId == null) return;
+    
+    final vaultDbId = int.tryParse(widget.vaultId!.replaceFirst('v_', ''));
+    if (vaultDbId == null) return;
+
+    final vault = await DatabaseService.getVault(vaultDbId);
+    if (vault == null) return;
+
+    bool vaultChanged = false;
+    if (_tempName != null && _tempName != vault.name && _tempName!.isNotEmpty) {
+      vault.name = _tempName!;
+      vaultChanged = true;
+    }
+    if (_tempCurrency != null && _tempCurrency != vault.currency) {
+      vault.currency = _tempCurrency!;
+      vaultChanged = true;
+    }
+
+    if (vaultChanged) {
+      await DatabaseService.updateVault(vault);
+    }
+
+    if (_tempSelectedTxIds != null) {
+      final allTx = await DatabaseService.getAllTransactions();
+      for (final tx in allTx) {
+        final shouldBeInVault = _tempSelectedTxIds!.contains(tx.id);
+        final isInVault = tx.vaultIds.contains(vaultDbId);
+        
+        if (shouldBeInVault != isInVault) {
+          final newVaultIds = List<int>.from(tx.vaultIds);
+          if (shouldBeInVault) {
+            newVaultIds.add(vaultDbId);
+          } else {
+            newVaultIds.remove(vaultDbId);
+          }
+          tx.vaultIds = newVaultIds;
+          await DatabaseService.updateTransaction(tx);
+        }
+      }
+    }
   }
 
   void _switchTab(VaultDetailTab tab) {
@@ -53,52 +114,92 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
   @override
   Widget build(BuildContext context) {
     final allVaults = ref.watch(allVaultsProvider);
-    final vaultDbId = int.tryParse(widget.vaultId.replaceFirst('v_', ''));
+    final allTransactions = ref.watch(vaultTransactionsProvider);
+    final globalCurrency = ref.watch(settingsProvider).currencySymbol;
+    final rates = ref.watch(exchangeRatesProvider).value ?? [];
     
-    final vault = allVaults.where((v) => v.id == vaultDbId).firstOrNull;
-    if (vault == null) return const SizedBox.shrink();
+    final bool isMainVault = widget.vaultId == null;
+    Vault? vault;
+    List<TransactionUI> displayTxs;
 
-    if (!_isEditingName && _nameController.text != vault.name) {
-      _nameController.text = vault.name;
+    if (isMainVault) {
+      vault = Vault()
+        ..name = AppLocalizations.of(context)!.mainVault
+        ..iconCode = 'account_balance_wallet_rounded'
+        ..currency = 'AUTO';
+      displayTxs = allTransactions;
+    } else {
+      final vaultDbId = int.tryParse(widget.vaultId!.replaceFirst('v_', ''));
+      vault = allVaults.where((v) => v.id == vaultDbId).firstOrNull;
+      
+      if (vault != null && !_isInitialized) {
+        _tempName = vault.name;
+        _tempCurrency = vault.currency;
+        _nameController.text = _tempName!;
+        _tempSelectedTxIds = allTransactions
+            .where((t) => t.groupIds.contains(widget.vaultId!))
+            .map((t) => t.dbId!)
+            .toSet();
+        _isInitialized = true;
+      }
+
+      displayTxs = allTransactions.where((t) {
+        if (_tempSelectedTxIds != null) {
+          return _tempSelectedTxIds!.contains(t.dbId);
+        }
+        return t.groupIds.contains(widget.vaultId!);
+      }).toList();
     }
 
-    final allTransactions = ref.watch(vaultTransactionsProvider);
-    final vaultTransactions = allTransactions.where((t) => t.groupIds.contains(widget.vaultId)).toList();
-    
+    if (vault == null) return const SizedBox.shrink();
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeColor = AppColors.getPrimary(context);
     final screenHeight = MediaQuery.of(context).size.height;
-    final scalingFactor = (screenHeight / 812.0).clamp(0.85, 1.0);
+    final sf = (screenHeight / 812.0).clamp(0.85, 1.0);
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        PrecisionSegmentedControl(
-          tabs: const ['İşlemler', 'Yönet'],
-          selectedIndex: _activeTab == VaultDetailTab.transactions ? 0 : 1,
-          onTabChanged: (index) => _switchTab(index == 0 ? VaultDetailTab.transactions : VaultDetailTab.manage),
-          scalingFactor: scalingFactor,
-        ),
-        SizedBox(height: 12 * scalingFactor),
-        AnimatedSize(
-          duration: const Duration(milliseconds: 400),
-          alignment: Alignment.topCenter,
-          child: AnimatedSwitcher(
+    final displayCurrency = (_tempCurrency ?? vault.currency) == 'AUTO' 
+        ? globalCurrency 
+        : (_tempCurrency ?? vault.currency);
+
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) {
+          await _saveChanges();
+        }
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!isMainVault)
+            PrecisionSegmentedControl(
+              tabs: const ['İşlemler', 'Yönet'],
+              selectedIndex: _activeTab == VaultDetailTab.transactions ? 0 : 1,
+              onTabChanged: (index) => _switchTab(index == 0 ? VaultDetailTab.transactions : VaultDetailTab.manage),
+              scalingFactor: sf,
+            ),
+          SizedBox(height: (isMainVault ? 0 : 12) * sf),
+          AnimatedSize(
             duration: const Duration(milliseconds: 400),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            child: _activeTab == VaultDetailTab.transactions
-              ? _buildMainView(context, vault, vaultTransactions, activeColor, isDark)
-              : _buildSelectionView(context, allTransactions, vaultTransactions, activeColor, isDark),
+            alignment: Alignment.topCenter,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: _activeTab == VaultDetailTab.transactions
+                ? _buildMainView(context, vault, displayTxs, activeColor, isDark, isMainVault, displayCurrency, sf, rates)
+                : _buildManageView(context, vault, allTransactions, displayTxs, activeColor, isDark, sf),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildMainView(BuildContext context, Vault vault, List<TransactionUI> vaultTransactions, Color activeColor, bool isDark) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final scalingFactor = (screenHeight / 812.0).clamp(0.85, 1.0);
+  Widget _buildMainView(BuildContext context, Vault vault, List<TransactionUI> vaultTransactions, Color activeColor, bool isDark, bool isMainVault, String currency, double sf, List<ExchangeRate> rates) {
+    final incomeLoad = vaultTransactions.where((t) => t.isIncome).fold<double>(0, (sum, t) => sum + t.getConvertedMonthlyEquivalent(currency, rates));
+    final expenseLoad = vaultTransactions.where((t) => !t.isIncome).fold<double>(0, (sum, t) => sum + t.getConvertedMonthlyEquivalent(currency, rates));
+    final netLoad = incomeLoad - expenseLoad;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -107,137 +208,71 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Row(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                Icon(
+                  IconUtils.getIcon(vault.iconCode ?? vault.name),
+                  color: activeColor.withValues(alpha: 0.4),
+                  size: 22 * sf,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    _tempName ?? vault.name,
+                    style: TextStyle(fontSize: 18 * sf, fontWeight: FontWeight.w900, letterSpacing: -0.5, color: AppColors.getTextPrimary(context)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          PrecisionCard(
+            scalingFactor: sf,
+            backgroundColor: activeColor.withValues(alpha: 0.05),
+            borderColor: activeColor.withValues(alpha: 0.1),
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        child: _isEditingName
-                          ? PrecisionInput(
-                              key: const ValueKey('editing_input'),
-                              controller: _nameController,
-                              hintText: 'Kasa Adı',
-                              icon: IconUtils.getIcon(vault.iconCode ?? vault.name),
-                              autofocus: true,
-                              scalingFactor: scalingFactor,
-                              onSubmitted: () async {
-                                if (_nameController.text.trim().isNotEmpty) {
-                                  vault.name = _nameController.text.trim();
-                                  await DatabaseService.updateVault(vault);
-                                }
-                                setState(() => _isEditingName = false);
-                              },
-                            )
-                          : PrecisionCard(
-                              key: const ValueKey('view_name_card'),
-                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 0 * scalingFactor),
-                              backgroundColor: Colors.transparent,
-                              borderColor: Colors.transparent,
-                              child: InkWell(
-                                onTap: () {
-                                  _nameController.text = vault.name;
-                                  setState(() => _isEditingName = true);
-                                  HapticFeedback.lightImpact();
-                                },
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      IconUtils.getIcon(vault.iconCode ?? vault.name),
-                                      color: activeColor.withValues(alpha: 0.4),
-                                      size: 22 * scalingFactor,
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Text(
-                                        vault.name,
-                                        style: TextStyle(
-                                          fontSize: 17 * scalingFactor, 
-                                          fontWeight: FontWeight.w800, 
-                                          letterSpacing: -0.5,
-                                          color: AppColors.getTextPrimary(context),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    PrecisionIconButton(
-                      onTap: () async {
-                        if (_isEditingName) {
-                          if (_nameController.text.trim().isNotEmpty) {
-                            vault.name = _nameController.text.trim();
-                            await DatabaseService.updateVault(vault);
-                          }
-                          setState(() => _isEditingName = false);
-                        } else {
-                          _nameController.text = vault.name;
-                          setState(() => _isEditingName = true);
-                        }
-                        HapticFeedback.lightImpact();
-                      },
-                      color: _isEditingName ? Colors.green : Colors.grey,
-                      backgroundColor: (_isEditingName ? Colors.green : Colors.grey).withValues(alpha: 0.1),
-                      padding: 12,
-                      borderRadius: 14,
-                      child: PrecisionAnimatedIcon(
-                        activeIcon: Icons.check_rounded,
-                        inactiveIcon: Icons.edit_rounded,
-                        isActive: _isEditingName,
-                        color: _isEditingName ? Colors.green : Colors.grey,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    PrecisionIconButton(
-                      icon: Icons.delete_sweep_rounded,
-                      onTap: () => _confirmDeleteVault(context, vault),
-                      color: AppColors.error,
-                      size: 22,
-                      padding: 12,
-                      borderRadius: 14,
-                    ),
+                    Text('AYLIK ORTALAMA YÜK', style: TextStyle(fontSize: 9 * sf, fontWeight: FontWeight.w900, color: activeColor.withValues(alpha: 0.6), letterSpacing: 1)),
+                    const SizedBox(height: 4),
+                    Text('$currency${CurrencyUtils.formatFullAmount(netLoad)}', style: TextStyle(fontSize: 20 * sf, fontWeight: FontWeight.w900, color: netLoad >= 0 ? AppColors.getIncome(context) : AppColors.getExpense(context))),
                   ],
                 ),
-              ),
-            ],
+                const Spacer(),
+                Icon(Icons.query_stats_rounded, color: activeColor.withValues(alpha: 0.3), size: 24 * sf),
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
-          // Görünürlük ayarı merkezi yönetime alındığı için buradan kaldırıldı.
           const SizedBox(height: 24),
-          Text(
-            'İşlemler',
-            style: TextStyle(fontSize: 14 * scalingFactor, fontWeight: FontWeight.w900, color: Colors.grey.withValues(alpha: 0.6)),
-          ),
+          Text('İşlemler', style: TextStyle(fontSize: 14 * sf, fontWeight: FontWeight.w900, color: Colors.grey.withValues(alpha: 0.6))),
           const SizedBox(height: 12),
           if (vaultTransactions.isNotEmpty)
             ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.35 * scalingFactor),
+              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.35 * sf),
               child: ListView.separated(
                 shrinkWrap: true,
-                padding: EdgeInsets.symmetric(vertical: 4 * scalingFactor),
+                padding: EdgeInsets.symmetric(vertical: 4 * sf),
                 itemCount: vaultTransactions.length,
-                separatorBuilder: (_, __) => SizedBox(height: 10 * scalingFactor),
-                itemBuilder: (context, index) => _buildTransactionItem(context, vaultTransactions[index], scalingFactor, isDark),
+                separatorBuilder: (_, __) => SizedBox(height: 10 * sf),
+                itemBuilder: (context, index) => _buildTransactionItem(context, vaultTransactions[index], sf, isDark),
               ),
             )
           else
             Container(
               width: double.infinity,
-              padding: EdgeInsets.symmetric(vertical: 40 * scalingFactor),
+              padding: EdgeInsets.symmetric(vertical: 40 * sf),
               child: Opacity(
                 opacity: 0.5,
                 child: Column(
                   children: [
-                    Icon(Icons.receipt_long_rounded, size: 40 * scalingFactor),
-                    SizedBox(height: 8 * scalingFactor),
-                    Text('Bu kasada işlem bulunmuyor.', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13 * scalingFactor)),
+                    Icon(Icons.receipt_long_rounded, size: 40 * sf),
+                    SizedBox(height: 8 * sf),
+                    Text('Bu kasada işlem bulunmuyor.', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13 * sf)),
                   ],
                 ),
               ),
@@ -248,76 +283,107 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
     );
   }
 
-  Widget _buildSelectionView(BuildContext context, List<TransactionUI> allTransactions, List<TransactionUI> vaultTransactions, Color activeColor, bool isDark) {
-    final scalingFactor = (MediaQuery.of(context).size.height / 812.0).clamp(0.85, 1.0);
-    final standaloneTransactions = allTransactions.where((t) => t.groupIds.isEmpty || t.groupIds.contains(widget.vaultId)).toList();
+  Widget _buildManageView(BuildContext context, Vault vault, List<TransactionUI> allTransactions, List<TransactionUI> vaultTransactions, Color activeColor, bool isDark, double sf) {
+    final standaloneTransactions = allTransactions.where((t) => t.groupIds.isEmpty || (_tempSelectedTxIds?.contains(t.dbId) ?? false)).toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
-        key: const ValueKey('selection_view'),
+        key: const ValueKey('manage_view'),
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Kasadaki İşlemleri Yönet',
-            style: TextStyle(fontSize: 18 * scalingFactor, fontWeight: FontWeight.w900, letterSpacing: -0.5),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Bu kasaya dahil etmek istediğiniz işlemleri seçin.',
-            style: TextStyle(fontSize: 12 * scalingFactor, color: Colors.grey, fontWeight: FontWeight.w500),
+          Row(
+            children: [
+              Expanded(
+                child: PrecisionInput(
+                  controller: _nameController,
+                  hintText: 'Kasa Adı',
+                  icon: Icons.edit_rounded,
+                  scalingFactor: sf,
+                ),
+              ),
+              const SizedBox(width: 12),
+              PrecisionIconButton(
+                icon: Icons.delete_outline_rounded,
+                onTap: () => _confirmDeleteVault(context, vault),
+                color: AppColors.error,
+                backgroundColor: AppColors.error.withValues(alpha: 0.1),
+                padding: 14,
+                borderRadius: 16,
+              ),
+            ],
           ),
           const SizedBox(height: 20),
+          Text('PARA BİRİMİ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey.withValues(alpha: 0.5), letterSpacing: 1)),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _currencies.map((c) {
+                final isSelected = (_tempCurrency ?? vault.currency) == c['symbol'];
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _tempCurrency = c['symbol']!);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? activeColor : activeColor.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: isSelected ? activeColor : activeColor.withValues(alpha: 0.1), width: 1.5),
+                      ),
+                      child: Text(c['label']!, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: isSelected ? Colors.white : AppColors.getTextPrimary(context).withValues(alpha: 0.5), letterSpacing: 0.5)),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 32),
+          Text('Kasadaki İşlemleri Yönet', style: TextStyle(fontSize: 16 * sf, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+          const SizedBox(height: 12),
           ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45 * scalingFactor),
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.35 * sf),
             child: ListView.separated(
               shrinkWrap: true,
-              padding: EdgeInsets.symmetric(vertical: 8 * scalingFactor),
+              padding: EdgeInsets.symmetric(vertical: 8 * sf),
               itemCount: standaloneTransactions.length,
-              separatorBuilder: (_, __) => SizedBox(height: 10 * scalingFactor),
+              separatorBuilder: (_, __) => SizedBox(height: 10 * sf),
               itemBuilder: (context, index) {
                 final tx = standaloneTransactions[index];
-                final isSelected = vaultTransactions.any((vtx) => vtx.id == tx.id);
+                final isSelected = _tempSelectedTxIds?.contains(tx.dbId) ?? false;
                 return PrecisionCard(
-                  scalingFactor: scalingFactor,
+                  scalingFactor: sf,
                   child: Row(
                     children: [
                       Container(
-                        padding: EdgeInsets.all(8 * scalingFactor),
-                        decoration: BoxDecoration(
-                          color: tx.color.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12 * scalingFactor),
-                        ),
-                        child: Icon(tx.icon, color: tx.color, size: 20 * scalingFactor),
+                        padding: EdgeInsets.all(8 * sf),
+                        decoration: BoxDecoration(color: tx.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12 * sf)),
+                        child: Icon(tx.icon, color: tx.color, size: 20 * sf),
                       ),
                       const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(tx.name, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14 * scalingFactor)),
-                      ),
+                      Expanded(child: Text(tx.name, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14 * sf))),
                       PrecisionToggle(
                         value: isSelected,
                         activeColor: activeColor,
                         activeIcon: Icons.check_rounded,
                         inactiveIcon: Icons.add_rounded,
-                        scalingFactor: 0.75 * scalingFactor,
-                        onChanged: (val) async {
+                        scalingFactor: 0.75 * sf,
+                        onChanged: (val) {
                           if (tx.dbId == null) return;
-                          final record = await DatabaseService.getTransaction(tx.dbId!);
-                          if (record != null) {
-                            final vaultDbId = int.tryParse(widget.vaultId.replaceFirst('v_', ''));
-                            if (vaultDbId == null) return;
-                            
-                            final currentVaults = List<int>.from(record.vaultIds);
-                            if (isSelected) {
-                              currentVaults.remove(vaultDbId);
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            if (val) {
+                              _tempSelectedTxIds!.add(tx.dbId!);
                             } else {
-                              currentVaults.add(vaultDbId);
+                              _tempSelectedTxIds!.remove(tx.dbId!);
                             }
-                            record.vaultIds = currentVaults;
-                            await DatabaseService.updateTransaction(record);
-                            HapticFeedback.selectionClick();
-                          }
+                          });
                         },
                       ),
                     ],
@@ -339,10 +405,7 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
         children: [
           Container(
             padding: EdgeInsets.all(8 * sf),
-            decoration: BoxDecoration(
-              color: tx.color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12 * sf),
-            ),
+            decoration: BoxDecoration(color: tx.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12 * sf)),
             child: Icon(tx.icon, color: tx.color, size: 20 * sf),
           ),
           const SizedBox(width: 12),
@@ -351,14 +414,7 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(tx.name, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14 * sf, letterSpacing: -0.5)),
-                Text(
-                  '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.amount)}',
-                  style: TextStyle(
-                    fontSize: 12 * sf,
-                    fontWeight: FontWeight.w900,
-                    color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context),
-                  ),
-                ),
+                Text('${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.effectiveAmount)}', style: TextStyle(fontSize: 12 * sf, fontWeight: FontWeight.w900, color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context))),
               ],
             ),
           ),
@@ -375,19 +431,10 @@ class _VaultDetailSheetState extends ConsumerState<VaultDetailSheet> with Single
       title: 'Kasayı Sil',
       content: '"${vault.name}" kasasını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
       actions: [
-        PrecisionDialogAction(
-          label: l10n.cancel, 
-          onTap: () => Navigator.pop(context, false), 
-          isPrimary: false,
-        ),
-        PrecisionDialogAction(
-          label: l10n.ok, 
-          onTap: () => Navigator.pop(context, true), 
-          isPrimary: true,
-        ),
+        PrecisionDialogAction(label: l10n.cancel, onTap: () => Navigator.pop(context, false), isPrimary: false),
+        PrecisionDialogAction(label: l10n.ok, onTap: () => Navigator.pop(context, true), isPrimary: true),
       ],
     );
-
     if (confirm == true) {
       await DatabaseService.deleteVault(vault.id);
       if (context.mounted) Navigator.pop(context);

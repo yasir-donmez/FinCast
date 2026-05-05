@@ -1,7 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/database_service.dart';
 import '../database/models/transaction_record.dart';
+import '../utils/currency_utils.dart';
+
 import '../database/models/vault.dart';
+import '../database/models/exchange_rate.dart';
+import './settings_provider.dart';
 
 /// === İŞLEM PROVİDER'LARI ===
 
@@ -27,26 +31,28 @@ final expenseTransactionsProvider = Provider<List<TransactionRecord>>((ref) {
   return ref.watch(allTransactionsProvider).where((t) => !t.isIncome).toList();
 });
 
-double _getEffectiveAmount(TransactionRecord t) {
-  if (t.amount == 0 && (t.minAmount != null || t.maxAmount != null)) {
-    return ((t.minAmount ?? 0) + (t.maxAmount ?? 0)) /
-        ((t.minAmount != null && t.maxAmount != null) ? 2 : 1);
-  }
-  return t.amount;
-}
-
-/// Toplam gelir
+/// Toplam gelir (Sadece gerçekleşenler: tarihi bugün veya geçmiş olanlar)
 final totalIncomeProvider = Provider<double>((ref) {
+  final now = DateTime.now();
+  final rates = ref.watch(exchangeRatesProvider).value ?? [];
+  final targetCurrency = ref.watch(settingsProvider).currencySymbol;
+
   return ref
-      .watch(incomeTransactionsProvider)
-      .fold<double>(0, (sum, t) => sum + _getEffectiveAmount(t));
+      .watch(allTransactionsProvider)
+      .where((t) => t.isIncome && (t.date.isBefore(now) || t.date.isAtSameMomentAs(now)))
+      .fold<double>(0, (sum, t) => sum + t.getConvertedAmount(targetCurrency, rates));
 });
 
-/// Toplam gider
+/// Toplam gider (Sadece gerçekleşenler)
 final totalExpenseProvider = Provider<double>((ref) {
+  final now = DateTime.now();
+  final rates = ref.watch(exchangeRatesProvider).value ?? [];
+  final targetCurrency = ref.watch(settingsProvider).currencySymbol;
+
   return ref
-      .watch(expenseTransactionsProvider)
-      .fold<double>(0, (sum, t) => sum + _getEffectiveAmount(t));
+      .watch(allTransactionsProvider)
+      .where((t) => !t.isIncome && (t.date.isBefore(now) || t.date.isAtSameMomentAs(now)))
+      .fold<double>(0, (sum, t) => sum + t.getConvertedAmount(targetCurrency, rates));
 });
 
 /// Net bakiye (gelir - gider)
@@ -54,27 +60,40 @@ final netBalanceProvider = Provider<double>((ref) {
   return ref.watch(totalIncomeProvider) - ref.watch(totalExpenseProvider);
 });
 
-/// Net Min bakiye (Kötü senaryo)
+/// Net Min bakiye (Kötü senaryo - Sadece gerçekleşenler üzerinden)
 final netMinBalanceProvider = Provider<double>((ref) {
-  return ref.watch(allTransactionsProvider).fold<double>(0, (sum, t) {
+  final now = DateTime.now();
+  final rates = ref.watch(exchangeRatesProvider).value ?? [];
+  final targetCurrency = ref.watch(settingsProvider).currencySymbol;
+  
+  return ref.watch(allTransactionsProvider)
+      .where((t) => t.date.isBefore(now) || t.date.isAtSameMomentAs(now))
+      .fold<double>(0, (sum, t) {
     if (t.isIncome) {
-      return sum + (t.minAmount ?? t.amount);
+      final val = t.minAmount ?? t.amount;
+      return sum + CurrencyUtils.convert(val, t.currency ?? '₺', targetCurrency, rates);
     } else {
-      return sum -
-          (t.maxAmount ??
-              t.amount); // Giderin en yükseği = bakiyeyi en aza indirir
+      final val = t.maxAmount ?? t.amount;
+      return sum - CurrencyUtils.convert(val, t.currency ?? '₺', targetCurrency, rates);
     }
   });
 });
 
-/// Net Max bakiye (İyi senaryo)
+/// Net Max bakiye (İyi senaryo - Sadece gerçekleşenler üzerinden)
 final netMaxBalanceProvider = Provider<double>((ref) {
-  return ref.watch(allTransactionsProvider).fold<double>(0, (sum, t) {
+  final now = DateTime.now();
+  final rates = ref.watch(exchangeRatesProvider).value ?? [];
+  final targetCurrency = ref.watch(settingsProvider).currencySymbol;
+
+  return ref.watch(allTransactionsProvider)
+      .where((t) => t.date.isBefore(now) || t.date.isAtSameMomentAs(now))
+      .fold<double>(0, (sum, t) {
     if (t.isIncome) {
-      return sum +
-          (t.maxAmount ?? t.amount); // Gelirin en yükseği = bakiyeyi artırır
+      final val = t.maxAmount ?? t.amount;
+      return sum + CurrencyUtils.convert(val, t.currency ?? '₺', targetCurrency, rates);
     } else {
-      return sum - (t.minAmount ?? t.amount);
+      final val = t.minAmount ?? t.amount;
+      return sum - CurrencyUtils.convert(val, t.currency ?? '₺', targetCurrency, rates);
     }
   });
 });
@@ -96,4 +115,9 @@ final vaultsStreamProvider = StreamProvider<List<Vault>>((ref) {
 /// Kasaların anlık listesi
 final allVaultsProvider = Provider<List<Vault>>((ref) {
   return ref.watch(vaultsStreamProvider).valueOrNull ?? [];
+});
+
+/// Döviz kurlarını canlı dinle
+final exchangeRatesProvider = StreamProvider<List<ExchangeRate>>((ref) {
+  return DatabaseService.watchAllExchangeRates();
 });

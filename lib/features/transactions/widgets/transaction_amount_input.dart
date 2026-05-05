@@ -52,10 +52,10 @@ class TransactionAmountInput extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingLarge),
       child: PrecisionInput(
         controller: amountController,
-        hintText: "0",
+        hintText: "0,00",
         icon: Icons.attach_money_rounded,
-        keyboardType: TextInputType.number,
-        inputFormatters: [_ThousandsSeparatorFormatter()],
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [_TRCurrencyFormatter()],
         textAlign: TextAlign.center,
         fontSize: 56,
         suffixText: currency,
@@ -112,10 +112,10 @@ class TransactionAmountInput extends StatelessWidget {
         const SizedBox(height: 4),
         PrecisionInput(
           controller: controller,
-          hintText: "0",
+          hintText: "0,00",
           icon: Icons.attach_money_rounded,
-          keyboardType: TextInputType.number,
-          inputFormatters: [_ThousandsSeparatorFormatter()],
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [_TRCurrencyFormatter()],
           textAlign: TextAlign.center,
           fontSize: 24,
           suffixText: currency,
@@ -126,18 +126,35 @@ class TransactionAmountInput extends StatelessWidget {
   }
 }
 
-class _ThousandsSeparatorFormatter extends TextInputFormatter {
+/// Akıllı Türkiye Para Formatı Formattırı
+class _TRCurrencyFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
     if (newValue.text.isEmpty) return newValue;
 
-    // Sadece sayıları al
-    String text = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    // Sadece rakamlar ve virgül kalsın
+    String text = newValue.text.replaceAll(RegExp(r'[^0-9,]'), '');
+    
+    // Sadece bir tane virgüle izin ver
+    if (text.contains(',')) {
+      List<String> parts = text.split(',');
+      if (parts.length > 2) {
+        text = '${parts[0]},${parts.sublist(1).join('')}';
+      }
+    }
+
     if (text.isEmpty) return newValue.copyWith(text: '');
 
-    // Binlik ayırıcı ekle (.)
+    // Binlik ayırıcıları ekle (Nokta)
+    String integerPart = text.contains(',') ? text.split(',')[0] : text;
+    String decimalPart = text.contains(',') ? text.split(',')[1] : '';
+
     final reg = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
-    String formatted = text.replaceAllMapped(reg, (Match m) => '${m[1]}.');
+    String formattedInteger = integerPart.replaceAllMapped(reg, (Match m) => '${m[1]}.');
+
+    String formatted = decimalPart.isEmpty && !text.contains(',') 
+        ? formattedInteger 
+        : '$formattedInteger,$decimalPart';
 
     return newValue.copyWith(
       text: formatted,

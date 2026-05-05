@@ -83,6 +83,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   late TransactionPeriodData _periodData;
 
   bool _isPrefilled = false;
+  String? _errorMessage;
 
   AppLocalizations get l10n => AppLocalizations.of(context)!;
 
@@ -195,11 +196,47 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   }
 
   Future<void> _saveTransaction() async {
-    final amount = double.tryParse(_amountController.text) ?? 0;
-    
-    // Sadece "Esnek Tutar" aktifse min/max değerlerini al, yoksa null yap (çöpe at)
-    final minAmount = _isFlexibleAmount ? double.tryParse(_minController.text) : null;
-    final maxAmount = _isFlexibleAmount ? double.tryParse(_maxController.text) : null;
+    final amountStr = _amountController.text.trim();
+    final minStr = _minController.text.trim();
+    final maxStr = _maxController.text.trim();
+
+    String sanitize(String input) {
+      if (input.isEmpty) return '0';
+      final clean = input.trim();
+      if (clean.contains(',')) {
+        return clean.replaceAll('.', '').replaceAll(',', '.');
+      } else {
+        if (RegExp(r'\.\d{3}$').hasMatch(clean)) {
+          return clean.replaceAll('.', '');
+        }
+        return clean;
+      }
+    }
+
+    final amount = double.tryParse(sanitize(amountStr)) ?? 0.0;
+    final minAmount = double.tryParse(sanitize(minStr)) ?? 0.0;
+    final maxAmount = double.tryParse(sanitize(maxStr)) ?? 0.0;
+    // --- Validasyon Kontrolleri ---
+    if (!_isFlexibleAmount && amount <= 0) {
+      _showValidationError('Lütfen geçerli bir tutar girin.');
+      return;
+    }
+
+    if (_isFlexibleAmount) {
+      if (maxAmount <= 0) {
+        _showValidationError('Maksimum tutar 0\'dan büyük olmalıdır.');
+        return;
+      }
+      if (minAmount >= maxAmount) {
+        _showValidationError('Minimum tutar maksimumdan küçük olmalıdır.');
+        return;
+      }
+    }
+
+    // Eğer esnek tutar aktifse ana amount 0 kaydedilir (model otomatik ortalamayı hesaplasın diye)
+    final finalAmount = _isFlexibleAmount ? 0.0 : amount;
+    final finalMin = _isFlexibleAmount ? minAmount : null;
+    final finalMax = _isFlexibleAmount ? maxAmount : null;
     
     final categories = _tabIndex == 0 
         ? TransactionCategoryData.getExpenseCategories(context, l10n)
@@ -218,9 +255,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
             : cat['name'] as String;
             
         old.title = catName;
-        old.amount = amount;
-        old.minAmount = minAmount;
-        old.maxAmount = maxAmount;
+        old.amount = finalAmount;
+        old.minAmount = finalMin;
+        old.maxAmount = finalMax;
         old.isIncome = _tabIndex == 1;
         old.vaultIds = _selectedVaultIds;
         old.categoryId = categoryId;
@@ -241,13 +278,30 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
           ? (cat['subModels'] as List)[_selectedSubModelIndex]['name'] as String
           : cat['name'] as String;
 
+      DateTime initialDate = DateTime.now();
+      
+      // Eğer periyodik bir işlemse ve belirli bir gün seçilmişse başlangıç tarihini ona göre ayarla
+      if (_periodData.periodType != 0) {
+        final now = DateTime.now();
+        if ([2, 3, 6, 7].contains(_periodData.periodType)) {
+          // Ayın belirli bir günü seçilmişse
+          final day = _periodData.selectedDay;
+          if (now.day <= day) {
+            initialDate = DateTime(now.year, now.month, day, now.hour, now.minute);
+          } else {
+            // Bu ayın günü geçtiyse sonraki aya at (isteğe bağlı, ama genelde gelecek planlanır)
+            initialDate = DateTime(now.year, now.month + 1, day, now.hour, now.minute);
+          }
+        }
+      }
+
       final tx = TransactionRecord()
         ..title = catName
-        ..amount = amount
-        ..minAmount = minAmount
-        ..maxAmount = maxAmount
+        ..amount = finalAmount
+        ..minAmount = finalMin
+        ..maxAmount = finalMax
         ..isIncome = _tabIndex == 1
-        ..date = DateTime.now()
+        ..date = initialDate
         ..vaultIds = _selectedVaultIds
         ..categoryId = categoryId
         
@@ -269,6 +323,11 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
     HapticFeedback.heavyImpact();
   }
 
+  void _showValidationError(String message) {
+    HapticFeedback.vibrate();
+    setState(() => _errorMessage = message);
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -277,8 +336,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
         ? TransactionCategoryData.getExpenseCategories(context, l10n)
         : TransactionCategoryData.getIncomeCategories(context, l10n);
 
-    return Column(
-      children: [
+    return RepaintBoundary(
+      child: Column(
+        children: [
         TransactionTypeToggle(
             tabIndex: _tabIndex,
             onTabChanged: (index) {
@@ -378,14 +438,23 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
               child: Column(
                 children: [
                   // KASA
-                  TransactionVaultSelector(
-                    vaults: _vaults,
-                    selectedVaultIds: _selectedVaultIds,
-                    scalingFactor: scalingFactor,
-                    onChanged: (ids) {
-                      setState(() => _selectedVaultIds = ids);
-                    },
-                  ),
+                    TransactionVaultSelector(
+                      vaults: _vaults,
+                      selectedVaultIds: _selectedVaultIds,
+                      scalingFactor: scalingFactor,
+                      onChanged: (ids) {
+                        setState(() {
+                          _selectedVaultIds = ids;
+                          // Akıllı Birim Geçişi: Eğer bir kasa seçildiyse ve o kasanın özel bir birimi varsa ona geç
+                          if (ids.isNotEmpty) {
+                            final selectedVault = _vaults.firstWhere((v) => v.id == ids.first);
+                            if (selectedVault.currency != 'AUTO') {
+                              _selectedCurrency = selectedVault.currency;
+                            }
+                          }
+                        });
+                      },
+                    ),
                   Divider(
                     height: 1,
                     thickness: 0.5,
@@ -468,11 +537,35 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
 
           const SizedBox(height: AppSizes.paddingMedium),
 
+          if (_errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
             child: PrecisionButton(
               label: l10n.save,
               onTap: () {
+                setState(() => _errorMessage = null);
                 FocusManager.instance.primaryFocus?.unfocus();
                 _saveTransaction();
               },
@@ -482,6 +575,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
           ),
           const SizedBox(height: 32),
         ],
-      );
+      ),
+    );
   }
 }

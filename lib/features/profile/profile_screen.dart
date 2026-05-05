@@ -18,6 +18,7 @@ import 'widgets/profile_list_items.dart';
 // Modular Settings
 import 'widgets/settings/language_setting.dart';
 import 'widgets/settings/currency_setting.dart';
+import 'widgets/settings/exchange_rate_setting.dart';
 import 'widgets/settings/notification_setting.dart';
 import 'widgets/settings/location_setting.dart';
 import 'widgets/settings/auth_setting.dart';
@@ -120,6 +121,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ProfileListItems.buildDivider(isDark),
                       const CurrencySetting(),
                       ProfileListItems.buildDivider(isDark),
+                      const ExchangeRateSetting(),
+                      ProfileListItems.buildDivider(isDark),
                       const NotificationSetting(),
                       ProfileListItems.buildDivider(isDark),
                       const LocationSetting(),
@@ -221,15 +224,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showAboutDialog(AppLocalizations l10n) {
-    final activeColor = ref.read(rotaryColorProvider);
     PrecisionSheet.show(
       context: context,
       title: 'FinCast',
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 12),
-          Icon(Icons.auto_awesome_rounded, color: activeColor, size: 72),
           const SizedBox(height: 24),
           Text(
             l10n.aboutFinCast,

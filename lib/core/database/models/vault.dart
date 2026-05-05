@@ -9,8 +9,8 @@ class Vault {
   /// Kasanın Adı (Örn: "Maaş Hesabı", "Yastık Altı Altın", "Dolar Zulası")
   String name = '';
 
-  /// Kasanın Ana Birimi (Örn: "TRY", "USD", "GRAM")
-  String currency = 'TRY';
+  /// Kasanın Ana Birimi (Örn: "TRY", "USD", "GRAM", "AUTO")
+  String currency = 'AUTO';
 
   /// Kasadaki Toplam Miktar (Örn: 25000.0)
   double balance = 0.0;

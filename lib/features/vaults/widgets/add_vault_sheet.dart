@@ -18,7 +18,16 @@ class AddVaultSheet extends ConsumerStatefulWidget {
 class _AddVaultSheetState extends ConsumerState<AddVaultSheet> with SingleTickerProviderStateMixin {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _balanceController = TextEditingController();
+  String _selectedCurrency = 'AUTO';
   late AnimationController _waveController;
+
+  final List<Map<String, String>> _currencies = [
+    {'symbol': 'AUTO', 'label': 'OTOMATİK'},
+    {'symbol': '₺', 'label': 'TL'},
+    {'symbol': '\$', 'label': 'USD'},
+    {'symbol': '€', 'label': 'EUR'},
+    {'symbol': 'G', 'label': 'ALTIN'},
+  ];
 
   @override
   void initState() {
@@ -41,7 +50,8 @@ class _AddVaultSheetState extends ConsumerState<AddVaultSheet> with SingleTicker
   Widget build(BuildContext context) {
     final activeColor = AppColors.getPrimary(context);
     final secondaryColor = AppColors.getSecondary(context);
-    final scalingFactor = (MediaQuery.of(context).size.height / 812.0).clamp(0.85, 1.0);
+    final screenHeight = MediaQuery.of(context).size.height;
+    final sf = (screenHeight / 812.0).clamp(0.85, 1.0);
 
     return Stack(
       children: [
@@ -58,34 +68,88 @@ class _AddVaultSheetState extends ConsumerState<AddVaultSheet> with SingleTicker
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
-                height: 50 * scalingFactor,
+                height: 50 * sf,
                 child: PrecisionInput(
                   controller: _nameController,
                   hintText: 'Kasa Adı (örn. Birikim)',
                   icon: Icons.drive_file_rename_outline_rounded,
                   autofocus: true,
-                  scalingFactor: scalingFactor,
+                  scalingFactor: sf,
                 ),
               ),
-              SizedBox(height: 12 * scalingFactor),
+              
+              SizedBox(height: 20 * sf),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  'PARA BİRİMİ',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.grey.withValues(alpha: 0.5),
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+              SizedBox(height: 12 * sf),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _currencies.map((c) {
+                    final isSelected = _selectedCurrency == c['symbol'];
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setState(() => _selectedCurrency = c['symbol']!);
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected ? activeColor : activeColor.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected ? activeColor : activeColor.withValues(alpha: 0.1),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Text(
+                            c['label']!,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: isSelected ? Colors.white : AppColors.getTextPrimary(context).withValues(alpha: 0.5),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              
+              SizedBox(height: 20 * sf),
               SizedBox(
-                height: 50 * scalingFactor,
+                height: 50 * sf,
                 child: PrecisionInput(
                   controller: _balanceController,
                   hintText: 'Başlangıç Bakiyesi',
                   icon: Icons.payments_rounded,
-                  suffixText: '₺',
+                  suffixText: _selectedCurrency == 'AUTO' ? '' : _selectedCurrency,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
                   ],
-                  scalingFactor: scalingFactor,
+                  scalingFactor: sf,
                 ),
               ),
-              SizedBox(height: 24 * scalingFactor),
-              // NEW STANDARD BUTTON
+              SizedBox(height: 24 * sf),
               PrecisionButton(
                 label: 'Kasa Oluştur',
                 onTap: () async {
@@ -93,8 +157,8 @@ class _AddVaultSheetState extends ConsumerState<AddVaultSheet> with SingleTicker
                     final double? initialBalance = double.tryParse(_balanceController.text.replaceAll(',', '.'));
                     
                     final newVault = Vault()
-                      ..name = _nameController.text
-                      ..currency = 'TRY'
+                      ..name = _nameController.text.trim()
+                      ..currency = _selectedCurrency
                       ..balance = initialBalance ?? 0.0
                       ..showOnDashboard = true;
                     
@@ -105,9 +169,9 @@ class _AddVaultSheetState extends ConsumerState<AddVaultSheet> with SingleTicker
                   }
                 },
                 activeColor: activeColor,
-                height: 64 * scalingFactor,
+                height: 64 * sf,
               ),
-              SizedBox(height: 24 * scalingFactor),
+              SizedBox(height: 24 * sf),
             ],
           ),
         ),

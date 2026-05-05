@@ -131,7 +131,7 @@ class _SpendingGiantsWidgetState extends ConsumerState<SpendingGiantsWidget> {
               ),
               Text(
                 tGiants.isNotEmpty
-                    ? CurrencyUtils.formatAmount(tGiants.first.amount)
+                    ? CurrencyUtils.formatAmount(tGiants.first.effectiveAmount)
                     : '-',
                 style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
               ),
@@ -314,7 +314,7 @@ class _SpendingGiantsWidgetState extends ConsumerState<SpendingGiantsWidget> {
             ),
           ),
           Text(
-            CurrencyUtils.formatAmount(tx.amount),
+            CurrencyUtils.formatAmount(tx.effectiveAmount),
             style: theme.textTheme.labelLarge?.copyWith(fontSize: 12),
           ),
         ],
@@ -343,7 +343,7 @@ class _SpendingGiantsWidgetState extends ConsumerState<SpendingGiantsWidget> {
     }
 
     return transactions.where((tx) => tx.date.isAfter(startDate)).toList()
-      ..sort((a, b) => b.amount.compareTo(a.amount));
+      ..sort((a, b) => b.effectiveAmount.compareTo(a.effectiveAmount));
   }
 
   List<_CategoryGiant> _getCategoryGiants(
@@ -356,8 +356,8 @@ class _SpendingGiantsWidgetState extends ConsumerState<SpendingGiantsWidget> {
 
     for (final tx in transactions) {
       final catId = tx.categoryId ?? 'Diğer';
-      categorySums[catId] = (categorySums[catId] ?? 0) + tx.amount;
-      total += tx.amount;
+      categorySums[catId] = (categorySums[catId] ?? 0) + tx.effectiveAmount;
+      total += tx.effectiveAmount;
     }
 
     final sortedEntries = categorySums.entries.toList()

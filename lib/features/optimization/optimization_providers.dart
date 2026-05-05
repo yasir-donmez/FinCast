@@ -83,7 +83,7 @@ class OptimizationEngine {
     // (Vault.balance alanı güncellenmediği için işlemlerden hesaplayalım)
     final double txBalance = scopedTxs.fold(0.0, (sum, t) {
       if (t.periodType != 0) return sum; // Sadece tek seferlik işlemler bakiyeyi etkiler
-      return t.isIncome ? sum + t.amount : sum - t.amount;
+      return t.isIncome ? sum + t.effectiveAmount : sum - t.effectiveAmount;
     });
     // Vault bakiyesi varsa onu da ekle (elle set edilmiş başlangıç bakiyeleri için)
     final double vaultBalance = scopedVaults.fold(0.0, (sum, v) => sum + v.balance);
@@ -148,7 +148,7 @@ class OptimizationEngine {
       // Bu kategori için arşivdeki geçmiş işlemleri bul
       final historic = allHistoric
           .where((h) => h.title == tx.title && !h.isIncome)
-          .map((h) => h.amount)
+          .map((h) => h.effectiveAmount)
           .toList();
 
       double? cv;
@@ -162,7 +162,7 @@ class OptimizationEngine {
 
       contextCategories.add(CategoryContext(
         name: tx.title,
-        currentAmount: tx.amount,
+        currentAmount: tx.monthlyEquivalent,
         minAmount: tx.minAmount,
         maxAmount: tx.maxAmount,
         coefficientOfVariation: cv,

@@ -49,7 +49,7 @@ class OptimizationEngine {
 
     // Eğer mevcut esnek harcamalar zaten hedeflenen bütçeden AZ ise, bir şeyi kısmaya gerek yok
     if (flexibleMonthlyTotal <= targetFlexibleBudget) {
-      return {for (var e in flexibleExpenses) e.title: e.amount};
+      return {for (var e in flexibleExpenses) e.title: e.monthlyEquivalent};
     }
 
     // 3. OPTİMİZASYON (Lineer Orantılı Kesinti)
@@ -58,7 +58,7 @@ class OptimizationEngine {
 
     for (var expense in flexibleExpenses) {
       // Bu kategorinin esnek giderler içindeki ağırlığı (Örn: %40'ı Eğlence)
-      double weight = expense.amount / flexibleMonthlyTotal;
+      double weight = expense.monthlyEquivalent / flexibleMonthlyTotal;
 
       // Yeni bütçeden bu kategoriye düşen (kırpılmış) pay
       double newLimit = targetFlexibleBudget * weight;
@@ -77,13 +77,7 @@ class OptimizationEngine {
   }
 
   double _calculateTotal(List<TransactionRecord> records) {
-    return records.fold(0.0, (sum, record) {
-      // İşlem türüne göre aylık değer bul (0: Tek, 1: Haftalık 2: Aylık 3: Yıllık)
-      double monthlyAmount = record.amount;
-      if (record.periodType == 1) monthlyAmount *= 4; // Haftalık
-      if (record.periodType == 3) monthlyAmount /= 12; // Yıllık
-      return sum + monthlyAmount;
-    });
+    return records.fold(0.0, (sum, record) => sum + record.monthlyEquivalent);
   }
 }
 

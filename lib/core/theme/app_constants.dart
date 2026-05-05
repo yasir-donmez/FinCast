@@ -89,3 +89,12 @@ class AppCurrency {
   };
   static String getCode(String symbol) => symbolToCode[symbol] ?? '';
 }
+class AppAssets {
+  static const String logoNormal = 'assets/images/app_logo_normal.png';
+  static const String logoPremium = 'assets/images/app_logo_premium.png';
+
+  static String getLogo(BuildContext context) {
+    // Dark mode usually fits the "premium/transparent" look better
+    return Theme.of(context).brightness == Brightness.dark ? logoPremium : logoNormal;
+  }
+}

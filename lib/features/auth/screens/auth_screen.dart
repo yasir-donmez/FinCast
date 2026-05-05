@@ -242,27 +242,27 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
     final double fontSize = (screenHeight * 0.06).clamp(32.0, 56.0);
     
     return Column(
-        children: [
-          Text(
-            'FinCast',
-            style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.w900,
-              color: AppColors.getTextPrimary(context),
-              letterSpacing: -3,
-            ),
+      children: [
+        Text(
+          'FinCast',
+          style: TextStyle(
+            fontSize: fontSize,
+            fontWeight: FontWeight.w900,
+            color: AppColors.getTextPrimary(context),
+            letterSpacing: -3,
           ),
-          const SizedBox(height: 4),
-          Container(
-            width: fontSize * 0.8,
-            height: 4,
-            decoration: BoxDecoration(
-              color: primaryColor,
-              borderRadius: BorderRadius.circular(2),
-            ),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          width: fontSize * 0.8,
+          height: 4,
+          decoration: BoxDecoration(
+            color: primaryColor,
+            borderRadius: BorderRadius.circular(2),
           ),
-        ],
-      );
+        ),
+      ],
+    );
   }
 
   Widget _buildLoginForm(BuildContext context, double screenHeight) {

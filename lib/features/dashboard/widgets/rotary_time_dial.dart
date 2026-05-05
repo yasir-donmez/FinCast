@@ -98,10 +98,36 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> with SingleTick
           HapticFeedback.selectionClick();
         }
 
-        final extraMultiplier = (pow(_currentAngle, 1.5) * 800).toDouble();
-        ref.read(simulationBonusProvider.notifier).state = extraMultiplier;
+        // --- GERÇEKÇİ SİMÜLASYON HESAPLAMASI ---
+        // 1. Önce kadranın gösterdiği "Gelecekteki Gün" sayısını hesaplıyoruz
+        final double simulatedDays = _calculateSimulatedDays(_currentAngle);
+        
+        // 2. Kullanıcının cüzdan hızını (Daily Velocity) alıyoruz
+        final double dailyVelocity = ref.read(dailyVelocityProvider);
+        
+        // 3. Bonus = Gün * Hız (Artık kafasına göre değil, verilere göre artıyor)
+        ref.read(simulationBonusProvider.notifier).state = simulatedDays * dailyVelocity;
       }
     });
+  }
+
+  double _calculateSimulatedDays(double currentAngle) {
+    if (currentAngle <= 0.01) return 0;
+    double turns = currentAngle / (2 * pi);
+    
+    if (turns <= 1.0) {
+      // 0-1 Tur: 0-7 Gün
+      return turns * 7;
+    } else if (turns <= 2.0) {
+      // 1-2 Tur: 1-4 Hafta (7-28 Gün)
+      return 7 + (turns - 1.0) * 21;
+    } else if (turns <= 3.0) {
+      // 2-3 Tur: 1-12 Ay (28-365 Gün)
+      return 28 + (turns - 2.0) * (365 - 28);
+    } else {
+      // 3+ Tur: Yıllar (Her tur +1 yıl)
+      return 365 + (turns - 3.0) * 365;
+    }
   }
 
   Color _getFixedColor() {
@@ -178,12 +204,12 @@ class _RotaryTimeDialState extends ConsumerState<RotaryTimeDial> with SingleTick
                     setState(() {
                       _currentAngle = _resetAnimation!.value.clamp(0.0, double.infinity);
                       _lastAngle = 0.0;
-                      _lastHapticLevel = 0; // Reset haptic level to prevent skipping initial ticks
+                      _lastHapticLevel = 0;
                       
-                      final extraMultiplier = (pow(_currentAngle, 1.5) * 800).toDouble();
-                      ref.read(simulationBonusProvider.notifier).state = extraMultiplier;
+                      final double simulatedDays = _calculateSimulatedDays(_currentAngle);
+                      final double dailyVelocity = ref.read(dailyVelocityProvider);
+                      ref.read(simulationBonusProvider.notifier).state = simulatedDays * dailyVelocity;
                       
-                      // Renk geçişini de sıfırlama sırasında senkronize et
                       final activeColor = _getFixedColor();
                       if (ref.read(rotaryColorProvider) != activeColor) {
                         ref.read(rotaryColorProvider.notifier).state = activeColor;

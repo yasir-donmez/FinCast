@@ -14,7 +14,7 @@ class TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
   final VoidCallback onManageVaults;
   final VoidCallback onAddVault;
   final AppLocalizations l10n;
-  final Function(String) onVaultTap;
+  final Function(String?) onVaultTap;
   final double topPadding;
 
   TrueMorphDeckHeaderDelegate({
@@ -116,7 +116,7 @@ class TrueMorphDeckHeaderDelegate extends SliverPersistentHeaderDelegate {
                     opacity: (1 - progress * 1.8).clamp(0.0, 1.0),
                     child: Row(
                       children: [
-                        HeaderIconButton(icon: Icons.visibility_rounded, onTap: onManageVaults),
+                        HeaderIconButton(icon: Icons.dashboard_customize_rounded, onTap: onManageVaults),
                         const SizedBox(width: 8),
                         HeaderIconButton(icon: Icons.add_rounded, onTap: onAddVault),
                       ],

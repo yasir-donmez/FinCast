@@ -78,7 +78,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
 
     PrecisionSheet.show(
       context: context,
-      isFullScreen: true,
+      isFullScreen: false,
       title: AppLocalizations.of(context)!.addTransaction,
       child: AddTransactionSheet(initialVaultIds: preselectedVaultId != null ? [preselectedVaultId] : []),
     );

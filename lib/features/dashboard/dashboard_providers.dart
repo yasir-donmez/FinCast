@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/db_providers.dart';
+import '../../core/providers/settings_provider.dart';
 import '../../core/utils/icon_utils.dart';
+import '../../core/utils/currency_utils.dart';
 import '../vaults/vaults_providers.dart';
 
 /// Dashboard'daki bir öğeyi temsil eder (Kasa/Grup veya Tekil İşlem)
@@ -43,6 +45,8 @@ class DashboardItem {
 final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
   final vaults = ref.watch(allVaultsProvider);
   final transactions = ref.watch(vaultTransactionsProvider);
+  final rates = ref.watch(exchangeRatesProvider).value ?? [];
+  final globalCurrency = ref.watch(settingsProvider).currencySymbol;
 
   final List<DashboardItem> items = [];
 
@@ -56,6 +60,8 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
 
   for (final v in sortedVaults) {
     final String vaultGroupId = 'v_${v.id}';
+    final targetCurrency = v.currency == 'AUTO' ? globalCurrency : v.currency;
+
     // Kasa içindeki işlemleri bul
     final groupTx = transactions.where((t) => t.groupIds.contains(vaultGroupId)).toList()
       ..sort((a, b) => b.date.compareTo(a.date));
@@ -66,21 +72,18 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
     bool hasFlexibleTx = false;
 
     for (final t in groupTx) {
+      final convAmount = t.getConvertedAmount(targetCurrency, rates);
       if (t.isIncome) {
-        groupBalance += t.amount;
+        groupBalance += convAmount;
         if (t.minAmount != null || t.maxAmount != null) hasFlexibleTx = true;
-        groupMin += t.minAmount ?? t.amount;
-        groupMax += t.maxAmount ?? t.amount;
+        groupMin += CurrencyUtils.convert(t.minAmount ?? t.amount, t.currency ?? '₺', targetCurrency, rates);
+        groupMax += CurrencyUtils.convert(t.maxAmount ?? t.amount, t.currency ?? '₺', targetCurrency, rates);
       } else {
-        groupBalance -= t.amount;
+        groupBalance -= convAmount;
         if (t.minAmount != null || t.maxAmount != null) hasFlexibleTx = true;
-        groupMin -= (t.maxAmount ?? t.amount);
-        groupMax -= (t.minAmount ?? t.amount);
+        groupMin -= CurrencyUtils.convert(t.maxAmount ?? t.amount, t.currency ?? '₺', targetCurrency, rates);
+        groupMax -= CurrencyUtils.convert(t.minAmount ?? t.amount, t.currency ?? '₺', targetCurrency, rates);
       }
-    }
-
-    if (hasFlexibleTx && groupBalance == 0) {
-      groupBalance = (groupMin + groupMax) / 2;
     }
 
     // En çok tekrar eden ikon kodunu bul
@@ -99,7 +102,7 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
         name: v.name,
         categoryId: dominantCategoryId,
         balance: groupBalance,
-        currency: v.currency,
+        currency: targetCurrency,
         iconCode: dominantIconCode,
         isGroup: true,
         itemIconCodes: groupTx
@@ -108,7 +111,10 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
             .take(50)
             .toList(),
         itemAmounts: groupTx
-            .map((t) => t.isIncome ? t.amount : -t.amount)
+            .map((t) {
+              final amt = t.getConvertedAmount(targetCurrency, rates);
+              return t.isIncome ? amt : -amt;
+            })
             .take(50)
             .toList(),
         itemCount: groupTx.length,
@@ -128,12 +134,18 @@ final dashboardItemsProvider = Provider<List<DashboardItem>>((ref) {
         id: t.id, 
         name: t.name,
         categoryId: t.categoryId,
-        balance: t.isIncome ? t.amount : -t.amount,
-        currency: '₺',
+        balance: t.isIncome 
+            ? t.getConvertedAmount(globalCurrency, rates) 
+            : -t.getConvertedAmount(globalCurrency, rates),
+        currency: globalCurrency,
         iconCode: t.iconCode ?? t.categoryId,
         isGroup: false,
-        minLimit: t.minAmount,
-        maxLimit: t.maxAmount,
+        minLimit: t.minAmount != null 
+            ? CurrencyUtils.convert(t.minAmount!, t.currency ?? '₺', globalCurrency, rates) 
+            : null,
+        maxLimit: t.maxAmount != null 
+            ? CurrencyUtils.convert(t.maxAmount!, t.currency ?? '₺', globalCurrency, rates) 
+            : null,
         dashboardOrder: 0,
         dashboardLayoutType: t.dashboardLayoutType,
       ),
@@ -160,3 +172,30 @@ final rotaryColorProvider = StateProvider<Color>(
 
 /// Zaman makinesinin şu an hangi "Ay/Yıl" ofsetinde olduğunu tutar (0 = Bugün)
 final timeOffsetProvider = StateProvider<int>((ref) => 0);
+
+/// Tüm periyodik işlemlerın günlük bazda net değişim hızını (velocity) hesaplayan Provider.
+/// Bu, Zaman Makinesi'nin ne kadar hızlı artıp azalacağını belirler.
+final dailyVelocityProvider = Provider<double>((ref) {
+  final transactions = ref.watch(vaultTransactionsProvider);
+  final rates = ref.watch(exchangeRatesProvider).value ?? [];
+  final globalCurrency = ref.watch(settingsProvider).currencySymbol;
+  
+  double dailyNet = 0;
+
+  for (final t in transactions) {
+    if (t.periodType == 0) continue; // Tek seferlik işlemler simülasyona dahil edilmez
+
+    // monthlyEquivalent'i günlüğe çeviriyoruz (30.44 gün ortalama)
+    // Önce global birime çeviriyoruz
+    double monthlyConv = t.getConvertedMonthlyEquivalent(globalCurrency, rates);
+    double dailyEffect = monthlyConv / 30;
+    
+    if (t.isIncome) {
+      dailyNet += dailyEffect;
+    } else {
+      dailyNet -= dailyEffect;
+    }
+  }
+
+  return dailyNet;
+});

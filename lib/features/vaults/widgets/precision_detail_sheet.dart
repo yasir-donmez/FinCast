@@ -65,7 +65,7 @@ class _PrecisionDetailSheetState extends ConsumerState<PrecisionDetailSheet> {
     final screenHeight = MediaQuery.of(context).size.height;
     final sf = (screenHeight / 812.0).clamp(0.75, 1.0);
 
-    final hasFlexibleAmount = tx.minAmount != null && tx.maxAmount != null && tx.minAmount! > 0;
+    final hasFlexibleAmount = tx.minAmount != null && tx.maxAmount != null;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -112,35 +112,57 @@ class _PrecisionDetailSheetState extends ConsumerState<PrecisionDetailSheet> {
 
         // TUTAR (Dengeli ve Etiketli Layout)
         Center(
-          child: hasFlexibleAmount
-            ? Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+          child: tx.effectiveAmount == 0
+            ? Column(
                 children: [
-                  _buildRangeValue('min', tx.minAmount!, tx.currency, sf, isDark),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16 * sf),
-                    child: Text(
-                      '${tx.currency ?? "₺"}${_formatFull(tx.amount == 0 ? ((tx.minAmount! + tx.maxAmount!) / 2) : tx.amount)}',
-                      style: TextStyle(
-                        fontSize: 40 * sf,
-                        fontWeight: FontWeight.w900,
-                        color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context),
-                        letterSpacing: -1.5,
-                      ),
+                  Text(
+                    'TUTAR GİRİLMEDİ',
+                    style: TextStyle(
+                      fontSize: 24 * sf,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.grey.withValues(alpha: 0.4),
+                      letterSpacing: 1,
                     ),
                   ),
-                  _buildRangeValue('max', tx.maxAmount!, tx.currency, sf, isDark),
+                  Text(
+                    'Düzenleyerek tutar ekleyin',
+                    style: TextStyle(
+                      fontSize: 12 * sf,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.withValues(alpha: 0.3),
+                    ),
+                  ),
                 ],
               )
-            : Text(
-                '${tx.currency ?? "₺"}${_formatFull(tx.amount)}',
-                style: TextStyle(
-                  fontSize: 40 * sf,
-                  fontWeight: FontWeight.w900,
-                  color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context),
-                  letterSpacing: -2, height: 1,
+            : hasFlexibleAmount
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildRangeValue('min', tx.minAmount!, tx.currency, sf, isDark),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16 * sf),
+                      child: Text(
+                        '${tx.currency ?? "₺"}${_formatFull(tx.effectiveAmount)}',
+                        style: TextStyle(
+                          fontSize: 40 * sf,
+                          fontWeight: FontWeight.w900,
+                          color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context),
+                          letterSpacing: -1.5,
+                        ),
+                      ),
+                    ),
+                    _buildRangeValue('max', tx.maxAmount!, tx.currency, sf, isDark),
+                  ],
+                )
+              : Text(
+                  '${tx.currency ?? "₺"}${_formatFull(tx.effectiveAmount)}',
+                  style: TextStyle(
+                    fontSize: 40 * sf,
+                    fontWeight: FontWeight.w900,
+                    color: tx.isIncome ? AppColors.getIncome(context) : AppColors.getExpense(context),
+                    letterSpacing: -2, height: 1,
+                  ),
                 ),
-              ),
         ),
 
         SizedBox(height: 16 * sf),

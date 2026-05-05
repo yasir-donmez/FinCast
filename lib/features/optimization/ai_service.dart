@@ -53,11 +53,9 @@ class AiService {
     final expenses = allTransactions.where((t) => !t.isIncome && !t.isArchived);
 
     final totalMonthlyIncome = incomes
-        .where((t) => t.periodType == 2)
-        .fold(0.0, (sum, t) => sum + t.amount);
+        .fold(0.0, (sum, t) => sum + t.monthlyEquivalent);
     final totalMonthlyExpense = expenses
-        .where((t) => t.periodType == 2)
-        .fold(0.0, (sum, t) => sum + t.amount);
+        .fold(0.0, (sum, t) => sum + t.monthlyEquivalent);
 
     final lockedCount = expenses.where((t) => t.isLocked).length;
     final flexibleCount = expenses.where((t) => !t.isLocked).length;
@@ -65,7 +63,7 @@ class AiService {
     // Kategori özetleri (anonim - sadece başlık ve tutar)
     final categoryMap = <String, double>{};
     for (final tx in expenses.where((t) => !t.isLocked)) {
-      categoryMap[tx.title] = (categoryMap[tx.title] ?? 0) + tx.amount;
+      categoryMap[tx.title] = (categoryMap[tx.title] ?? 0) + tx.monthlyEquivalent;
     }
     final topCategories = categoryMap.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));

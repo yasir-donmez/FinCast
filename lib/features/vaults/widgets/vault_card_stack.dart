@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/utils/currency_utils.dart';
+import '../../../core/providers/settings_provider.dart';
+import '../../../core/providers/db_providers.dart';
 import '../vaults_providers.dart';
 import 'integrated_vault_card.dart';
 
-class VaultCardStack extends StatefulWidget {
+class VaultCardStack extends ConsumerStatefulWidget {
   final List<String?> deckItems;
   final List<TransactionUI> allTransactions;
   final int currentIndex;
@@ -13,7 +17,7 @@ class VaultCardStack extends StatefulWidget {
   final AppLocalizations l10n;
   final List<TransactionGroup> groups;
   final double morphProgress;
-  final Function(String) onVaultTap;
+  final Function(String?) onVaultTap;
 
   const VaultCardStack({
     super.key,
@@ -29,10 +33,10 @@ class VaultCardStack extends StatefulWidget {
   });
 
   @override
-  State<VaultCardStack> createState() => _VaultCardStackState();
+  ConsumerState<VaultCardStack> createState() => _VaultCardStackState();
 }
 
-class _VaultCardStackState extends State<VaultCardStack> {
+class _VaultCardStackState extends ConsumerState<VaultCardStack> {
   late PageController _pageController;
   int? _lastTargetIndex;
 
@@ -107,10 +111,25 @@ class _VaultCardStackState extends State<VaultCardStack> {
         itemCount: widget.deckItems.length,
         itemBuilder: (context, index) {
           final vaultId = widget.deckItems[index];
+          final globalCurrency = ref.watch(settingsProvider).currencySymbol;
+          final rates = ref.watch(exchangeRatesProvider).value ?? [];
+          final allVaults = ref.watch(allVaultsProvider);
+          final vault = allVaults.where((v) => 'v_${v.id}' == vaultId).firstOrNull;
+          final vaultCurrency = vault?.currency ?? 'AUTO';
+          final targetCurrency = vaultCurrency == 'AUTO' ? globalCurrency : vaultCurrency;
+
           final txs = vaultId == null ? widget.allTransactions : widget.allTransactions.where((t) => t.groupIds.contains(vaultId)).toList();
-          final income = txs.where((t) => t.isIncome).fold<double>(0, (sum, t) => sum + t.monthlyEquivalent);
-          final expense = txs.where((t) => !t.isIncome).fold<double>(0, (sum, t) => sum + t.monthlyEquivalent);
+          final income = txs.where((t) => t.isIncome).fold<double>(0, (sum, t) => sum + t.getConvertedMonthlyEquivalent(targetCurrency, rates));
+          final expense = txs.where((t) => !t.isIncome).fold<double>(0, (sum, t) => sum + t.getConvertedMonthlyEquivalent(targetCurrency, rates));
           final balance = income - expense;
+
+          // Döviz çevrisi (Görünür sembol ve opsiyonel global bakiye)
+          final currencySymbol = vaultCurrency == 'AUTO' ? globalCurrency : vaultCurrency;
+
+          double? convertedBalance;
+          if (vaultCurrency != 'AUTO' && vaultCurrency != globalCurrency) {
+            convertedBalance = CurrencyUtils.convert(balance, vaultCurrency, globalCurrency, rates);
+          }
 
           return AnimatedBuilder(
             animation: _pageController,
@@ -138,7 +157,7 @@ class _VaultCardStackState extends State<VaultCardStack> {
                       scale: isCurrent ? value : value * (1 - widget.morphProgress * 0.2), // Küçük bir küçülme eklendi
                       child: RepaintBoundary(
                         child: GestureDetector(
-                          onTap: isCurrent && vaultId != null ? () => widget.onVaultTap(vaultId) : null,
+                          onTap: isCurrent ? () => widget.onVaultTap(vaultId) : null,
                           child: IntegratedVaultCard(
                             vaultId: vaultId,
                             income: income,
@@ -148,6 +167,11 @@ class _VaultCardStackState extends State<VaultCardStack> {
                             activeColor: widget.activeColor,
                             l10n: widget.l10n,
                             vaultName: index == 0 ? widget.l10n.mainVault : widget.groups[index - 1].name,
+                            currencySymbol: currencySymbol,
+                            convertedBalance: convertedBalance,
+                            convertedSymbol: globalCurrency,
+                            exchangeRates: rates,
+                            targetCurrency: targetCurrency,
                             morphProgress: widget.morphProgress,
                             isCurrent: isCurrent,
                           ),

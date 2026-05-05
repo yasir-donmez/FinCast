@@ -250,7 +250,7 @@ class PrecisionTransactionCard extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.amount)}',
+                                    '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.effectiveAmount)}',
                                     style: TextStyle(
                                       fontSize: 36 * sf,
                                       fontWeight: FontWeight.w900,
@@ -296,7 +296,7 @@ class PrecisionTransactionCard extends StatelessWidget {
                                 ],
                               )
                             : Text(
-                                '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.amount)}',
+                                '${tx.currency ?? "₺"}${CurrencyUtils.formatAmount(tx.effectiveAmount)}',
                                 style: TextStyle(
                                   fontSize: 44 * sf,
                                   fontWeight: FontWeight.w900,
